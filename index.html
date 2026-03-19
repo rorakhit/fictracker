@@ -389,21 +389,41 @@ function App() {
           const description = getMeta('description') || '';
           const subjects = getAllMeta('subject');
 
-          // Extract AO3 work ID from source URL
-          const ao3Match = source.match(/archiveofourown\.org\/works\/(\d+)/);
-          const ao3Id = ao3Match ? parseInt(ao3Match[1]) : null;
+          // Extract AO3 work ID - check multiple locations
+          let finalId = null;
 
-          // Also try to find it in identifier
-          let ao3IdFromIdentifier = null;
-          if (!ao3Id) {
+          // 1. Check dc:source for AO3 URL (most reliable)
+          const ao3Match = source.match(/archiveofourown\.org\/works\/(\d+)/);
+          if (ao3Match) finalId = parseInt(ao3Match[1]);
+
+          // 2. Check all identifiers for AO3 URLs
+          if (!finalId) {
             const identifiers = doc.querySelectorAll('identifier');
             for (const ident of identifiers) {
-              const idMatch = ident.textContent?.match(/(\d{5,})/);
-              if (idMatch) { ao3IdFromIdentifier = parseInt(idMatch[1]); break; }
+              const text = ident.textContent || '';
+              const urlMatch = text.match(/archiveofourown\.org\/works\/(\d+)/);
+              if (urlMatch) { finalId = parseInt(urlMatch[1]); break; }
             }
           }
 
-          const finalId = ao3Id || ao3IdFromIdentifier;
+          // 3. Check dc:identifier with AO3-style scheme
+          if (!finalId) {
+            const identifiers = doc.querySelectorAll('identifier');
+            for (const ident of identifiers) {
+              const scheme = ident.getAttribute('opf:scheme') || ident.getAttribute('scheme') || '';
+              if (scheme.toLowerCase().includes('ao3') || scheme.toLowerCase().includes('archive')) {
+                const idMatch = ident.textContent?.match(/(\d+)/);
+                if (idMatch) { finalId = parseInt(idMatch[1]); break; }
+              }
+            }
+          }
+
+          // 4. Check all text content for AO3 URLs as last resort
+          if (!finalId) {
+            const allText = opfContent;
+            const lastResort = allText.match(/archiveofourown\.org\/works\/(\d+)/);
+            if (lastResort) finalId = parseInt(lastResort[1]);
+          }
           if (finalId) {
             worksToImport.push({
               ao3_id: finalId,
@@ -858,7 +878,11 @@ function App() {
             <div className="modal-actions">
               <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)', marginRight: 'auto' }}
                 onClick={() => { if (confirm('Remove this fic from your library?')) deleteWork(selected.id); }}>Remove</button>
-              <a className="btn btn-ghost btn-sm" href={`https://archiveofourown.org/works/${selected.ao3_id}`} target="_blank" rel="noopener" style={{ textDecoration: 'none' }}>Open on AO3</a>
+              {selected.ao3_id && selected.ao3_id > 0 && (
+                <a className="btn btn-ghost btn-sm" href={`https://archiveofourown.org/works/${selected.ao3_id}`} target="_blank" rel="noopener"
+                  onClick={e => e.stopPropagation()}
+                  style={{ textDecoration: 'none' }}>Open on AO3</a>
+              )}
               <button className="btn btn-ghost" onClick={() => setSelected(null)}>Cancel</button>
               <button className="btn btn-accent" onClick={saveWorkDetails}>Save</button>
             </div>
