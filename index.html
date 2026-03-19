@@ -143,6 +143,14 @@
     .import-progress { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
     .import-progress .progress-text { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
 
+    /* Bulk selection */
+    .bulk-bar { display: flex; gap: 8px; align-items: center; background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; }
+    .bulk-bar span { font-size: 13px; color: var(--text); flex: 1; }
+    .bulk-check { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; margin-right: 4px; }
+    .work-card.selectable { padding-left: 14px; }
+    .work-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .select-all-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: var(--text-muted); }
+
     @media (max-width: 700px) {
       .stats { grid-template-columns: repeat(3, 1fr); }
       .charts-grid { grid-template-columns: 1fr; }
@@ -153,7 +161,9 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
-const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
+const RC = typeof Recharts !== 'undefined' ? Recharts : {};
+const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = RC;
+const chartsAvailable = typeof Recharts !== 'undefined';
 
 const SUPABASE_URL = 'https://nivqfnrkpuoyjtugavtj.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pdnFmbnJrcHVveWp0dWdhdnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4ODU0NDAsImV4cCI6MjA4OTQ2MTQ0MH0.gEjhPIGqXqAj_ZU69upkk_rW3-392b0TWNLv-CVC1mU';
@@ -216,6 +226,8 @@ function App() {
   const [importMsg, setImportMsg] = useState('');
   const fileRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState(new Set());
 
   async function loadData() {
     try {
@@ -253,6 +265,56 @@ function App() {
     await supa('reading_log', { method: 'DELETE', filters: `work_id=eq.${workId}` });
     await supa('works', { method: 'DELETE', filters: `id=eq.${workId}` });
     setSelected(null);
+    loadData();
+  }
+
+  // Bulk actions
+  function toggleBulkSelect(workId) {
+    setBulkSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(workId)) next.delete(workId);
+      else next.add(workId);
+      return next;
+    });
+  }
+
+  function selectAllVisible() {
+    const allIds = new Set(filtered.map(w => w.id));
+    setBulkSelected(allIds);
+  }
+
+  function deselectAll() {
+    setBulkSelected(new Set());
+  }
+
+  async function bulkSetStatus(newStatus) {
+    const ids = Array.from(bulkSelected);
+    if (ids.length === 0) return;
+    for (const workId of ids) {
+      const updates = { status: newStatus, updated_at: new Date().toISOString() };
+      if (newStatus === 'completed') updates.completed_at = new Date().toISOString();
+      if (newStatus === 'reading') {
+        const existing = statuses[workId];
+        if (!existing?.started_at) updates.started_at = new Date().toISOString();
+      }
+      await updateStatus(workId, updates);
+    }
+    setBulkSelected(new Set());
+    setBulkMode(false);
+    loadData();
+  }
+
+  async function bulkDelete() {
+    const ids = Array.from(bulkSelected);
+    if (ids.length === 0) return;
+    for (const workId of ids) {
+      await supa('reading_status', { method: 'DELETE', filters: `work_id=eq.${workId}` });
+      await supa('wip_tracking', { method: 'DELETE', filters: `work_id=eq.${workId}` });
+      await supa('reading_log', { method: 'DELETE', filters: `work_id=eq.${workId}` });
+      await supa('works', { method: 'DELETE', filters: `id=eq.${workId}` });
+    }
+    setBulkSelected(new Set());
+    setBulkMode(false);
     loadData();
   }
 
@@ -543,19 +605,47 @@ function App() {
             <option value="rating">My Rating</option>
           </select>
           <input className="search-input" placeholder="Search fics, fandoms, ships..." value={search} onChange={e => setSearch(e.target.value)} />
+          <button className={`pill ${bulkMode ? 'active' : ''}`} onClick={() => { setBulkMode(!bulkMode); setBulkSelected(new Set()); }}>{bulkMode ? 'Cancel' : 'Select'}</button>
         </div>
+
+        {bulkMode && (
+          <div className="bulk-bar">
+            <span>{bulkSelected.size} selected</span>
+            <button className="btn btn-ghost btn-sm" onClick={selectAllVisible}>Select all ({filtered.length})</button>
+            {bulkSelected.size > 0 && <button className="btn btn-ghost btn-sm" onClick={deselectAll}>Deselect</button>}
+            {bulkSelected.size > 0 && (<>
+              <select style={{ width: 140, padding: '5px 8px', fontSize: 12, borderRadius: 8 }}
+                onChange={e => { if (e.target.value) bulkSetStatus(e.target.value); e.target.value = ''; }}
+                defaultValue="">
+                <option value="" disabled>Set status...</option>
+                <option value="to_read">To Read</option>
+                <option value="reading">Reading</option>
+                <option value="completed">Completed</option>
+                <option value="on_hold">On Hold</option>
+                <option value="dropped">Dropped</option>
+              </select>
+              <button className="btn btn-sm" style={{ color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.3)', background: 'transparent' }}
+                onClick={() => { if (confirm(`Remove ${bulkSelected.size} fics?`)) bulkDelete(); }}>Remove</button>
+            </>)}
+          </div>
+        )}
 
         <div className="work-list">
           {filtered.length === 0 ? (
             <div className="empty"><div className="emoji">📚</div><p>{works.length === 0 ? 'No fics yet! Import your bookmarks or add a fic by URL.' : 'No fics match your filters.'}</p></div>
           ) : filtered.map(w => {
             const st = w._status?.status || 'to_read';
+            const isChecked = bulkSelected.has(w.id);
             return (
-              <div key={w.id} className="work-card" onClick={() => openWork(w)}>
+              <div key={w.id} className={`work-card ${bulkMode ? 'selectable' : ''} ${isChecked ? 'selected' : ''}`}
+                onClick={() => bulkMode ? toggleBulkSelect(w.id) : openWork(w)}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                  <div>
-                    <div className="work-title">{w.title}</div>
-                    <div className="work-author">by {(w.authors || []).join(', ') || 'Anonymous'}</div>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    {bulkMode && <input type="checkbox" className="bulk-check" checked={isChecked} onChange={() => toggleBulkSelect(w.id)} onClick={e => e.stopPropagation()} style={{ marginTop: 3 }} />}
+                    <div>
+                      <div className="work-title">{w.title}</div>
+                      <div className="work-author">by {(w.authors || []).join(', ') || 'Anonymous'}</div>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
                     {w._status?.rating_personal > 0 && <Stars value={w._status.rating_personal} />}
@@ -586,6 +676,8 @@ function App() {
       {view === 'stats' && (<>
         {works.length === 0 ? (
           <div className="empty"><div className="emoji">📊</div><p>Import some fics to see your stats!</p></div>
+        ) : !chartsAvailable ? (
+          <div className="empty"><div className="emoji">📊</div><p>Charts library failed to load. Try refreshing the page.</p></div>
         ) : (<>
           <div className="charts-grid">
             <div className="chart-card">
@@ -670,8 +762,8 @@ function App() {
         <div className="import-section">
           <h3>📥 Import AO3 Bookmarks</h3>
           <p>Drag this button to your browser's bookmarks bar. Then visit your <a href="https://archiveofourown.org/users/BizarreBavarian/bookmarks" target="_blank" style={{ color: 'var(--accent-hover)' }}>AO3 bookmarks page</a> and click it.</p>
-          <a className="bookmarklet-link" href={`javascript:void(function(){const ENDPOINT='${SUPABASE_URL}/functions/v1/import-works';function parseWorks(doc){const items=doc.querySelectorAll('li.bookmark');const works=[];items.forEach(li=>{try{const heading=li.querySelector('h4.heading a');if(!heading)return;const href=heading.getAttribute('href')||'';const idMatch=href.match(/\\/works\\/(\\d+)/);if(!idMatch)return;const ao3_id=parseInt(idMatch[1]);const title=heading.textContent.trim();const authorEls=li.querySelectorAll('h4.heading a[rel=author]');const authors=Array.from(authorEls).map(a=>a.textContent.trim());const fandomEls=li.querySelectorAll('.fandoms .tag');const fandoms=Array.from(fandomEls).map(e=>e.textContent.trim());const shipEls=li.querySelectorAll('li.relationships .tag');const relationships=Array.from(shipEls).map(e=>e.textContent.trim());const charEls=li.querySelectorAll('li.characters .tag');const characters=Array.from(charEls).map(e=>e.textContent.trim());const tagEls=li.querySelectorAll('li.freeforms .tag');const freeform_tags=Array.from(tagEls).map(e=>e.textContent.trim());const ratingEl=li.querySelector('.rating .tag');const rating=ratingEl?ratingEl.textContent.trim():null;const warnEls=li.querySelectorAll('li.warnings .tag');const warnings=Array.from(warnEls).map(e=>e.textContent.trim());const catEls=li.querySelectorAll('li.categories .tag');const categories=Array.from(catEls).map(e=>e.textContent.trim());const statsEl=li.querySelector('dl.stats');let word_count=null,chapter_count=null,chapter_total=null,kudos=null,hits=null,bookmarks_count=null,comments_count=null;if(statsEl){const wcEl=statsEl.querySelector('dd.words');if(wcEl)word_count=parseInt(wcEl.textContent.replace(/,/g,''))||null;const chEl=statsEl.querySelector('dd.chapters');if(chEl){const chMatch=chEl.textContent.match(/(\\d+)\\/(\\d+|\\?)/);if(chMatch){chapter_count=parseInt(chMatch[1]);chapter_total=chMatch[2]==='?'?null:parseInt(chMatch[2]);}}const kEl=statsEl.querySelector('dd.kudos');if(kEl)kudos=parseInt(kEl.textContent.replace(/,/g,''))||null;const hEl=statsEl.querySelector('dd.hits');if(hEl)hits=parseInt(hEl.textContent.replace(/,/g,''))||null;const bEl=statsEl.querySelector('dd.bookmarks');if(bEl)bookmarks_count=parseInt(bEl.textContent.replace(/,/g,''))||null;const cEl=statsEl.querySelector('dd.comments');if(cEl)comments_count=parseInt(cEl.textContent.replace(/,/g,''))||null;}const langEl=statsEl?statsEl.querySelector('dd.language'):null;const language=langEl?langEl.textContent.trim():'English';const summaryEl=li.querySelector('blockquote.summary');const summary=summaryEl?summaryEl.textContent.trim():null;const dateEl=li.querySelector('.datetime');const is_complete=chapter_total?chapter_count>=chapter_total:false;works.push({ao3_id,title,authors,rating,warnings,categories,fandoms,relationships,characters,freeform_tags,summary,language,word_count,chapter_count,chapter_total,is_complete,kudos,hits,bookmarks_count,comments_count});}catch(e){console.error('Parse error:',e);}});return works;}async function importPage(pageNum,totalPages){const statusEl=document.getElementById('fictracker-status');if(pageNum===1){const allWorks=parseWorks(document);statusEl.textContent='Page 1/'+totalPages+': found '+allWorks.length+' fics...';await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:allWorks,source:'bookmarks'})});for(let p=2;p<=totalPages;p++){statusEl.textContent='Fetching page '+p+'/'+totalPages+'...';const resp=await fetch(window.location.pathname+'?page='+p);const html=await resp.text();const parser=new DOMParser();const doc=parser.parseFromString(html,'text/html');const pageWorks=parseWorks(doc);statusEl.textContent='Page '+p+'/'+totalPages+': found '+pageWorks.length+' fics...';if(pageWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:pageWorks,source:'bookmarks'})});await new Promise(r=>setTimeout(r,1500));}statusEl.textContent='Import complete!';}}const navEl=document.querySelector('ol.pagination li:nth-last-child(2) a');const totalPages=navEl?parseInt(navEl.textContent):1;const overlay=document.createElement('div');overlay.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a1d27;color:#e4e4e7;padding:16px 20px;font-family:system-ui;font-size:14px;text-align:center;border-bottom:2px solid #e04666;';overlay.innerHTML='<div style=\"margin-bottom:8px;font-weight:700;font-size:16px\">📖 FicTracker Import</div><div id=\"fictracker-status\">Starting import...</div>';document.body.prepend(overlay);importPage(1,totalPages);})()`}>📖 Import to FicTracker</a>
-          <p style={{ marginTop: 12, fontSize: 12 }}>The bookmarklet auto-paginates — it'll go through all {'>'}20 pages of bookmarks with a 1.5s delay between pages to be respectful to AO3's servers.</p>
+          <a className="bookmarklet-link" href={`javascript:void(function(){const ENDPOINT='${SUPABASE_URL}/functions/v1/import-works';const seen=new Set();let total=0;function parseWorks(doc){const items=doc.querySelectorAll('li.bookmark');const works=[];items.forEach(li=>{try{const heading=li.querySelector('h4.heading a');if(!heading)return;const href=heading.getAttribute('href')||'';const idMatch=href.match(/\\/works\\/(\\d+)/);if(!idMatch)return;const ao3_id=parseInt(idMatch[1]);if(seen.has(ao3_id))return;seen.add(ao3_id);const title=heading.textContent.trim();const authorEls=li.querySelectorAll('h4.heading a[rel=author]');const authors=Array.from(authorEls).map(a=>a.textContent.trim());const fandomEls=li.querySelectorAll('.fandoms .tag');const fandoms=Array.from(fandomEls).map(e=>e.textContent.trim());const shipEls=li.querySelectorAll('li.relationships .tag');const relationships=Array.from(shipEls).map(e=>e.textContent.trim());const charEls=li.querySelectorAll('li.characters .tag');const characters=Array.from(charEls).map(e=>e.textContent.trim());const tagEls=li.querySelectorAll('li.freeforms .tag');const freeform_tags=Array.from(tagEls).map(e=>e.textContent.trim());const ratingEl=li.querySelector('span.rating span.text');const rating=ratingEl?ratingEl.textContent.trim():null;const warnEls=li.querySelectorAll('li.warnings .tag');const warnings=Array.from(warnEls).map(e=>e.textContent.trim());const catEl=li.querySelector('span.category span.text');const categories=catEl?[catEl.textContent.trim()]:[];const statsEl=li.querySelector('dl.stats');let word_count=null,chapter_count=null,chapter_total=null,kudos=null,hits=null,bookmarks_count=null,comments_count=null;if(statsEl){const wcEl=statsEl.querySelector('dd.words');if(wcEl)word_count=parseInt(wcEl.textContent.replace(/,/g,''))||null;const chEl=statsEl.querySelector('dd.chapters');if(chEl){const chMatch=chEl.textContent.match(/(\\d+)\\/(\\d+|\\?)/);if(chMatch){chapter_count=parseInt(chMatch[1]);chapter_total=chMatch[2]==='?'?null:parseInt(chMatch[2]);}}const kEl=statsEl.querySelector('dd.kudos');if(kEl)kudos=parseInt(kEl.textContent.replace(/,/g,''))||null;const hEl=statsEl.querySelector('dd.hits');if(hEl)hits=parseInt(hEl.textContent.replace(/,/g,''))||null;const bEl=statsEl.querySelector('dd.bookmarks');if(bEl)bookmarks_count=parseInt(bEl.textContent.replace(/,/g,''))||null;const cEl=statsEl.querySelector('dd.comments');if(cEl)comments_count=parseInt(cEl.textContent.replace(/,/g,''))||null;}const langEl=statsEl?statsEl.querySelector('dd.language'):null;const language=langEl?langEl.textContent.trim():'English';const summaryEl=li.querySelector('blockquote.summary');const summary=summaryEl?summaryEl.textContent.trim():null;const is_complete=chapter_total?chapter_count>=chapter_total:false;works.push({ao3_id,title,authors,rating,warnings,categories,fandoms,relationships,characters,freeform_tags,summary,language,word_count,chapter_count,chapter_total,is_complete,kudos,hits,bookmarks_count,comments_count});}catch(e){console.error('Parse error:',e);}});return works;}async function run(){const statusEl=document.getElementById('fictracker-status');const navEl=document.querySelector('ol.pagination li:nth-last-child(2) a');const totalPages=navEl?parseInt(navEl.textContent):1;const allWorks=parseWorks(document);total+=allWorks.length;statusEl.textContent='Page 1/'+totalPages+': '+allWorks.length+' fics ('+total+' total)';if(allWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:allWorks,source:'bookmarks'})});for(let p=2;p<=totalPages;p++){await new Promise(r=>setTimeout(r,8000));statusEl.textContent='Fetching page '+p+'/'+totalPages+'...';try{const resp=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(resp.status===429||resp.status===503){statusEl.textContent='Rate limited at page '+p+'. Waiting 60s...';await new Promise(r=>setTimeout(r,60000));const retry=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(!retry.ok){statusEl.textContent='Still limited. Got '+total+' fics so far. Wait a few min and re-run.';return;}var html=await retry.text();}else if(!resp.ok){statusEl.textContent='Error on page '+p+' ('+resp.status+'). Skipping...';continue;}else{var html=await resp.text();}const parser=new DOMParser();const doc=parser.parseFromString(html,'text/html');const retryCheck=doc.querySelector('h2.landmark.heading');if(retryCheck&&retryCheck.textContent.includes('Retry')){statusEl.textContent='Rate limited at page '+p+'. Waiting 60s...';await new Promise(r=>setTimeout(r,60000));const retry2=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(!retry2.ok){statusEl.textContent='Still limited. Got '+total+' fics. Wait and re-run.';return;}html=await retry2.text();const doc2=new DOMParser().parseFromString(html,'text/html');const pw=parseWorks(doc2);total+=pw.length;statusEl.textContent='Page '+p+'/'+totalPages+': '+pw.length+' fics ('+total+' total)';if(pw.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:pw,source:'bookmarks'})});continue;}const pageWorks=parseWorks(doc);total+=pageWorks.length;statusEl.textContent='Page '+p+'/'+totalPages+': '+pageWorks.length+' fics ('+total+' total, '+seen.size+' unique)';if(pageWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:pageWorks,source:'bookmarks'})});}catch(e){statusEl.textContent='Error on page '+p+': '+e.message;}}statusEl.textContent='Done! Imported '+total+' fics ('+seen.size+' unique) from '+totalPages+' pages.';}const overlay=document.createElement('div');overlay.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a1d27;color:#e4e4e7;padding:16px 20px;font-family:system-ui;font-size:14px;text-align:center;border-bottom:2px solid #e04666;';overlay.innerHTML='<div style=\"margin-bottom:8px;font-weight:700;font-size:16px\">📖 FicTracker Import</div><div id=\"fictracker-status\">Starting import...</div>';document.body.prepend(overlay);run();})()`}>📖 Import to FicTracker</a>
+          <p style={{ marginTop: 12, fontSize: 12 }}>The bookmarklet auto-paginates with an 8-second delay between pages. If rate-limited, it waits 60 seconds and retries. ~24 pages takes about 3-4 minutes.</p>
         </div>
 
         <div className="import-section">
