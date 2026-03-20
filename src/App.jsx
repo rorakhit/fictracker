@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 import { useLibrary } from './hooks/useLibrary';
+import { useAnalytics } from './hooks/useAnalytics';
 import LoginPage from './components/LoginPage';
 import SettingsView from './components/SettingsView';
 import Library from './components/Library';
 import StatsView from './components/StatsView';
+import AnalyticsView from './components/AnalyticsView';
 import RecsView from './components/RecsView';
 import ImportView from './components/ImportView';
 import WorkModal from './components/WorkModal';
@@ -19,6 +21,7 @@ function Dashboard({ session }) {
   const [editChapter, setEditChapter] = useState(0);
 
   const lib = useLibrary(userId);
+  const analytics = useAnalytics(lib.works, lib.statuses, lib.readingLog);
 
   function openWork(w) {
     const st = lib.statuses[w.id];
@@ -61,7 +64,7 @@ function Dashboard({ session }) {
       </div>
 
       <div className="tabs">
-        {[['library', 'Library'], ['stats', 'Stats'], ['recs', 'For You'], ['import', 'Import'], ['settings', 'Settings']].map(([k, l]) => (
+        {[['library', 'Library'], ['stats', 'Stats'], ['analytics', 'Analytics'], ['recs', 'For You'], ['import', 'Import'], ['settings', 'Settings']].map(([k, l]) => (
           <button key={k} className={`tab ${view === k ? 'active' : ''}`} onClick={() => setView(k)}>{l}</button>
         ))}
       </div>
@@ -86,6 +89,7 @@ function Dashboard({ session }) {
       )}
 
       {view === 'stats' && <StatsView stats={lib.stats} works={lib.works} />}
+      {view === 'analytics' && <AnalyticsView analytics={analytics} works={lib.works} />}
       {view === 'recs' && <RecsView recommendations={lib.recommendations} onOpenWork={openWork} />}
       {view === 'import' && (
         <ImportView

@@ -10,6 +10,7 @@ export function useLibrary(userId) {
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState('');
+  const [readingLog, setReadingLog] = useState([]);
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
 
@@ -44,6 +45,14 @@ export function useLibrary(userId) {
       });
       setWorks(worksArr);
       setStatuses(statusMap);
+
+      // Load reading log for analytics
+      const { data: logRows } = await supabase
+        .from('reading_log')
+        .select('*')
+        .eq('user_id', userId)
+        .order('read_at', { ascending: true });
+      setReadingLog(logRows || []);
     } catch (e) { console.error('Load error:', e); }
     setLoading(false);
   }, [userId]);
@@ -54,8 +63,57 @@ export function useLibrary(userId) {
     return statuses[workId] || null;
   }
 
+  // Log a reading event to the append-only reading_log table.
+  // This powers the analytics engine — every status change or chapter
+  // advance becomes a data point we can chart over time.
+  async function logReadingEvent(workId, chaptersRead, wordCountRead) {
+    if (chaptersRead <= 0 && !wordCountRead) return;
+    await supabase.from('reading_log').insert({
+      work_id: workId,
+      user_id: userId,
+      chapters_read: chaptersRead || 0,
+      word_count_read: wordCountRead || 0,
+      read_at: new Date().toISOString(),
+    });
+  }
+
   async function updateStatus(workId, updates) {
     const existing = statuses[workId];
+    const work = works.find(w => w.id === workId);
+    const wordsPerChapter = work && work.word_count && work.chapter_count
+      ? Math.round(work.word_count / work.chapter_count) : 0;
+
+    // Detect chapter advancement for reading_log
+    if (updates.current_chapter !== undefined && existing) {
+      const oldChapter = existing.current_chapter || 0;
+      const newChapter = updates.current_chapter || 0;
+      const chapterDelta = newChapter - oldChapter;
+      if (chapterDelta > 0) {
+        await logReadingEvent(workId, chapterDelta, chapterDelta * wordsPerChapter);
+      }
+    }
+
+    // Log completion as a reading event (remaining chapters)
+    if (updates.status === 'completed' && existing?.status !== 'completed' && work) {
+      const currentCh = updates.current_chapter || existing?.current_chapter || 0;
+      const totalCh = work.chapter_total || work.chapter_count || 1;
+      const remaining = Math.max(0, totalCh - currentCh);
+      if (remaining > 0) {
+        await logReadingEvent(workId, remaining, remaining * wordsPerChapter);
+      } else if (currentCh === 0 && work.word_count) {
+        // Single-chapter or never tracked chapters — log the whole thing
+        await logReadingEvent(workId, totalCh, work.word_count);
+      }
+    }
+
+    // Log starting to read (first chapter) if no chapters were tracked yet
+    if (updates.status === 'reading' && (!existing || existing.status !== 'reading')) {
+      const currentCh = existing?.current_chapter || 0;
+      if (currentCh === 0 && wordsPerChapter > 0) {
+        await logReadingEvent(workId, 1, wordsPerChapter);
+      }
+    }
+
     if (existing) {
       await supabase.from('reading_status')
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -313,7 +371,7 @@ export function useLibrary(userId) {
   }, [works, statuses]);
 
   return {
-    works, statuses, loading, importing, importMsg, setImportMsg,
+    works, statuses, readingLog, loading, importing, importMsg, setImportMsg,
     bulkMode, setBulkMode, bulkSelected, setBulkSelected,
     stats, recommendations,
     loadData, getStatusForWork, updateStatus, deleteWork,

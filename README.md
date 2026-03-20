@@ -26,9 +26,9 @@ FicTracker learns what you love. Rate a few fics and the For You tab surfaces un
 
 See your reading life at a glance: top fandoms, favorite ships, word count distributions, rating breakdowns, and aggregate stats across your entire library. (Reading Wrapped coming soon.)
 
-### WIP alerts *(coming soon)*
+### WIP badges
 
-Never miss an update. FicTracker monitors your incomplete works and notifies you when new chapters drop.
+Never lose track of an update. FicTracker flags your incomplete works when new chapters drop, right in your library view — no email noise, just a quiet badge when something you're reading has new content.
 
 ## Quick start
 
@@ -40,9 +40,10 @@ Never miss an update. FicTracker monitors your incomplete works and notifies you
 
 ## Tech stack
 
-- **Frontend:** React 18 (migrating to Vite + React for production)
+- **Frontend:** Vite + React 19 (component architecture with custom hooks)
 - **Backend:** [Supabase](https://supabase.com) (Postgres, Auth, Edge Functions, Row Level Security)
-- **Hosting:** Vercel *(planned)*
+- **Hosting:** [Vercel](https://vercel.com) (auto-deploys from GitHub)
+- **Charts:** Recharts
 - **Payments:** Stripe *(planned)*
 
 ## Pricing
@@ -54,31 +55,55 @@ Never miss an update. FicTracker monitors your incomplete works and notifies you
 | Import bookmarks | ✓ | ✓ |
 | Search, filter, sort | ✓ | ✓ |
 | Status tracking | ✓ | ✓ |
+| WIP update badges | ✓ | ✓ |
 | Stats & analytics | — | ✓ |
 | Reading Wrapped | — | ✓ |
-| WIP update alerts | — | ✓ |
 | Personalized recs | — | ✓ |
 | Browser extension | — | ✓ |
 | EPUB import | — | ✓ |
 
 ## Development
 
-FicTracker is a single-page app. For local development:
-
 ```bash
 # Clone the repo
 git clone https://github.com/rorakhit/fictracker.git
 cd fictracker
 
-# Open index.html in your browser — that's it (for now)
-# Vite build pipeline coming in Phase 4
+# Install dependencies (requires Node >= 20)
+npm install
+
+# Start dev server
+npm run dev
+
+# Production build
+npm run build
 ```
 
 ### Project structure
 
 ```
 fictracker/
-├── index.html          # The entire app (React SPA, single-file)
+├── index.html              # Vite entry point
+├── src/
+│   ├── main.jsx            # React entry point
+│   ├── App.jsx             # Auth wrapper + Dashboard (tab routing)
+│   ├── supabase.js         # Supabase client init
+│   ├── styles/index.css    # All CSS
+│   ├── components/
+│   │   ├── LoginPage.jsx   # Email/password + OAuth
+│   │   ├── Library.jsx     # Fic list, filters, sorting, bulk actions
+│   │   ├── StatsView.jsx   # Charts (fandoms, ratings, word count, ships)
+│   │   ├── RecsView.jsx    # Recommendation cards
+│   │   ├── ImportView.jsx  # Bookmarklet, EPUB import, add-by-URL
+│   │   ├── SettingsView.jsx
+│   │   ├── WorkModal.jsx   # Work detail modal
+│   │   └── Stars.jsx       # Star rating component
+│   ├── hooks/
+│   │   ├── useLibrary.js   # Data layer (fetching, CRUD, bulk ops, import)
+│   │   └── useAnalytics.js # Analytics engine (timelines, pace, streaks, wrapped)
+│   └── utils/
+│       └── helpers.js      # Shared utilities
+├── FicTracker_Brand_Board.html  # Brand identity reference
 ├── README.md
 └── .gitignore
 ```

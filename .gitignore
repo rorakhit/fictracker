@@ -4,3 +4,31 @@ FicTracker_SaaS_Plan.docx
 
 # Editor/IDE artifacts
 .Rhistory
+
+# Node/npm
+node_modules/
+package-lock.json
+yarn.lock
+
+# Vite
+dist/
+.vite/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db

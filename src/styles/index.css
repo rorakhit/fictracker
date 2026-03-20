@@ -162,7 +162,25 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
 .form-group label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
 .form-group input { width: 100%; }
 
+/* Analytics hero stats */
+.analytics-hero { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+.analytics-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 12px; text-align: center; }
+.analytics-stat-value { font-size: 28px; font-weight: 700; line-height: 1.1; }
+.analytics-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* Wrapped cards */
+.wrapped-container { margin-top: 24px; }
+.wrapped-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+.wrapped-card h3 { font-size: 18px; margin-bottom: 16px; }
+.wrapped-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.wrapped-stat { }
+.wrapped-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.wrapped-stat-value { font-size: 20px; font-weight: 700; }
+.wrapped-highlight { background: var(--bg); border-radius: 12px; padding: 16px; margin-top: 16px; grid-column: 1 / -1; text-align: center; }
+
 @media (max-width: 700px) {
   .stats { grid-template-columns: repeat(3, 1fr); }
   .charts-grid { grid-template-columns: 1fr; }
+  .analytics-hero { grid-template-columns: repeat(3, 1fr); }
+  .wrapped-grid { grid-template-columns: 1fr; }
 }
