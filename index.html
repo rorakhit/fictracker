@@ -7,6 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -101,7 +102,7 @@
     select:focus { border-color: var(--accent); }
     textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); font-size: 13px; resize: vertical; min-height: 50px; font-family: inherit; outline: none; }
     textarea:focus { border-color: var(--accent); }
-    input[type="text"], input[type="url"] { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; width: 100%; outline: none; }
+    input[type="text"], input[type="url"], input[type="email"], input[type="password"] { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; width: 100%; outline: none; }
     input:focus { border-color: var(--accent); }
 
     /* Charts */
@@ -151,6 +152,30 @@
     .work-card.selected { border-color: var(--accent); background: var(--accent-dim); }
     .select-all-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: var(--text-muted); }
 
+    /* Login page */
+    .login-page { max-width: 400px; margin: 80px auto; padding: 0 16px; }
+    .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+    .login-card h2 { text-align: center; margin-bottom: 8px; }
+    .login-card .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+    .login-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 14px; margin-bottom: 12px; outline: none; box-sizing: border-box; }
+    .login-input:focus { border-color: var(--accent); }
+    .login-input::placeholder { color: var(--text-muted); }
+    .login-error { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
+    .login-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 12px; }
+    .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .oauth-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .oauth-btn:hover { border-color: var(--accent); background: var(--surface-hover); }
+    .login-toggle { text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+    .login-toggle a { color: var(--accent); cursor: pointer; text-decoration: none; }
+    .login-toggle a:hover { color: var(--accent-hover); }
+
+    /* Settings page */
+    .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; max-width: 500px; }
+    .settings-card h2 { font-size: 20px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .form-group input { width: 100%; }
+
     @media (max-width: 700px) {
       .stats { grid-template-columns: repeat(3, 1fr); }
       .charts-grid { grid-template-columns: 1fr; }
@@ -167,16 +192,7 @@ const chartsAvailable = typeof Recharts !== 'undefined';
 
 const SUPABASE_URL = 'https://nivqfnrkpuoyjtugavtj.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pdnFmbnJrcHVveWp0dWdhdnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4ODU0NDAsImV4cCI6MjA4OTQ2MTQ0MH0.gEjhPIGqXqAj_ZU69upkk_rW3-392b0TWNLv-CVC1mU';
-
-async function supa(table, opts = {}) {
-  const { method = 'GET', filters = '', body, select = '*' } = opts;
-  const url = `${SUPABASE_URL}/rest/v1/${table}?${filters ? filters + '&' : ''}select=${encodeURIComponent(select)}`;
-  const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
-  const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const text = await res.text();
-  return text ? JSON.parse(text) : [];
-}
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const COLORS = ['#e04666','#3b82f6','#8b5cf6','#14b8a6','#f59e0b','#22c55e','#f97316','#ec4899','#6366f1','#84cc16'];
 
@@ -208,7 +224,165 @@ function Stars({ value, onChange }) {
   );
 }
 
-function App() {
+function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleEmailAuth(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      if (isSignUp) {
+        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        if (signUpError) throw signUpError;
+        setError('Check your email to confirm your account!');
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+      }
+    } catch (e) {
+      setError(e.message || 'Authentication failed');
+    }
+    setLoading(false);
+  }
+
+  async function handleOAuth(provider) {
+    setError('');
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
+      if (error) throw error;
+    } catch (e) {
+      setError(e.message || `${provider} sign-in failed`);
+    }
+  }
+
+  return (
+    <div className="app">
+      <div className="login-page">
+        <div className="login-card">
+          <h2>📖 FicTracker</h2>
+          <div className="subtitle">{isSignUp ? 'Create an account' : 'Sign in to your library'}</div>
+          {error && <div className="login-error">{error}</div>}
+
+          <form onSubmit={handleEmailAuth}>
+            <input
+              className="login-input"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+            <input
+              className="login-input"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="submit"
+              className="btn btn-accent"
+              style={{ width: '100%', marginBottom: 12 }}
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            </button>
+          </form>
+
+          <div className="login-divider">or continue with</div>
+
+          <button className="oauth-btn" onClick={() => handleOAuth('google')} disabled={loading}>
+            🔵 Google
+          </button>
+          <button className="oauth-btn" onClick={() => handleOAuth('discord')} disabled={loading}>
+            🟣 Discord
+          </button>
+
+          <div className="login-toggle">
+            {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+            <a onClick={() => { setIsSignUp(!isSignUp); setError(''); }}>
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsView({ userId, session }) {
+  const [ao3Username, setAo3Username] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('ao3_username')
+          .eq('user_id', userId)
+          .single();
+        if (!error && data) {
+          setAo3Username(data.ao3_username || '');
+        }
+      } catch (e) { console.error('Load settings error:', e); }
+      setLoading(false);
+    }
+    loadSettings();
+  }, [userId]);
+
+  async function saveSettings() {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({ user_id: userId, ao3_username: ao3Username });
+      if (error) throw error;
+    } catch (e) { console.error('Save error:', e); }
+    setSaving(false);
+  }
+
+  if (loading) return <div className="loading">Loading settings...</div>;
+
+  return (
+    <div className="app">
+      <div className="settings-card">
+        <h2>Settings</h2>
+
+        <div className="form-group">
+          <label>Account Email</label>
+          <input type="email" value={session.user.email} readOnly style={{ color: 'var(--text-muted)' }} />
+        </div>
+
+        <div className="form-group">
+          <label>AO3 Username (optional)</label>
+          <input
+            type="text"
+            placeholder="Your AO3 username"
+            value={ao3Username}
+            onChange={e => setAo3Username(e.target.value)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-accent" onClick={saveSettings} disabled={saving}>
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App({ session }) {
+  const userId = session.user.id;
   const [works, setWorks] = useState([]);
   const [statuses, setStatuses] = useState({});
   const [loading, setLoading] = useState(true);
@@ -229,21 +403,42 @@ function App() {
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
 
+  useEffect(() => {
+    async function claimData() {
+      try {
+        const { data } = await supabase.rpc('claim_existing_data', { target_user_id: userId });
+        if (data && (data.reading_status > 0 || data.reading_log > 0 || data.wip_tracking > 0)) {
+          console.log('Claimed existing data:', data);
+          loadData();
+        }
+      } catch (e) { console.error('Claim error:', e); }
+    }
+    claimData();
+  }, [userId]);
+
   async function loadData() {
     try {
-      const [w, s] = await Promise.all([
-        supa('works', { select: '*' }),
-        supa('reading_status', { select: '*' })
-      ]);
-      setWorks(w);
+      const { data: statusRows, error: statusError } = await supabase
+        .from('reading_status')
+        .select('*, work:works(*)')
+        .eq('user_id', userId);
+      if (statusError) throw statusError;
+
+      const worksArr = [];
       const statusMap = {};
-      s.forEach(st => { statusMap[st.work_id] = st; });
+      (statusRows || []).forEach(row => {
+        if (row.work) {
+          worksArr.push(row.work);
+          statusMap[row.work.id] = row;
+        }
+      });
+      setWorks(worksArr);
       setStatuses(statusMap);
     } catch (e) { console.error('Load error:', e); }
     setLoading(false);
   }
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [userId]);
 
   function getStatusForWork(workId) {
     return statuses[workId] || null;
@@ -252,23 +447,25 @@ function App() {
   async function updateStatus(workId, updates) {
     const existing = statuses[workId];
     if (existing) {
-      await supa('reading_status', { method: 'PATCH', filters: `work_id=eq.${workId}`, body: { ...updates, updated_at: new Date().toISOString() } });
+      await supabase.from('reading_status')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('work_id', workId)
+        .eq('user_id', userId);
     } else {
-      await supa('reading_status', { method: 'POST', body: { work_id: workId, ...updates } });
+      await supabase.from('reading_status')
+        .insert({ work_id: workId, user_id: userId, ...updates });
     }
     loadData();
   }
 
   async function deleteWork(workId) {
-    await supa('reading_status', { method: 'DELETE', filters: `work_id=eq.${workId}` });
-    await supa('wip_tracking', { method: 'DELETE', filters: `work_id=eq.${workId}` });
-    await supa('reading_log', { method: 'DELETE', filters: `work_id=eq.${workId}` });
-    await supa('works', { method: 'DELETE', filters: `id=eq.${workId}` });
+    await supabase.from('reading_status').delete().eq('work_id', workId).eq('user_id', userId);
+    await supabase.from('wip_tracking').delete().eq('work_id', workId).eq('user_id', userId);
+    await supabase.from('reading_log').delete().eq('work_id', workId).eq('user_id', userId);
     setSelected(null);
     loadData();
   }
 
-  // Bulk actions
   function toggleBulkSelect(workId) {
     setBulkSelected(prev => {
       const next = new Set(prev);
@@ -308,17 +505,12 @@ function App() {
     const ids = Array.from(bulkSelected);
     if (ids.length === 0) return;
     for (const workId of ids) {
-      await supa('reading_status', { method: 'DELETE', filters: `work_id=eq.${workId}` });
-      await supa('wip_tracking', { method: 'DELETE', filters: `work_id=eq.${workId}` });
-      await supa('reading_log', { method: 'DELETE', filters: `work_id=eq.${workId}` });
-      await supa('works', { method: 'DELETE', filters: `id=eq.${workId}` });
+      await deleteWork(workId);
     }
     setBulkSelected(new Set());
     setBulkMode(false);
-    loadData();
   }
 
-  // Add work by AO3 URL
   async function addByUrl() {
     if (!addUrl.trim()) return;
     const match = addUrl.match(/works\/(\d+)/);
@@ -327,9 +519,13 @@ function App() {
     setImporting(true);
     setImportMsg('Adding work...');
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       const res = await fetch(`${SUPABASE_URL}/functions/v1/import-works`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`
+        },
         body: JSON.stringify({ works: [{ ao3_id: ao3Id, title: 'Loading...', source: 'manual' }], source: 'manual' })
       });
       const data = await res.json();
@@ -340,7 +536,6 @@ function App() {
     setImporting(false);
   }
 
-  // EPUB upload handler
   async function handleEpubFiles(files) {
     setImporting(true);
     setImportMsg(`Processing ${files.length} EPUB file(s)...`);
@@ -349,7 +544,6 @@ function App() {
     for (const file of files) {
       try {
         const zip = await JSZip.loadAsync(file);
-        // Find the OPF file (contains metadata)
         let opfContent = null;
         for (const [path, zipEntry] of Object.entries(zip.files)) {
           if (path.endsWith('.opf') || path.includes('content.opf')) {
@@ -358,7 +552,6 @@ function App() {
           }
         }
         if (!opfContent) {
-          // Try container.xml to find OPF path
           const container = zip.file('META-INF/container.xml');
           if (container) {
             const containerXml = await container.async('text');
@@ -389,14 +582,10 @@ function App() {
           const description = getMeta('description') || '';
           const subjects = getAllMeta('subject');
 
-          // Extract AO3 work ID - check multiple locations
           let finalId = null;
-
-          // 1. Check dc:source for AO3 URL (most reliable)
           const ao3Match = source.match(/archiveofourown\.org\/works\/(\d+)/);
           if (ao3Match) finalId = parseInt(ao3Match[1]);
 
-          // 2. Check all identifiers for AO3 URLs
           if (!finalId) {
             const identifiers = doc.querySelectorAll('identifier');
             for (const ident of identifiers) {
@@ -406,7 +595,6 @@ function App() {
             }
           }
 
-          // 3. Check dc:identifier with AO3-style scheme
           if (!finalId) {
             const identifiers = doc.querySelectorAll('identifier');
             for (const ident of identifiers) {
@@ -418,7 +606,6 @@ function App() {
             }
           }
 
-          // 4. Check all text content for AO3 URLs as last resort
           if (!finalId) {
             const allText = opfContent;
             const lastResort = allText.match(/archiveofourown\.org\/works\/(\d+)/);
@@ -444,9 +631,13 @@ function App() {
 
     if (worksToImport.length > 0) {
       try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
         const res = await fetch(`${SUPABASE_URL}/functions/v1/import-works`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`
+          },
           body: JSON.stringify({ works: worksToImport, source: 'epub' })
         });
         const data = await res.json();
@@ -459,7 +650,6 @@ function App() {
     setImporting(false);
   }
 
-  // Filtered & sorted works
   const filtered = useMemo(() => {
     let result = works.map(w => ({ ...w, _status: getStatusForWork(w.id) }));
     if (statusFilter !== 'all') {
@@ -486,7 +676,6 @@ function App() {
     return result;
   }, [works, statuses, statusFilter, search, sortBy]);
 
-  // Stats computations
   const stats = useMemo(() => {
     const total = works.length;
     const totalWords = works.reduce((s, w) => s + (w.word_count || 0), 0);
@@ -497,22 +686,18 @@ function App() {
     });
     const wips = works.filter(w => !w.is_complete).length;
 
-    // Top fandoms
     const fandomCount = {};
     works.forEach(w => (w.fandoms || []).forEach(f => { fandomCount[f] = (fandomCount[f] || 0) + 1; }));
     const topFandoms = Object.entries(fandomCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name: name.length > 25 ? name.slice(0, 22) + '...' : name, value }));
 
-    // Rating distribution
     const ratingCount = {};
     works.forEach(w => { const r = w.rating || 'Not Rated'; ratingCount[r] = (ratingCount[r] || 0) + 1; });
     const ratingDist = Object.entries(ratingCount).map(([name, value]) => ({ name, value }));
 
-    // Top ships
     const shipCount = {};
     works.forEach(w => (w.relationships || []).forEach(r => { shipCount[r] = (shipCount[r] || 0) + 1; }));
     const topShips = Object.entries(shipCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, value]) => ({ name: name.length > 30 ? name.slice(0, 27) + '...' : name, value }));
 
-    // Word count distribution
     const wcBuckets = { '<1k': 0, '1-5k': 0, '5-10k': 0, '10-50k': 0, '50-100k': 0, '100k+': 0 };
     works.forEach(w => {
       const wc = w.word_count || 0;
@@ -528,7 +713,6 @@ function App() {
     return { total, totalWords, statusCounts, wips, topFandoms, ratingDist, topShips, wcDist };
   }, [works, statuses]);
 
-  // Recommendations: find fandoms/ships you've rated highly and suggest unread fics with similar tags
   const recommendations = useMemo(() => {
     const rated = works.filter(w => (statuses[w.id]?.rating_personal || 0) >= 4);
     const likedFandoms = {};
@@ -578,6 +762,11 @@ function App() {
     setSelected(null);
   }
 
+  function generateBookmarklet() {
+    const token = session.access_token;
+    return `javascript:void(function(){const TOKEN='${token}';const ENDPOINT='${SUPABASE_URL}/functions/v1/import-works';const seen=new Set();let total=0;function parseWorks(doc){const items=doc.querySelectorAll('li.bookmark');const works=[];items.forEach(li=>{try{const heading=li.querySelector('h4.heading a');if(!heading)return;const href=heading.getAttribute('href')||'';const idMatch=href.match(/\\/works\\/(\\d+)/);if(!idMatch)return;const ao3_id=parseInt(idMatch[1]);if(seen.has(ao3_id))return;seen.add(ao3_id);const title=heading.textContent.trim();const authorEls=li.querySelectorAll('h4.heading a[rel=author]');const authors=Array.from(authorEls).map(a=>a.textContent.trim());const fandomEls=li.querySelectorAll('.fandoms .tag');const fandoms=Array.from(fandomEls).map(e=>e.textContent.trim());const shipEls=li.querySelectorAll('li.relationships .tag');const relationships=Array.from(shipEls).map(e=>e.textContent.trim());const charEls=li.querySelectorAll('li.characters .tag');const characters=Array.from(charEls).map(e=>e.textContent.trim());const tagEls=li.querySelectorAll('li.freeforms .tag');const freeform_tags=Array.from(tagEls).map(e=>e.textContent.trim());const ratingEl=li.querySelector('span.rating span.text');const rating=ratingEl?ratingEl.textContent.trim():null;const warnEls=li.querySelectorAll('li.warnings .tag');const warnings=Array.from(warnEls).map(e=>e.textContent.trim());const catEl=li.querySelector('span.category span.text');const categories=catEl?[catEl.textContent.trim()]:[];const statsEl=li.querySelector('dl.stats');let word_count=null,chapter_count=null,chapter_total=null,kudos=null,hits=null,bookmarks_count=null,comments_count=null;if(statsEl){const wcEl=statsEl.querySelector('dd.words');if(wcEl)word_count=parseInt(wcEl.textContent.replace(/,/g,''))||null;const chEl=statsEl.querySelector('dd.chapters');if(chEl){const chMatch=chEl.textContent.match(/(\\d+)\\/(\\d+|\\?)/);if(chMatch){chapter_count=parseInt(chMatch[1]);chapter_total=chMatch[2]==='?'?null:parseInt(chMatch[2]);}}const kEl=statsEl.querySelector('dd.kudos');if(kEl)kudos=parseInt(kEl.textContent.replace(/,/g,''))||null;const hEl=statsEl.querySelector('dd.hits');if(hEl)hits=parseInt(hEl.textContent.replace(/,/g,''))||null;const bEl=statsEl.querySelector('dd.bookmarks');if(bEl)bookmarks_count=parseInt(bEl.textContent.replace(/,/g,''))||null;const cEl=statsEl.querySelector('dd.comments');if(cEl)comments_count=parseInt(cEl.textContent.replace(/,/g,''))||null;}const langEl=statsEl?statsEl.querySelector('dd.language'):null;const language=langEl?langEl.textContent.trim():'English';const summaryEl=li.querySelector('blockquote.summary');const summary=summaryEl?summaryEl.textContent.trim():null;const is_complete=chapter_total?chapter_count>=chapter_total:false;works.push({ao3_id,title,authors,rating,warnings,categories,fandoms,relationships,characters,freeform_tags,summary,language,word_count,chapter_count,chapter_total,is_complete,kudos,hits,bookmarks_count,comments_count});}catch(e){console.error('Parse error:',e);}});return works;}async function run(){const statusEl=document.getElementById('fictracker-status');const urlParams=new URLSearchParams(window.location.search);const startPage=parseInt(urlParams.get('page'))||1;const navEl=document.querySelector('ol.pagination li:nth-last-child(2) a');const totalPages=navEl?parseInt(navEl.textContent):1;statusEl.textContent='Starting from page '+startPage+' of '+totalPages+'...';const allWorks=parseWorks(document);total+=allWorks.length;statusEl.textContent='Page '+startPage+'/'+totalPages+': '+allWorks.length+' fics ('+total+' total)';if(allWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({works:allWorks,source:'bookmarks'})});for(let p=startPage+1;p<=totalPages;p++){await new Promise(r=>setTimeout(r,10000));statusEl.textContent='Fetching page '+p+'/'+totalPages+'...';try{const resp=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(resp.status===429||resp.status===503){statusEl.textContent='Rate limited at page '+p+'. Waiting 60s...';await new Promise(r=>setTimeout(r,60000));const retry=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(!retry.ok){statusEl.textContent='Still limited. Got '+total+' fics. Navigate to page '+p+' and re-run.';return;}var html=await retry.text();}else if(!resp.ok){statusEl.textContent='Error on page '+p+' ('+resp.status+'). Skipping...';continue;}else{var html=await resp.text();}const parser=new DOMParser();const doc=parser.parseFromString(html,'text/html');const retryCheck=doc.querySelector('h2.landmark.heading');if(retryCheck&&retryCheck.textContent.includes('Retry')){statusEl.textContent='Rate limited at page '+p+'. Waiting 60s...';await new Promise(r=>setTimeout(r,60000));const retry2=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(!retry2.ok){statusEl.textContent='Still limited. Got '+total+' fics. Navigate to page '+p+' and re-run.';return;}html=await retry2.text();const doc2=new DOMParser().parseFromString(html,'text/html');const pw=parseWorks(doc2);total+=pw.length;statusEl.textContent='Page '+p+'/'+totalPages+': '+pw.length+' fics ('+total+' total)';if(pw.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({works:pw,source:'bookmarks'})});continue;}const pageWorks=parseWorks(doc);total+=pageWorks.length;statusEl.textContent='Page '+p+'/'+totalPages+': '+pageWorks.length+' fics ('+total+' total, '+seen.size+' unique)';if(pageWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({works:pageWorks,source:'bookmarks'})});}catch(e){statusEl.textContent='Error on page '+p+': '+e.message;}}statusEl.textContent='Done! Imported '+total+' fics ('+seen.size+' unique) from pages '+startPage+'-'+totalPages+'.';}const overlay=document.createElement('div');overlay.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a1d27;color:#e4e4e7;padding:16px 20px;font-family:system-ui;font-size:14px;text-align:center;border-bottom:2px solid #e04666;';overlay.innerHTML='<div style="margin-bottom:8px;font-weight:700;font-size:16px">📖 FicTracker Import</div><div id="fictracker-status">Starting import...</div>';document.body.prepend(overlay);run();})()`
+  }
+
   if (loading) return <div className="app"><div className="loading">Loading FicTracker...</div></div>;
 
   return (
@@ -585,12 +774,13 @@ function App() {
       <div className="header">
         <h1>📖 Fic<span>Tracker</span></h1>
         <div className="header-right">
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{works.length} fics</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{session.user.email}</span>
+          <button className="btn btn-ghost btn-sm" onClick={async () => { await supabase.auth.signOut(); }}>Sign Out</button>
         </div>
       </div>
 
       <div className="tabs">
-        {[['library', 'Library'], ['stats', 'Stats'], ['recs', 'For You'], ['import', 'Import']].map(([k, l]) => (
+        {[['library', 'Library'], ['stats', 'Stats'], ['recs', 'For You'], ['import', 'Import'], ['settings', 'Settings']].map(([k, l]) => (
           <button key={k} className={`tab ${view === k ? 'active' : ''}`} onClick={() => setView(k)}>{l}</button>
         ))}
       </div>
@@ -646,8 +836,7 @@ function App() {
               </select>
               <button className="btn btn-sm" style={{ color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.3)', background: 'transparent' }}
                 onClick={() => { if (confirm(`Remove ${bulkSelected.size} fics?`)) bulkDelete(); }}>Remove</button>
-            </>)}
-          </div>
+            </>)}</div>
         )}
 
         <div className="work-list">
@@ -784,7 +973,7 @@ function App() {
           <p>Click "Copy Bookmarklet" below, then create a new bookmark in your browser and paste it as the URL. Or drag the purple button to your bookmarks bar. Then visit your <a href="https://archiveofourown.org/users/BizarreBavarian/bookmarks" target="_blank" style={{ color: 'var(--accent-hover)' }}>AO3 bookmarks page</a> and click it.</p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
             <button className="btn btn-accent" onClick={() => {
-              const code = document.getElementById('bookmarklet-src').href;
+              const code = generateBookmarklet();
               navigator.clipboard.writeText(code).then(() => {
                 const btn = document.activeElement;
                 const orig = btn.textContent;
@@ -794,7 +983,7 @@ function App() {
             }}>Copy Bookmarklet</button>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Then: right-click bookmarks bar → Add page → paste as URL</span>
           </div>
-          <a id="bookmarklet-src" className="bookmarklet-link" href={`javascript:void(function(){const ENDPOINT='${SUPABASE_URL}/functions/v1/import-works';const seen=new Set();let total=0;function parseWorks(doc){const items=doc.querySelectorAll('li.bookmark');const works=[];items.forEach(li=>{try{const heading=li.querySelector('h4.heading a');if(!heading)return;const href=heading.getAttribute('href')||'';const idMatch=href.match(/\\/works\\/(\\d+)/);if(!idMatch)return;const ao3_id=parseInt(idMatch[1]);if(seen.has(ao3_id))return;seen.add(ao3_id);const title=heading.textContent.trim();const authorEls=li.querySelectorAll('h4.heading a[rel=author]');const authors=Array.from(authorEls).map(a=>a.textContent.trim());const fandomEls=li.querySelectorAll('.fandoms .tag');const fandoms=Array.from(fandomEls).map(e=>e.textContent.trim());const shipEls=li.querySelectorAll('li.relationships .tag');const relationships=Array.from(shipEls).map(e=>e.textContent.trim());const charEls=li.querySelectorAll('li.characters .tag');const characters=Array.from(charEls).map(e=>e.textContent.trim());const tagEls=li.querySelectorAll('li.freeforms .tag');const freeform_tags=Array.from(tagEls).map(e=>e.textContent.trim());const ratingEl=li.querySelector('span.rating span.text');const rating=ratingEl?ratingEl.textContent.trim():null;const warnEls=li.querySelectorAll('li.warnings .tag');const warnings=Array.from(warnEls).map(e=>e.textContent.trim());const catEl=li.querySelector('span.category span.text');const categories=catEl?[catEl.textContent.trim()]:[];const statsEl=li.querySelector('dl.stats');let word_count=null,chapter_count=null,chapter_total=null,kudos=null,hits=null,bookmarks_count=null,comments_count=null;if(statsEl){const wcEl=statsEl.querySelector('dd.words');if(wcEl)word_count=parseInt(wcEl.textContent.replace(/,/g,''))||null;const chEl=statsEl.querySelector('dd.chapters');if(chEl){const chMatch=chEl.textContent.match(/(\\d+)\\/(\\d+|\\?)/);if(chMatch){chapter_count=parseInt(chMatch[1]);chapter_total=chMatch[2]==='?'?null:parseInt(chMatch[2]);}}const kEl=statsEl.querySelector('dd.kudos');if(kEl)kudos=parseInt(kEl.textContent.replace(/,/g,''))||null;const hEl=statsEl.querySelector('dd.hits');if(hEl)hits=parseInt(hEl.textContent.replace(/,/g,''))||null;const bEl=statsEl.querySelector('dd.bookmarks');if(bEl)bookmarks_count=parseInt(bEl.textContent.replace(/,/g,''))||null;const cEl=statsEl.querySelector('dd.comments');if(cEl)comments_count=parseInt(cEl.textContent.replace(/,/g,''))||null;}const langEl=statsEl?statsEl.querySelector('dd.language'):null;const language=langEl?langEl.textContent.trim():'English';const summaryEl=li.querySelector('blockquote.summary');const summary=summaryEl?summaryEl.textContent.trim():null;const is_complete=chapter_total?chapter_count>=chapter_total:false;works.push({ao3_id,title,authors,rating,warnings,categories,fandoms,relationships,characters,freeform_tags,summary,language,word_count,chapter_count,chapter_total,is_complete,kudos,hits,bookmarks_count,comments_count});}catch(e){console.error('Parse error:',e);}});return works;}async function run(){const statusEl=document.getElementById('fictracker-status');const urlParams=new URLSearchParams(window.location.search);const startPage=parseInt(urlParams.get('page'))||1;const navEl=document.querySelector('ol.pagination li:nth-last-child(2) a');const totalPages=navEl?parseInt(navEl.textContent):1;statusEl.textContent='Starting from page '+startPage+' of '+totalPages+'...';const allWorks=parseWorks(document);total+=allWorks.length;statusEl.textContent='Page '+startPage+'/'+totalPages+': '+allWorks.length+' fics ('+total+' total)';if(allWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:allWorks,source:'bookmarks'})});for(let p=startPage+1;p<=totalPages;p++){await new Promise(r=>setTimeout(r,10000));statusEl.textContent='Fetching page '+p+'/'+totalPages+'...';try{const resp=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(resp.status===429||resp.status===503){statusEl.textContent='Rate limited at page '+p+'. Waiting 60s...';await new Promise(r=>setTimeout(r,60000));const retry=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(!retry.ok){statusEl.textContent='Still limited. Got '+total+' fics. Navigate to page '+p+' and re-run.';return;}var html=await retry.text();}else if(!resp.ok){statusEl.textContent='Error on page '+p+' ('+resp.status+'). Skipping...';continue;}else{var html=await resp.text();}const parser=new DOMParser();const doc=parser.parseFromString(html,'text/html');const retryCheck=doc.querySelector('h2.landmark.heading');if(retryCheck&&retryCheck.textContent.includes('Retry')){statusEl.textContent='Rate limited at page '+p+'. Waiting 60s...';await new Promise(r=>setTimeout(r,60000));const retry2=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(!retry2.ok){statusEl.textContent='Still limited. Got '+total+' fics. Navigate to page '+p+' and re-run.';return;}html=await retry2.text();const doc2=new DOMParser().parseFromString(html,'text/html');const pw=parseWorks(doc2);total+=pw.length;statusEl.textContent='Page '+p+'/'+totalPages+': '+pw.length+' fics ('+total+' total)';if(pw.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:pw,source:'bookmarks'})});continue;}const pageWorks=parseWorks(doc);total+=pageWorks.length;statusEl.textContent='Page '+p+'/'+totalPages+': '+pageWorks.length+' fics ('+total+' total, '+seen.size+' unique)';if(pageWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:pageWorks,source:'bookmarks'})});}catch(e){statusEl.textContent='Error on page '+p+': '+e.message;}}statusEl.textContent='Done! Imported '+total+' fics ('+seen.size+' unique) from pages '+startPage+'-'+totalPages+'.';}const overlay=document.createElement('div');overlay.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a1d27;color:#e4e4e7;padding:16px 20px;font-family:system-ui;font-size:14px;text-align:center;border-bottom:2px solid #e04666;';overlay.innerHTML='<div style=\"margin-bottom:8px;font-weight:700;font-size:16px\">📖 FicTracker Import</div><div id=\"fictracker-status\">Starting import...</div>';document.body.prepend(overlay);run();})()`}>📖 Import to FicTracker</a>
+          <a className="bookmarklet-link" href={generateBookmarklet()}>📖 Import to FicTracker</a>
           <p style={{ marginTop: 12, fontSize: 12 }}>Starts from whatever page you're on and goes forward. 10-second delay between pages, 60-second backoff if rate-limited. To resume after a rate limit, navigate to the page it stopped at and click again.</p>
         </div>
 
@@ -821,6 +1010,9 @@ function App() {
           </div>
         </div>
       </>)}
+
+      {/* SETTINGS VIEW */}
+      {view === 'settings' && <SettingsView userId={userId} session={session} />}
 
       {/* WORK DETAIL MODAL */}
       {selected && (
@@ -893,7 +1085,29 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+function Root() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
+  if (loading) return <div className="app"><div className="loading">Loading...</div></div>;
+  if (!session) return <LoginPage />;
+  return <App session={session} />;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
 </script>
 </body>
 </html>
