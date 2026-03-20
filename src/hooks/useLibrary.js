@@ -320,25 +320,23 @@ export function useLibrary(userId) {
   }
 
   // --- WIP update checking ---
+  // Uses supabase.functions.invoke() instead of raw fetch() because the
+  // Supabase client automatically handles token refresh and sends the
+  // correct auth headers. Raw fetch was causing 401s when the cached
+  // access token was stale.
   async function checkWipUpdates() {
     setCheckingWips(true);
     setWipCheckMsg('Checking AO3 for updates...');
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/check-wip-updates`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentSession.access_token}`,
-        },
-      });
-      const data = await res.json();
-      if (data.error) {
+      const { data, error } = await supabase.functions.invoke('check-wip-updates');
+      if (error) {
+        setWipCheckMsg('Error: ' + error.message);
+      } else if (data?.error) {
         setWipCheckMsg('Error: ' + data.error);
-      } else if (data.updated > 0) {
+      } else if (data?.updated > 0) {
         setWipCheckMsg(`Found ${data.updated} fic${data.updated > 1 ? 's' : ''} with new chapters!`);
       } else {
-        setWipCheckMsg(`Checked ${data.checked} WIPs — no new chapters yet.`);
+        setWipCheckMsg(`Checked ${data?.checked || 0} WIPs — no new chapters yet.`);
       }
       loadData(); // Refresh to pick up new has_update flags
     } catch (e) {
