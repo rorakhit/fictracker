@@ -108,8 +108,11 @@ export function useAnalytics(works, statuses, readingLog) {
     activityEvents.sort((a, b) => new Date(a.read_at) - new Date(b.read_at));
 
     // --- Compute aggregate analytics ---
-    const weeklyActivity = bucketByWeek(activityEvents, 'read_at');
-    const monthlyActivity = bucketByMonth(activityEvents, 'read_at');
+    // Timeline charts use real events only — bootstrap events create a
+    // misleading spike at import time that dwarfs actual reading activity.
+    const realTimelineEvents = activityEvents.filter(e => e._source === 'log');
+    const weeklyActivity = bucketByWeek(realTimelineEvents, 'read_at');
+    const monthlyActivity = bucketByMonth(realTimelineEvents, 'read_at');
 
     // Total words read (from all events)
     const totalWordsRead = activityEvents.reduce((sum, e) => sum + (e.word_count_read || 0), 0);
@@ -130,15 +133,18 @@ export function useAnalytics(works, statuses, readingLog) {
       : 0;
 
     // Reading pace: words per day over the last 30 days
+    // Uses only real log events — bootstrap events would inflate this
+    // with "words" from organizing your library, not actual reading.
+    const realEventsOnly = activityEvents.filter(e => e._source === 'log');
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const recentEvents = activityEvents.filter(e => new Date(e.read_at) >= thirtyDaysAgo);
+    const recentEvents = realEventsOnly.filter(e => new Date(e.read_at) >= thirtyDaysAgo);
     const recentWords = recentEvents.reduce((s, e) => s + (e.word_count_read || 0), 0);
     const wordsPerDay = Math.round(recentWords / 30);
 
-    // Reading streak: consecutive days with activity
+    // Reading streak: consecutive days with real activity
     const activeDays = new Set();
-    activityEvents.forEach(e => {
+    realEventsOnly.forEach(e => {
       const d = new Date(e.read_at);
       if (!isNaN(d)) activeDays.add(d.toISOString().slice(0, 10));
     });
@@ -228,23 +234,29 @@ export function useAnalytics(works, statuses, readingLog) {
     const fastestComplete = completionTimes.length > 0 ? Math.min(...completionTimes) : null;
 
     // --- Wrapped data (current month + current year) ---
+    // IMPORTANT: Wrapped only uses real reading_log events, not bootstrapped
+    // events from import timestamps. The bootstrap is useful for lifetime
+    // aggregate stats, but time-bounded summaries need to reflect actual
+    // reading activity — not "I organized my library on this date."
+    const realEvents = activityEvents.filter(e => e._source === 'log');
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
     function wrappedForPeriod(startDate, endDate, label) {
-      const periodEvents = activityEvents.filter(e => {
+      const periodEvents = realEvents.filter(e => {
         const d = new Date(e.read_at);
         return d >= startDate && d <= endDate;
       });
       const periodWords = periodEvents.reduce((s, e) => s + (e.word_count_read || 0), 0);
       const periodChapters = periodEvents.reduce((s, e) => s + (e.chapters_read || 0), 0);
 
-      // Completed in period
+      // Completed in period — only count fics with real log entries in this period
+      const periodWorkIds = new Set(periodEvents.map(e => e.work_id));
       const periodCompleted = completedWorks.filter(w => {
         const ca = statuses[w.id]?.completed_at;
         if (!ca) return false;
         const d = new Date(ca);
-        return d >= startDate && d <= endDate;
+        return d >= startDate && d <= endDate && periodWorkIds.has(w.id);
       });
 
       // Top fandom in period
