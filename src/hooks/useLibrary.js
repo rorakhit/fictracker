@@ -11,6 +11,9 @@ export function useLibrary(userId) {
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState('');
   const [readingLog, setReadingLog] = useState([]);
+  const [wipTracking, setWipTracking] = useState({}); // keyed by work_id
+  const [checkingWips, setCheckingWips] = useState(false);
+  const [wipCheckMsg, setWipCheckMsg] = useState('');
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
 
@@ -53,6 +56,15 @@ export function useLibrary(userId) {
         .eq('user_id', userId)
         .order('read_at', { ascending: true });
       setReadingLog(logRows || []);
+
+      // Load WIP tracking data for badges
+      const { data: wipRows } = await supabase
+        .from('wip_tracking')
+        .select('*')
+        .eq('user_id', userId);
+      const wipMap = {};
+      (wipRows || []).forEach(row => { wipMap[row.work_id] = row; });
+      setWipTracking(wipMap);
     } catch (e) { console.error('Load error:', e); }
     setLoading(false);
   }, [userId]);
@@ -307,6 +319,56 @@ export function useLibrary(userId) {
     setImporting(false);
   }
 
+  // --- WIP update checking ---
+  async function checkWipUpdates() {
+    setCheckingWips(true);
+    setWipCheckMsg('Checking AO3 for updates...');
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/check-wip-updates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.error) {
+        setWipCheckMsg('Error: ' + data.error);
+      } else if (data.updated > 0) {
+        setWipCheckMsg(`Found ${data.updated} fic${data.updated > 1 ? 's' : ''} with new chapters!`);
+      } else {
+        setWipCheckMsg(`Checked ${data.checked} WIPs — no new chapters yet.`);
+      }
+      loadData(); // Refresh to pick up new has_update flags
+    } catch (e) {
+      setWipCheckMsg('Error checking for updates: ' + e.message);
+    }
+    setCheckingWips(false);
+  }
+
+  // Dismiss a single WIP update badge
+  async function dismissWipUpdate(workId) {
+    await supabase
+      .from('wip_tracking')
+      .update({ has_update: false, last_known_chapters: wipTracking[workId]?.updated_chapter_count || null })
+      .eq('work_id', workId)
+      .eq('user_id', userId);
+    loadData();
+  }
+
+  // Dismiss all WIP update badges
+  async function dismissAllWipUpdates() {
+    const updatedWips = Object.values(wipTracking).filter(w => w.has_update);
+    for (const wip of updatedWips) {
+      await supabase
+        .from('wip_tracking')
+        .update({ has_update: false, last_known_chapters: wip.updated_chapter_count || wip.last_known_chapters })
+        .eq('id', wip.id);
+    }
+    loadData();
+  }
+
   const stats = useMemo(() => {
     const total = works.length;
     const totalWords = works.reduce((s, w) => s + (w.word_count || 0), 0);
@@ -371,11 +433,13 @@ export function useLibrary(userId) {
   }, [works, statuses]);
 
   return {
-    works, statuses, readingLog, loading, importing, importMsg, setImportMsg,
+    works, statuses, readingLog, wipTracking, loading, importing, importMsg, setImportMsg,
+    checkingWips, wipCheckMsg, setWipCheckMsg,
     bulkMode, setBulkMode, bulkSelected, setBulkSelected,
     stats, recommendations,
     loadData, getStatusForWork, updateStatus, deleteWork,
     toggleBulkSelect, bulkSetStatus, bulkDelete,
-    addByUrl, handleEpubFiles
+    addByUrl, handleEpubFiles,
+    checkWipUpdates, dismissWipUpdate, dismissAllWipUpdates
   };
 }

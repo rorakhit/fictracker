@@ -162,6 +162,13 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
 .form-group label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
 .form-group input { width: 100%; }
 
+/* WIP update badges */
+.wip-update-banner { display: flex; align-items: center; gap: 10px; background: rgba(20,184,166,0.08); border: 1px solid rgba(20,184,166,0.25); border-radius: 12px; padding: 10px 16px; margin-bottom: 12px; }
+.wip-update-banner-icon { font-size: 16px; }
+.wip-update-banner-text { flex: 1; font-size: 13px; color: var(--teal); font-weight: 500; }
+.tag.wip-updated { background: rgba(20,184,166,0.18); color: var(--teal); cursor: pointer; font-weight: 600; transition: all 0.15s; }
+.tag.wip-updated:hover { background: rgba(20,184,166,0.3); }
+
 /* Analytics hero stats */
 .analytics-hero { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
 .analytics-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 12px; text-align: center; }

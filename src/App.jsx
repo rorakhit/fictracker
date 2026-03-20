@@ -74,6 +74,7 @@ function Dashboard({ session }) {
           works={lib.works}
           statuses={lib.statuses}
           stats={lib.stats}
+          wipTracking={lib.wipTracking}
           bulkMode={lib.bulkMode}
           setBulkMode={lib.setBulkMode}
           bulkSelected={lib.bulkSelected}
@@ -84,6 +85,11 @@ function Dashboard({ session }) {
           importing={lib.importing}
           importMsg={lib.importMsg}
           addByUrl={lib.addByUrl}
+          checkingWips={lib.checkingWips}
+          wipCheckMsg={lib.wipCheckMsg}
+          checkWipUpdates={lib.checkWipUpdates}
+          dismissWipUpdate={lib.dismissWipUpdate}
+          dismissAllWipUpdates={lib.dismissAllWipUpdates}
           onOpenWork={openWork}
         />
       )}

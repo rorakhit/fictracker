@@ -3,10 +3,11 @@ import Stars from './Stars';
 import { ratingClass, wordCountLabel } from '../utils/helpers';
 
 export default function Library({
-  works, statuses, stats,
+  works, statuses, stats, wipTracking,
   bulkMode, setBulkMode, bulkSelected, setBulkSelected,
   toggleBulkSelect, bulkSetStatus, bulkDelete,
   importing, importMsg, addByUrl,
+  checkingWips, wipCheckMsg, checkWipUpdates, dismissWipUpdate, dismissAllWipUpdates,
   onOpenWork
 }) {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -63,12 +64,39 @@ export default function Library({
         <div className="stat"><div className="stat-num" style={{ color: 'var(--teal)' }}>{wordCountLabel(stats.totalWords)}</div><div className="stat-label">Words</div></div>
       </div>
 
-      <div className="add-url-bar">
-        <input type="url" placeholder="Paste AO3 URL to add a fic..." value={addUrl} onChange={e => setAddUrl(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { addByUrl(addUrl); setAddUrl(''); } }} />
-        <button className="btn btn-accent btn-sm" onClick={() => { addByUrl(addUrl); setAddUrl(''); }} disabled={importing}>Add</button>
-      </div>
+      {/* WIP update section */}
+      {(() => {
+        const updatedWips = works.filter(w => wipTracking[w.id]?.has_update);
+        const hasUpdates = updatedWips.length > 0;
+        return (
+          <>
+            {hasUpdates && (
+              <div className="wip-update-banner">
+                <span className="wip-update-banner-icon">✨</span>
+                <span className="wip-update-banner-text">
+                  {updatedWips.length} fic{updatedWips.length > 1 ? 's have' : ' has'} new chapters!
+                </span>
+                <button className="btn btn-ghost btn-sm" onClick={dismissAllWipUpdates}>Dismiss all</button>
+              </div>
+            )}
+            <div className="add-url-bar">
+              <input type="url" placeholder="Paste AO3 URL to add a fic..." value={addUrl} onChange={e => setAddUrl(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { addByUrl(addUrl); setAddUrl(''); } }} />
+              <button className="btn btn-accent btn-sm" onClick={() => { addByUrl(addUrl); setAddUrl(''); }} disabled={importing}>Add</button>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={checkWipUpdates}
+                disabled={checkingWips}
+                title="Check AO3 for new chapters on your WIPs"
+              >
+                {checkingWips ? 'Checking...' : 'Check WIPs'}
+              </button>
+            </div>
+          </>
+        );
+      })()}
       {importMsg && <div style={{ fontSize: 12, color: 'var(--accent-hover)', marginBottom: 12 }}>{importMsg}</div>}
+      {wipCheckMsg && <div style={{ fontSize: 12, color: 'var(--teal)', marginBottom: 12 }}>{wipCheckMsg}</div>}
 
       <div className="filters">
         {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dropped','Dropped']].map(([k,l]) => (
@@ -133,6 +161,11 @@ export default function Library({
                 {w.word_count && <span>{wordCountLabel(w.word_count)} words</span>}
                 {w.chapter_count && <span>{w.chapter_count}{w.chapter_total ? '/' + w.chapter_total : '/?'} ch</span>}
                 {!w.is_complete && <span className="tag wip">WIP</span>}
+                {wipTracking[w.id]?.has_update && (
+                  <span className="tag wip-updated" onClick={e => { e.stopPropagation(); dismissWipUpdate(w.id); }} title="New chapters! Click to dismiss">
+                    ✨ Updated!
+                  </span>
+                )}
                 {w.kudos && <span>♥ {w.kudos.toLocaleString()}</span>}
                 {w.rating && <span className={`tag ${ratingClass(w.rating)}`}>{w.rating}</span>}
               </div>
