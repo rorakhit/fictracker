@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FicTracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface-hover: #22252f;
+      --border: #2a2d3a; --text: #e4e4e7; --text-muted: #8b8d97;
+      --accent: #e04666; --accent-hover: #f06080; --accent-dim: rgba(224,70,102,0.12);
+      --success: #22c55e; --warning: #f59e0b; --danger: #ef4444;
+      --blue: #3b82f6; --purple: #8b5cf6; --teal: #14b8a6;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .app { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+    .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+    .header h1 span { color: var(--accent); }
+    .header-right { display: flex; gap: 8px; align-items: center; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 22px; background: var(--surface); border-radius: 12px; padding: 4px; border: 1px solid var(--border); width: fit-content; }
+    .tab { padding: 8px 18px; border-radius: 9px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    .tab:hover { color: var(--text); }
+    .tab.active { background: var(--accent); color: white; }
+
+    /* Stats row */
+    .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+    .stat-num { font-size: 26px; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Filters */
+    .filters { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+    .pill { padding: 6px 14px; border-radius: 18px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+    .pill:hover { border-color: var(--accent); color: var(--text); }
+    .pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .search-input { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 7px 14px; color: var(--text); font-size: 13px; width: 220px; outline: none; }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    /* Work cards */
+    .work-list { display: flex; flex-direction: column; gap: 6px; }
+    .work-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; cursor: pointer; transition: all 0.15s; }
+    .work-card:hover { background: var(--surface-hover); border-color: #3a3d4a; }
+    .work-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .work-author { font-size: 12px; color: var(--accent-hover); margin-bottom: 6px; }
+    .work-meta { display: flex; gap: 10px; font-size: 11px; color: var(--text-muted); flex-wrap: wrap; align-items: center; }
+    .work-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+    .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; background: var(--accent-dim); color: var(--accent-hover); }
+    .tag.fandom { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .tag.ship { background: rgba(139,92,246,0.12); color: var(--purple); }
+    .tag.rating-e { background: rgba(239,68,68,0.12); color: var(--danger); }
+    .tag.rating-m { background: rgba(245,158,11,0.12); color: var(--warning); }
+    .tag.rating-t { background: rgba(34,197,94,0.12); color: var(--success); }
+    .tag.rating-g { background: rgba(20,184,166,0.12); color: var(--teal); }
+    .tag.wip { background: rgba(245,158,11,0.15); color: var(--warning); }
+
+    /* Status badge */
+    .status-badge { padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .status-to_read { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .status-reading { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .status-completed { background: rgba(34,197,94,0.15); color: var(--success); }
+    .status-dropped { background: rgba(139,141,151,0.15); color: var(--text-muted); }
+    .status-on_hold { background: rgba(139,92,246,0.15); color: var(--purple); }
+
+    /* Stars */
+    .stars { display: inline-flex; gap: 2px; cursor: pointer; }
+    .star { font-size: 18px; color: var(--border); transition: color 0.1s; }
+    .star.filled { color: var(--warning); }
+    .star:hover { color: var(--warning); }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 90%; max-width: 540px; max-height: 85vh; overflow-y: auto; }
+    .modal h2 { font-size: 20px; margin-bottom: 4px; }
+    .modal-author { color: var(--accent-hover); font-size: 14px; margin-bottom: 14px; }
+    .modal-summary { color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 16px; padding: 12px; background: var(--bg); border-radius: 10px; max-height: 120px; overflow-y: auto; }
+    .modal-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+    .modal-section { margin-bottom: 16px; }
+    .modal-section label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+    .btn { padding: 9px 18px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-accent:hover { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; width: 100%; outline: none; }
+    select:focus { border-color: var(--accent); }
+    textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); font-size: 13px; resize: vertical; min-height: 50px; font-family: inherit; outline: none; }
+    textarea:focus { border-color: var(--accent); }
+    input[type="text"], input[type="url"], input[type="email"], input[type="password"] { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; width: 100%; outline: none; }
+    input:focus { border-color: var(--accent); }
+
+    /* Charts */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .chart-card h3 { font-size: 14px; margin-bottom: 14px; color: var(--text-muted); }
+    .chart-card.full { grid-column: 1 / -1; }
+
+    /* Import section */
+    .import-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; }
+    .import-section h3 { font-size: 16px; margin-bottom: 8px; }
+    .import-section p { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
+    .bookmarklet-link { display: inline-block; padding: 10px 20px; background: var(--accent); color: white; border-radius: 10px; font-weight: 600; font-size: 14px; text-decoration: none; cursor: grab; }
+    .bookmarklet-link:hover { background: var(--accent-hover); }
+    code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--accent-hover); }
+
+    /* Drop zone */
+    .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; color: var(--text-muted); font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .drop-zone:hover, .drop-zone.active { border-color: var(--accent); color: var(--accent-hover); background: var(--accent-dim); }
+    .drop-zone input { display: none; }
+
+    /* Progress bar */
+    .progress-bar { background: var(--bg); border-radius: 6px; height: 8px; overflow: hidden; margin-top: 6px; }
+    .progress-fill { height: 100%; border-radius: 6px; background: var(--accent); transition: width 0.3s; }
+
+    /* Recommendations */
+    .rec-card { background: var(--bg); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .rec-reason { font-size: 11px; color: var(--accent-hover); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+    .empty { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+    .empty .emoji { font-size: 42px; margin-bottom: 12px; }
+    .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text-muted); }
+
+    /* Add by URL bar */
+    .add-url-bar { display: flex; gap: 8px; margin-bottom: 18px; }
+    .add-url-bar input { flex: 1; }
+
+    /* Import progress */
+    .import-progress { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .import-progress .progress-text { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+
+    /* Bulk selection */
+    .bulk-bar { display: flex; gap: 8px; align-items: center; background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; }
+    .bulk-bar span { font-size: 13px; color: var(--text); flex: 1; }
+    .bulk-check { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; margin-right: 4px; }
+    .work-card.selectable { padding-left: 14px; }
+    .work-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .select-all-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: var(--text-muted); }
+
+    /* Login page */
+    .login-page { max-width: 400px; margin: 80px auto; padding: 0 16px; }
+    .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+    .login-card h2 { text-align: center; margin-bottom: 8px; }
+    .login-card .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+    .login-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 14px; margin-bottom: 12px; outline: none; box-sizing: border-box; }
+    .login-input:focus { border-color: var(--accent); }
+    .login-input::placeholder { color: var(--text-muted); }
+    .login-error { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
+    .login-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 12px; }
+    .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .oauth-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .oauth-btn:hover { border-color: var(--accent); background: var(--surface-hover); }
+    .login-toggle { text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+    .login-toggle a { color: var(--accent); cursor: pointer; text-decoration: none; }
+    .login-toggle a:hover { color: var(--accent-hover); }
+
+    /* Settings page */
+    .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; max-width: 500px; }
+    .settings-card h2 { font-size: 20px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .form-group input { width: 100%; }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+const RC = typeof Recharts !== 'undefined' ? Recharts : {};
+const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } = RC;
+const chartsAvailable = typeof Recharts !== 'undefined';
+
+const SUPABASE_URL = 'https://nivqfnrkpuoyjtugavtj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pdnFmbnJrcHVveWp0dWdhdnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4ODU0NDAsImV4cCI6MjA4OTQ2MTQ0MH0.gEjhPIGqXqAj_ZU69upkk_rW3-392b0TWNLv-CVC1mU';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const COLORS = ['#e04666','#3b82f6','#8b5cf6','#14b8a6','#f59e0b','#22c55e','#f97316','#ec4899','#6366f1','#84cc16'];
+
+function ratingClass(r) {
+  if (!r) return '';
+  if (r.startsWith('Explicit')) return 'rating-e';
+  if (r.startsWith('Mature')) return 'rating-m';
+  if (r.startsWith('Teen')) return 'rating-t';
+  return 'rating-g';
+}
+
+function wordCountLabel(wc) {
+  if (!wc) return '?';
+  if (wc < 1000) return wc.toLocaleString();
+  if (wc < 1000000) return (wc / 1000).toFixed(wc < 10000 ? 1 : 0) + 'k';
+  return (wc / 1000000).toFixed(1) + 'M';
+}
+
+function Stars({ value, onChange }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <span className="stars" onMouseLeave={() => setHover(0)}>
+      {[1,2,3,4,5].map(i => (
+        <span key={i} className={`star ${i <= (hover || value || 0) ? 'filled' : ''}`}
+          onMouseEnter={() => setHover(i)}
+          onClick={() => onChange && onChange(i === value ? 0 : i)}>&#9733;</span>
+      ))}
+    </span>
+  );
+}
+
+function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleEmailAuth(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      if (isSignUp) {
+        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        if (signUpError) throw signUpError;
+        setError('Check your email to confirm your account!');
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+      }
+    } catch (e) {
+      setError(e.message || 'Authentication failed');
+    }
+    setLoading(false);
+  }
+
+  async function handleOAuth(provider) {
+    setError('');
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
+      if (error) throw error;
+    } catch (e) {
+      setError(e.message || `${provider} sign-in failed`);
+    }
+  }
+
+  return (
+    <div className="app">
+      <div className="login-page">
+        <div className="login-card">
+          <h2>📖 FicTracker</h2>
+          <div className="subtitle">{isSignUp ? 'Create an account' : 'Sign in to your library'}</div>
+          {error && <div className="login-error">{error}</div>}
+
+          <form onSubmit={handleEmailAuth}>
+            <input
+              className="login-input"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+            <input
+              className="login-input"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="submit"
+              className="btn btn-accent"
+              style={{ width: '100%', marginBottom: 12 }}
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            </button>
+          </form>
+
+          <div className="login-divider">or continue with</div>
+
+          <button className="oauth-btn" onClick={() => handleOAuth('google')} disabled={loading}>
+            🔵 Google
+          </button>
+          <button className="oauth-btn" onClick={() => handleOAuth('discord')} disabled={loading}>
+            🟣 Discord
+          </button>
+
+          <div className="login-toggle">
+            {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+            <a onClick={() => { setIsSignUp(!isSignUp); setError(''); }}>
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsView({ userId, session }) {
+  const [ao3Username, setAo3Username] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('ao3_username')
+          .eq('user_id', userId)
+          .single();
+        if (!error && data) {
+          setAo3Username(data.ao3_username || '');
+        }
+      } catch (e) { console.error('Load settings error:', e); }
+      setLoading(false);
+    }
+    loadSettings();
+  }, [userId]);
+
+  async function saveSettings() {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({ user_id: userId, ao3_username: ao3Username });
+      if (error) throw error;
+    } catch (e) { console.error('Save error:', e); }
+    setSaving(false);
+  }
+
+  if (loading) return <div className="loading">Loading settings...</div>;
+
+  return (
+    <div className="app">
+      <div className="settings-card">
+        <h2>Settings</h2>
+
+        <div className="form-group">
+          <label>Account Email</label>
+          <input type="email" value={session.user.email} readOnly style={{ color: 'var(--text-muted)' }} />
+        </div>
+
+        <div className="form-group">
+          <label>AO3 Username (optional)</label>
+          <input
+            type="text"
+            placeholder="Your AO3 username"
+            value={ao3Username}
+            onChange={e => setAo3Username(e.target.value)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-accent" onClick={saveSettings} disabled={saving}>
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App({ session }) {
+  const userId = session.user.id;
+  const [works, setWorks] = useState([]);
+  const [statuses, setStatuses] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState('library');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('recent');
+  const [selected, setSelected] = useState(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [editRating, setEditRating] = useState(0);
+  const [editNotes, setEditNotes] = useState('');
+  const [editChapter, setEditChapter] = useState(0);
+  const [addUrl, setAddUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
+  const fileRef = useRef(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState(new Set());
+
+  useEffect(() => {
+    async function claimData() {
+      try {
+        const { data } = await supabase.rpc('claim_existing_data', { target_user_id: userId });
+        if (data && (data.reading_status > 0 || data.reading_log > 0 || data.wip_tracking > 0)) {
+          console.log('Claimed existing data:', data);
+          loadData();
+        }
+      } catch (e) { console.error('Claim error:', e); }
+    }
+    claimData();
+  }, [userId]);
+
+  async function loadData() {
+    try {
+      const { data: statusRows, error: statusError } = await supabase
+        .from('reading_status')
+        .select('*, work:works(*)')
+        .eq('user_id', userId);
+      if (statusError) throw statusError;
+
+      const worksArr = [];
+      const statusMap = {};
+      (statusRows || []).forEach(row => {
+        if (row.work) {
+          worksArr.push(row.work);
+          statusMap[row.work.id] = row;
+        }
+      });
+      setWorks(worksArr);
+      setStatuses(statusMap);
+    } catch (e) { console.error('Load error:', e); }
+    setLoading(false);
+  }
+
+  useEffect(() => { loadData(); }, [userId]);
+
+  function getStatusForWork(workId) {
+    return statuses[workId] || null;
+  }
+
+  async function updateStatus(workId, updates) {
+    const existing = statuses[workId];
+    if (existing) {
+      await supabase.from('reading_status')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('work_id', workId)
+        .eq('user_id', userId);
+    } else {
+      await supabase.from('reading_status')
+        .insert({ work_id: workId, user_id: userId, ...updates });
+    }
+    loadData();
+  }
+
+  async function deleteWork(workId) {
+    await supabase.from('reading_status').delete().eq('work_id', workId).eq('user_id', userId);
+    await supabase.from('wip_tracking').delete().eq('work_id', workId).eq('user_id', userId);
+    await supabase.from('reading_log').delete().eq('work_id', workId).eq('user_id', userId);
+    setSelected(null);
+    loadData();
+  }
+
+  function toggleBulkSelect(workId) {
+    setBulkSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(workId)) next.delete(workId);
+      else next.add(workId);
+      return next;
+    });
+  }
+
+  function selectAllVisible() {
+    const allIds = new Set(filtered.map(w => w.id));
+    setBulkSelected(allIds);
+  }
+
+  function deselectAll() {
+    setBulkSelected(new Set());
+  }
+
+  async function bulkSetStatus(newStatus) {
+    const ids = Array.from(bulkSelected);
+    if (ids.length === 0) return;
+    for (const workId of ids) {
+      const updates = { status: newStatus, updated_at: new Date().toISOString() };
+      if (newStatus === 'completed') updates.completed_at = new Date().toISOString();
+      if (newStatus === 'reading') {
+        const existing = statuses[workId];
+        if (!existing?.started_at) updates.started_at = new Date().toISOString();
+      }
+      await updateStatus(workId, updates);
+    }
+    setBulkSelected(new Set());
+    setBulkMode(false);
+    loadData();
+  }
+
+  async function bulkDelete() {
+    const ids = Array.from(bulkSelected);
+    if (ids.length === 0) return;
+    for (const workId of ids) {
+      await deleteWork(workId);
+    }
+    setBulkSelected(new Set());
+    setBulkMode(false);
+  }
+
+  async function addByUrl() {
+    if (!addUrl.trim()) return;
+    const match = addUrl.match(/works\/(\d+)/);
+    if (!match) { setImportMsg('Could not find an AO3 work ID in that URL'); return; }
+    const ao3Id = parseInt(match[1]);
+    setImporting(true);
+    setImportMsg('Adding work...');
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/import-works`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`
+        },
+        body: JSON.stringify({ works: [{ ao3_id: ao3Id, title: 'Loading...', source: 'manual' }], source: 'manual' })
+      });
+      const data = await res.json();
+      setImportMsg(`Added! (${data.imported} imported)`);
+      setAddUrl('');
+      loadData();
+    } catch (e) { setImportMsg('Error: ' + e.message); }
+    setImporting(false);
+  }
+
+  async function handleEpubFiles(files) {
+    setImporting(true);
+    setImportMsg(`Processing ${files.length} EPUB file(s)...`);
+    const worksToImport = [];
+
+    for (const file of files) {
+      try {
+        const zip = await JSZip.loadAsync(file);
+        let opfContent = null;
+        for (const [path, zipEntry] of Object.entries(zip.files)) {
+          if (path.endsWith('.opf') || path.includes('content.opf')) {
+            opfContent = await zipEntry.async('text');
+            break;
+          }
+        }
+        if (!opfContent) {
+          const container = zip.file('META-INF/container.xml');
+          if (container) {
+            const containerXml = await container.async('text');
+            const rootfileMatch = containerXml.match(/full-path="([^"]+\.opf)"/);
+            if (rootfileMatch) {
+              const opfFile = zip.file(rootfileMatch[1]);
+              if (opfFile) opfContent = await opfFile.async('text');
+            }
+          }
+        }
+
+        if (opfContent) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(opfContent, 'text/xml');
+
+          const getMeta = (name) => {
+            const el = doc.querySelector(`metadata > *[name="${name}"], dc\\:${name}, ${name}`);
+            return el ? el.textContent?.trim() : null;
+          };
+          const getAllMeta = (name) => {
+            const els = doc.querySelectorAll(`dc\\:${name}, ${name}`);
+            return Array.from(els).map(e => e.textContent?.trim()).filter(Boolean);
+          };
+
+          const title = getMeta('title') || file.name.replace('.epub', '');
+          const creators = getAllMeta('creator');
+          const source = getMeta('source') || '';
+          const description = getMeta('description') || '';
+          const subjects = getAllMeta('subject');
+
+          let finalId = null;
+          const ao3Match = source.match(/archiveofourown\.org\/works\/(\d+)/);
+          if (ao3Match) finalId = parseInt(ao3Match[1]);
+
+          if (!finalId) {
+            const identifiers = doc.querySelectorAll('identifier');
+            for (const ident of identifiers) {
+              const text = ident.textContent || '';
+              const urlMatch = text.match(/archiveofourown\.org\/works\/(\d+)/);
+              if (urlMatch) { finalId = parseInt(urlMatch[1]); break; }
+            }
+          }
+
+          if (!finalId) {
+            const identifiers = doc.querySelectorAll('identifier');
+            for (const ident of identifiers) {
+              const scheme = ident.getAttribute('opf:scheme') || ident.getAttribute('scheme') || '';
+              if (scheme.toLowerCase().includes('ao3') || scheme.toLowerCase().includes('archive')) {
+                const idMatch = ident.textContent?.match(/(\d+)/);
+                if (idMatch) { finalId = parseInt(idMatch[1]); break; }
+              }
+            }
+          }
+
+          if (!finalId) {
+            const allText = opfContent;
+            const lastResort = allText.match(/archiveofourown\.org\/works\/(\d+)/);
+            if (lastResort) finalId = parseInt(lastResort[1]);
+          }
+          if (finalId) {
+            worksToImport.push({
+              ao3_id: finalId,
+              title,
+              authors: creators,
+              summary: description.replace(/<[^>]*>/g, '').substring(0, 2000),
+              freeform_tags: subjects,
+              source: 'epub'
+            });
+          } else {
+            setImportMsg(prev => prev + `\nCouldn't find AO3 ID in ${file.name}`);
+          }
+        }
+      } catch (e) {
+        console.error('EPUB parse error:', e);
+      }
+    }
+
+    if (worksToImport.length > 0) {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/import-works`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`
+          },
+          body: JSON.stringify({ works: worksToImport, source: 'epub' })
+        });
+        const data = await res.json();
+        setImportMsg(`Imported ${data.imported} of ${worksToImport.length} fics from EPUBs!`);
+        loadData();
+      } catch (e) { setImportMsg('Import error: ' + e.message); }
+    } else {
+      setImportMsg('No AO3 work IDs found in the EPUB files. They may not be AO3 downloads.');
+    }
+    setImporting(false);
+  }
+
+  const filtered = useMemo(() => {
+    let result = works.map(w => ({ ...w, _status: getStatusForWork(w.id) }));
+    if (statusFilter !== 'all') {
+      result = result.filter(w => (w._status?.status || 'to_read') === statusFilter);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(w =>
+        w.title?.toLowerCase().includes(q) ||
+        w.authors?.some(a => a.toLowerCase().includes(q)) ||
+        w.fandoms?.some(f => f.toLowerCase().includes(q)) ||
+        w.relationships?.some(r => r.toLowerCase().includes(q)) ||
+        w.freeform_tags?.some(t => t.toLowerCase().includes(q))
+      );
+    }
+    result.sort((a, b) => {
+      if (sortBy === 'recent') return new Date(b.imported_at) - new Date(a.imported_at);
+      if (sortBy === 'words') return (b.word_count || 0) - (a.word_count || 0);
+      if (sortBy === 'kudos') return (b.kudos || 0) - (a.kudos || 0);
+      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
+      if (sortBy === 'rating') return (b._status?.rating_personal || 0) - (a._status?.rating_personal || 0);
+      return 0;
+    });
+    return result;
+  }, [works, statuses, statusFilter, search, sortBy]);
+
+  const stats = useMemo(() => {
+    const total = works.length;
+    const totalWords = works.reduce((s, w) => s + (w.word_count || 0), 0);
+    const statusCounts = { to_read: 0, reading: 0, completed: 0, dropped: 0, on_hold: 0 };
+    works.forEach(w => {
+      const st = statuses[w.id]?.status || 'to_read';
+      if (statusCounts[st] !== undefined) statusCounts[st]++;
+    });
+    const wips = works.filter(w => !w.is_complete).length;
+
+    const fandomCount = {};
+    works.forEach(w => (w.fandoms || []).forEach(f => { fandomCount[f] = (fandomCount[f] || 0) + 1; }));
+    const topFandoms = Object.entries(fandomCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name: name.length > 25 ? name.slice(0, 22) + '...' : name, value }));
+
+    const ratingCount = {};
+    works.forEach(w => { const r = w.rating || 'Not Rated'; ratingCount[r] = (ratingCount[r] || 0) + 1; });
+    const ratingDist = Object.entries(ratingCount).map(([name, value]) => ({ name, value }));
+
+    const shipCount = {};
+    works.forEach(w => (w.relationships || []).forEach(r => { shipCount[r] = (shipCount[r] || 0) + 1; }));
+    const topShips = Object.entries(shipCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, value]) => ({ name: name.length > 30 ? name.slice(0, 27) + '...' : name, value }));
+
+    const wcBuckets = { '<1k': 0, '1-5k': 0, '5-10k': 0, '10-50k': 0, '50-100k': 0, '100k+': 0 };
+    works.forEach(w => {
+      const wc = w.word_count || 0;
+      if (wc < 1000) wcBuckets['<1k']++;
+      else if (wc < 5000) wcBuckets['1-5k']++;
+      else if (wc < 10000) wcBuckets['5-10k']++;
+      else if (wc < 50000) wcBuckets['10-50k']++;
+      else if (wc < 100000) wcBuckets['50-100k']++;
+      else wcBuckets['100k+']++;
+    });
+    const wcDist = Object.entries(wcBuckets).map(([name, value]) => ({ name, value }));
+
+    return { total, totalWords, statusCounts, wips, topFandoms, ratingDist, topShips, wcDist };
+  }, [works, statuses]);
+
+  const recommendations = useMemo(() => {
+    const rated = works.filter(w => (statuses[w.id]?.rating_personal || 0) >= 4);
+    const likedFandoms = {};
+    const likedShips = {};
+    rated.forEach(w => {
+      (w.fandoms || []).forEach(f => { likedFandoms[f] = (likedFandoms[f] || 0) + 1; });
+      (w.relationships || []).forEach(r => { likedShips[r] = (likedShips[r] || 0) + 1; });
+    });
+
+    const unread = works.filter(w => {
+      const st = statuses[w.id]?.status || 'to_read';
+      return st === 'to_read';
+    });
+
+    const scored = unread.map(w => {
+      let score = 0;
+      let reasons = [];
+      (w.fandoms || []).forEach(f => { if (likedFandoms[f]) { score += likedFandoms[f] * 2; reasons.push(`You like ${f}`); } });
+      (w.relationships || []).forEach(r => { if (likedShips[r]) { score += likedShips[r] * 3; reasons.push(`You enjoy ${r}`); } });
+      if (w.kudos > 1000) { score += 1; reasons.push('Popular fic'); }
+      return { ...w, score, reasons: [...new Set(reasons)].slice(0, 2) };
+    });
+
+    return scored.filter(w => w.score > 0).sort((a, b) => b.score - a.score).slice(0, 10);
+  }, [works, statuses]);
+
+  function openWork(w) {
+    const st = statuses[w.id];
+    setSelected(w);
+    setEditStatus(st?.status || 'to_read');
+    setEditRating(st?.rating_personal || 0);
+    setEditNotes(st?.notes || '');
+    setEditChapter(st?.current_chapter || 0);
+  }
+
+  async function saveWorkDetails() {
+    if (!selected) return;
+    const updates = {
+      status: editStatus,
+      rating_personal: editRating || null,
+      notes: editNotes || null,
+      current_chapter: editChapter || 0,
+    };
+    if (editStatus === 'reading' && !statuses[selected.id]?.started_at) updates.started_at = new Date().toISOString();
+    if (editStatus === 'completed') updates.completed_at = new Date().toISOString();
+    await updateStatus(selected.id, updates);
+    setSelected(null);
+  }
+
+  function generateBookmarklet() {
+    const token = session.access_token;
+    return `javascript:void(function(){const TOKEN='${token}';const ENDPOINT='${SUPABASE_URL}/functions/v1/import-works';const seen=new Set();let total=0;function parseWorks(doc){const items=doc.querySelectorAll('li.bookmark');const works=[];items.forEach(li=>{try{const heading=li.querySelector('h4.heading a');if(!heading)return;const href=heading.getAttribute('href')||'';const idMatch=href.match(/\\/works\\/(\\d+)/);if(!idMatch)return;const ao3_id=parseInt(idMatch[1]);if(seen.has(ao3_id))return;seen.add(ao3_id);const title=heading.textContent.trim();const authorEls=li.querySelectorAll('h4.heading a[rel=author]');const authors=Array.from(authorEls).map(a=>a.textContent.trim());const fandomEls=li.querySelectorAll('.fandoms .tag');const fandoms=Array.from(fandomEls).map(e=>e.textContent.trim());const shipEls=li.querySelectorAll('li.relationships .tag');const relationships=Array.from(shipEls).map(e=>e.textContent.trim());const charEls=li.querySelectorAll('li.characters .tag');const characters=Array.from(charEls).map(e=>e.textContent.trim());const tagEls=li.querySelectorAll('li.freeforms .tag');const freeform_tags=Array.from(tagEls).map(e=>e.textContent.trim());const ratingEl=li.querySelector('span.rating span.text');const rating=ratingEl?ratingEl.textContent.trim():null;const warnEls=li.querySelectorAll('li.warnings .tag');const warnings=Array.from(warnEls).map(e=>e.textContent.trim());const catEl=li.querySelector('span.category span.text');const categories=catEl?[catEl.textContent.trim()]:[];const statsEl=li.querySelector('dl.stats');let word_count=null,chapter_count=null,chapter_total=null,kudos=null,hits=null,bookmarks_count=null,comments_count=null;if(statsEl){const wcEl=statsEl.querySelector('dd.words');if(wcEl)word_count=parseInt(wcEl.textContent.replace(/,/g,''))||null;const chEl=statsEl.querySelector('dd.chapters');if(chEl){const chMatch=chEl.textContent.match(/(\\d+)\\/(\\d+|\\?)/);if(chMatch){chapter_count=parseInt(chMatch[1]);chapter_total=chMatch[2]==='?'?null:parseInt(chMatch[2]);}}const kEl=statsEl.querySelector('dd.kudos');if(kEl)kudos=parseInt(kEl.textContent.replace(/,/g,''))||null;const hEl=statsEl.querySelector('dd.hits');if(hEl)hits=parseInt(hEl.textContent.replace(/,/g,''))||null;const bEl=statsEl.querySelector('dd.bookmarks');if(bEl)bookmarks_count=parseInt(bEl.textContent.replace(/,/g,''))||null;const cEl=statsEl.querySelector('dd.comments');if(cEl)comments_count=parseInt(cEl.textContent.replace(/,/g,''))||null;}const langEl=statsEl?statsEl.querySelector('dd.language'):null;const language=langEl?langEl.textContent.trim():'English';const summaryEl=li.querySelector('blockquote.summary');const summary=summaryEl?summaryEl.textContent.trim():null;const is_complete=chapter_total?chapter_count>=chapter_total:false;works.push({ao3_id,title,authors,rating,warnings,categories,fandoms,relationships,characters,freeform_tags,summary,language,word_count,chapter_count,chapter_total,is_complete,kudos,hits,bookmarks_count,comments_count});}catch(e){console.error('Parse error:',e);}});return works;}async function run(){const statusEl=document.getElementById('fictracker-status');const urlParams=new URLSearchParams(window.location.search);const startPage=parseInt(urlParams.get('page'))||1;const navEl=document.querySelector('ol.pagination li:nth-last-child(2) a');const totalPages=navEl?parseInt(navEl.textContent):1;statusEl.textContent='Starting from page '+startPage+' of '+totalPages+'...';const allWorks=parseWorks(document);total+=allWorks.length;statusEl.textContent='Page '+startPage+'/'+totalPages+': '+allWorks.length+' fics ('+total+' total)';if(allWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({works:allWorks,source:'bookmarks'})});for(let p=startPage+1;p<=totalPages;p++){await new Promise(r=>setTimeout(r,10000));statusEl.textContent='Fetching page '+p+'/'+totalPages+'...';try{const resp=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(resp.status===429||resp.status===503){statusEl.textContent='Rate limited at page '+p+'. Waiting 60s...';await new Promise(r=>setTimeout(r,60000));const retry=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(!retry.ok){statusEl.textContent='Still limited. Got '+total+' fics. Navigate to page '+p+' and re-run.';return;}var html=await retry.text();}else if(!resp.ok){statusEl.textContent='Error on page '+p+' ('+resp.status+'). Skipping...';continue;}else{var html=await resp.text();}const parser=new DOMParser();const doc=parser.parseFromString(html,'text/html');const retryCheck=doc.querySelector('h2.landmark.heading');if(retryCheck&&retryCheck.textContent.includes('Retry')){statusEl.textContent='Rate limited at page '+p+'. Waiting 60s...';await new Promise(r=>setTimeout(r,60000));const retry2=await fetch(window.location.pathname+'?page='+p,{credentials:'include'});if(!retry2.ok){statusEl.textContent='Still limited. Got '+total+' fics. Navigate to page '+p+' and re-run.';return;}html=await retry2.text();const doc2=new DOMParser().parseFromString(html,'text/html');const pw=parseWorks(doc2);total+=pw.length;statusEl.textContent='Page '+p+'/'+totalPages+': '+pw.length+' fics ('+total+' total)';if(pw.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({works:pw,source:'bookmarks'})});continue;}const pageWorks=parseWorks(doc);total+=pageWorks.length;statusEl.textContent='Page '+p+'/'+totalPages+': '+pageWorks.length+' fics ('+total+' total, '+seen.size+' unique)';if(pageWorks.length>0)await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({works:pageWorks,source:'bookmarks'})});}catch(e){statusEl.textContent='Error on page '+p+': '+e.message;}}statusEl.textContent='Done! Imported '+total+' fics ('+seen.size+' unique) from pages '+startPage+'-'+totalPages+'.';}const overlay=document.createElement('div');overlay.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a1d27;color:#e4e4e7;padding:16px 20px;font-family:system-ui;font-size:14px;text-align:center;border-bottom:2px solid #e04666;';overlay.innerHTML='<div style="margin-bottom:8px;font-weight:700;font-size:16px">📖 FicTracker Import</div><div id="fictracker-status">Starting import...</div>';document.body.prepend(overlay);run();})()`
+  }
+
+  if (loading) return <div className="app"><div className="loading">Loading FicTracker...</div></div>;
+
+  return (
+    <div className="app">
+      <div className="header">
+        <h1>📖 Fic<span>Tracker</span></h1>
+        <div className="header-right">
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{session.user.email}</span>
+          <button className="btn btn-ghost btn-sm" onClick={async () => { await supabase.auth.signOut(); }}>Sign Out</button>
+        </div>
+      </div>
+
+      <div className="tabs">
+        {[['library', 'Library'], ['stats', 'Stats'], ['recs', 'For You'], ['import', 'Import'], ['settings', 'Settings']].map(([k, l]) => (
+          <button key={k} className={`tab ${view === k ? 'active' : ''}`} onClick={() => setView(k)}>{l}</button>
+        ))}
+      </div>
+
+      {/* LIBRARY VIEW */}
+      {view === 'library' && (<>
+        <div className="stats">
+          <div className="stat"><div className="stat-num" style={{ color: 'var(--accent)' }}>{stats.total}</div><div className="stat-label">Total</div></div>
+          <div className="stat"><div className="stat-num" style={{ color: 'var(--blue)' }}>{stats.statusCounts.to_read}</div><div className="stat-label">To Read</div></div>
+          <div className="stat"><div className="stat-num" style={{ color: 'var(--warning)' }}>{stats.statusCounts.reading}</div><div className="stat-label">Reading</div></div>
+          <div className="stat"><div className="stat-num" style={{ color: 'var(--success)' }}>{stats.statusCounts.completed}</div><div className="stat-label">Done</div></div>
+          <div className="stat"><div className="stat-num" style={{ color: 'var(--teal)' }}>{wordCountLabel(stats.totalWords)}</div><div className="stat-label">Words</div></div>
+        </div>
+
+        <div className="add-url-bar">
+          <input type="url" placeholder="Paste AO3 URL to add a fic..." value={addUrl} onChange={e => setAddUrl(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addByUrl()} />
+          <button className="btn btn-accent btn-sm" onClick={addByUrl} disabled={importing}>Add</button>
+        </div>
+        {importMsg && <div style={{ fontSize: 12, color: 'var(--accent-hover)', marginBottom: 12 }}>{importMsg}</div>}
+
+        <div className="filters">
+          {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dropped','Dropped']].map(([k,l]) => (
+            <button key={k} className={`pill ${statusFilter === k ? 'active' : ''}`} onClick={() => setStatusFilter(k)}>{l}</button>
+          ))}
+          <span style={{ width: 1, background: 'var(--border)', margin: '0 2px', height: 20, display: 'inline-block' }}></span>
+          <select style={{ width: 130, padding: '5px 8px', fontSize: 12, borderRadius: 18 }} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            <option value="recent">Recent</option>
+            <option value="title">Title</option>
+            <option value="words">Word Count</option>
+            <option value="kudos">Kudos</option>
+            <option value="rating">My Rating</option>
+          </select>
+          <input className="search-input" placeholder="Search fics, fandoms, ships..." value={search} onChange={e => setSearch(e.target.value)} />
+          <button className={`pill ${bulkMode ? 'active' : ''}`} onClick={() => { setBulkMode(!bulkMode); setBulkSelected(new Set()); }}>{bulkMode ? 'Cancel' : 'Select'}</button>
+        </div>
+
+        {bulkMode && (
+          <div className="bulk-bar">
+            <span>{bulkSelected.size} selected</span>
+            <button className="btn btn-ghost btn-sm" onClick={selectAllVisible}>Select all ({filtered.length})</button>
+            {bulkSelected.size > 0 && <button className="btn btn-ghost btn-sm" onClick={deselectAll}>Deselect</button>}
+            {bulkSelected.size > 0 && (<>
+              <select style={{ width: 140, padding: '5px 8px', fontSize: 12, borderRadius: 8 }}
+                onChange={e => { if (e.target.value) bulkSetStatus(e.target.value); e.target.value = ''; }}
+                defaultValue="">
+                <option value="" disabled>Set status...</option>
+                <option value="to_read">To Read</option>
+                <option value="reading">Reading</option>
+                <option value="completed">Completed</option>
+                <option value="on_hold">On Hold</option>
+                <option value="dropped">Dropped</option>
+              </select>
+              <button className="btn btn-sm" style={{ color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.3)', background: 'transparent' }}
+                onClick={() => { if (confirm(`Remove ${bulkSelected.size} fics?`)) bulkDelete(); }}>Remove</button>
+            </>)}</div>
+        )}
+
+        <div className="work-list">
+          {filtered.length === 0 ? (
+            <div className="empty"><div className="emoji">📚</div><p>{works.length === 0 ? 'No fics yet! Import your bookmarks or add a fic by URL.' : 'No fics match your filters.'}</p></div>
+          ) : filtered.map(w => {
+            const st = w._status?.status || 'to_read';
+            const isChecked = bulkSelected.has(w.id);
+            return (
+              <div key={w.id} className={`work-card ${bulkMode ? 'selectable' : ''} ${isChecked ? 'selected' : ''}`}
+                onClick={() => bulkMode ? toggleBulkSelect(w.id) : openWork(w)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    {bulkMode && <input type="checkbox" className="bulk-check" checked={isChecked} onChange={() => toggleBulkSelect(w.id)} onClick={e => e.stopPropagation()} style={{ marginTop: 3 }} />}
+                    <div>
+                      <div className="work-title">{w.title}</div>
+                      <div className="work-author">by {(w.authors || []).join(', ') || 'Anonymous'}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+                    {w._status?.rating_personal > 0 && <Stars value={w._status.rating_personal} />}
+                    <span className={`status-badge status-${st}`}>{st.replace('_', ' ')}</span>
+                  </div>
+                </div>
+                <div className="work-meta">
+                  {w.word_count && <span>{wordCountLabel(w.word_count)} words</span>}
+                  {w.chapter_count && <span>{w.chapter_count}{w.chapter_total ? '/' + w.chapter_total : '/?'} ch</span>}
+                  {!w.is_complete && <span className="tag wip">WIP</span>}
+                  {w.kudos && <span>♥ {w.kudos.toLocaleString()}</span>}
+                  {w.rating && <span className={`tag ${ratingClass(w.rating)}`}>{w.rating}</span>}
+                </div>
+                <div className="work-tags">
+                  {(w.fandoms || []).slice(0, 2).map(f => <span key={f} className="tag fandom">{f.length > 30 ? f.slice(0, 27) + '...' : f}</span>)}
+                  {(w.relationships || []).slice(0, 3).map(r => <span key={r} className="tag ship">{r}</span>)}
+                </div>
+                {st === 'reading' && w._status?.current_chapter > 0 && w.chapter_count && (
+                  <div className="progress-bar" style={{ marginTop: 8 }}><div className="progress-fill" style={{ width: `${Math.min(100, (w._status.current_chapter / (w.chapter_total || w.chapter_count)) * 100)}%` }}></div></div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </>)}
+
+      {/* STATS VIEW */}
+      {view === 'stats' && (<>
+        {works.length === 0 ? (
+          <div className="empty"><div className="emoji">📊</div><p>Import some fics to see your stats!</p></div>
+        ) : !chartsAvailable ? (
+          <div className="empty"><div className="emoji">📊</div><p>Charts library failed to load. Try refreshing the page.</p></div>
+        ) : (<>
+          <div className="charts-grid">
+            <div className="chart-card">
+              <h3>Top Fandoms</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={stats.topFandoms} layout="vertical" margin={{ left: 10, right: 10 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" width={140} tick={{ fill: '#8b8d97', fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: '#1a1d27', border: '1px solid #2a2d3a', borderRadius: 8 }} />
+                  <Bar dataKey="value" fill="#e04666" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="chart-card">
+              <h3>Rating Breakdown</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={stats.ratingDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name}: ${value}`}>
+                    {stats.ratingDist.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: '#1a1d27', border: '1px solid #2a2d3a', borderRadius: 8 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="chart-card">
+              <h3>Word Count Distribution</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={stats.wcDist} margin={{ left: 0, right: 10 }}>
+                  <XAxis dataKey="name" tick={{ fill: '#8b8d97', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#8b8d97', fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: '#1a1d27', border: '1px solid #2a2d3a', borderRadius: 8 }} />
+                  <Bar dataKey="value" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="chart-card">
+              <h3>Top Ships</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={stats.topShips} layout="vertical" margin={{ left: 10, right: 10 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" width={160} tick={{ fill: '#8b8d97', fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: '#1a1d27', border: '1px solid #2a2d3a', borderRadius: 8 }} />
+                  <Bar dataKey="value" fill="#3b82f6" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="chart-card full" style={{ marginBottom: 20 }}>
+            <h3>Quick Stats</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 10 }}>
+              <div><span style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>{stats.totalWords.toLocaleString()}</span><div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total words across all fics</div></div>
+              <div><span style={{ fontSize: 24, fontWeight: 700, color: 'var(--warning)' }}>{stats.wips}</span><div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Works in progress</div></div>
+              <div><span style={{ fontSize: 24, fontWeight: 700, color: 'var(--purple)' }}>{stats.topFandoms[0]?.name || 'N/A'}</span><div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Most-read fandom</div></div>
+            </div>
+          </div>
+        </>)}
+      </>)}
+
+      {/* RECOMMENDATIONS VIEW */}
+      {view === 'recs' && (<>
+        <h2 style={{ fontSize: 18, marginBottom: 14 }}>Recommended For You</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 18 }}>Based on fics you've rated 4+ stars. Rate more fics to improve recommendations.</p>
+        {recommendations.length === 0 ? (
+          <div className="empty"><div className="emoji">🔮</div><p>Rate some fics with 4+ stars and come back for personalized recommendations!</p></div>
+        ) : recommendations.map(w => (
+          <div key={w.id} className="rec-card" style={{ cursor: 'pointer' }} onClick={() => openWork(w)}>
+            <div className="rec-reason">{w.reasons.join(' · ')}</div>
+            <div className="work-title">{w.title}</div>
+            <div className="work-author">by {(w.authors || []).join(', ') || 'Anonymous'}</div>
+            <div className="work-meta" style={{ marginTop: 6 }}>
+              {w.word_count && <span>{wordCountLabel(w.word_count)} words</span>}
+              {w.kudos && <span>♥ {w.kudos.toLocaleString()}</span>}
+              {(w.fandoms || []).slice(0, 2).map(f => <span key={f} className="tag fandom">{f.length > 25 ? f.slice(0, 22) + '...' : f}</span>)}
+              {(w.relationships || []).slice(0, 2).map(r => <span key={r} className="tag ship">{r}</span>)}
+            </div>
+          </div>
+        ))}
+      </>)}
+
+      {/* IMPORT VIEW */}
+      {view === 'import' && (<>
+        <div className="import-section">
+          <h3>📥 Import AO3 Bookmarks</h3>
+          <p>Click "Copy Bookmarklet" below, then create a new bookmark in your browser and paste it as the URL. Or drag the purple button to your bookmarks bar. Then visit your <a href="https://archiveofourown.org/users/BizarreBavarian/bookmarks" target="_blank" style={{ color: 'var(--accent-hover)' }}>AO3 bookmarks page</a> and click it.</p>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+            <button className="btn btn-accent" onClick={() => {
+              const code = generateBookmarklet();
+              navigator.clipboard.writeText(code).then(() => {
+                const btn = document.activeElement;
+                const orig = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = orig, 2000);
+              });
+            }}>Copy Bookmarklet</button>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Then: right-click bookmarks bar → Add page → paste as URL</span>
+          </div>
+          <a className="bookmarklet-link" href={generateBookmarklet()}>📖 Import to FicTracker</a>
+          <p style={{ marginTop: 12, fontSize: 12 }}>Starts from whatever page you're on and goes forward. 10-second delay between pages, 60-second backoff if rate-limited. To resume after a rate limit, navigate to the page it stopped at and click again.</p>
+        </div>
+
+        <div className="import-section">
+          <h3>📱 Import from EPUBs</h3>
+          <p>Drop AO3-downloaded EPUB files here. The importer reads AO3 metadata embedded in the EPUB to identify and import the fics.</p>
+          <div className={`drop-zone ${dragActive ? 'active' : ''}`}
+            onDragOver={e => { e.preventDefault(); setDragActive(true); }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={e => { e.preventDefault(); setDragActive(false); handleEpubFiles(Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.epub'))); }}
+            onClick={() => fileRef.current?.click()}>
+            <input ref={fileRef} type="file" accept=".epub" multiple onChange={e => handleEpubFiles(Array.from(e.target.files))} />
+            {importing ? importMsg : 'Drop EPUB files here or click to browse'}
+          </div>
+        </div>
+
+        <div className="import-section">
+          <h3>🔗 Add by URL</h3>
+          <p>Paste any AO3 work URL to add it to your library.</p>
+          <div className="add-url-bar">
+            <input type="url" placeholder="https://archiveofourown.org/works/12345678" value={addUrl} onChange={e => setAddUrl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addByUrl()} />
+            <button className="btn btn-accent btn-sm" onClick={addByUrl} disabled={importing}>Add</button>
+          </div>
+        </div>
+      </>)}
+
+      {/* SETTINGS VIEW */}
+      {view === 'settings' && <SettingsView userId={userId} session={session} />}
+
+      {/* WORK DETAIL MODAL */}
+      {selected && (
+        <div className="modal-overlay" onClick={() => setSelected(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>{selected.title}</h2>
+            <div className="modal-author">by {(selected.authors || []).join(', ') || 'Anonymous'}</div>
+            {selected.summary && <div className="modal-summary">{selected.summary}</div>}
+            <div className="modal-meta">
+              {selected.word_count && <span>{selected.word_count.toLocaleString()} words</span>}
+              {selected.chapter_count && <span>{selected.chapter_count}{selected.chapter_total ? '/' + selected.chapter_total : '/?'} chapters</span>}
+              {!selected.is_complete && <span style={{ color: 'var(--warning)' }}>WIP</span>}
+              {selected.kudos && <span>♥ {selected.kudos.toLocaleString()} kudos</span>}
+              {selected.hits && <span>{selected.hits.toLocaleString()} hits</span>}
+            </div>
+            <div className="work-tags" style={{ marginBottom: 16 }}>
+              {selected.rating && <span className={`tag ${ratingClass(selected.rating)}`}>{selected.rating}</span>}
+              {(selected.fandoms || []).map(f => <span key={f} className="tag fandom">{f}</span>)}
+              {(selected.relationships || []).map(r => <span key={r} className="tag ship">{r}</span>)}
+              {(selected.characters || []).slice(0, 6).map(c => <span key={c} className="tag">{c}</span>)}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div className="modal-section">
+                <label>Status</label>
+                <select value={editStatus} onChange={e => setEditStatus(e.target.value)}>
+                  <option value="to_read">To Read</option>
+                  <option value="reading">Reading</option>
+                  <option value="completed">Completed</option>
+                  <option value="on_hold">On Hold</option>
+                  <option value="dropped">Dropped</option>
+                </select>
+              </div>
+              <div className="modal-section">
+                <label>My Rating</label>
+                <div style={{ paddingTop: 6 }}><Stars value={editRating} onChange={setEditRating} /></div>
+              </div>
+            </div>
+
+            {(editStatus === 'reading' && (selected.chapter_total || selected.chapter_count > 1)) && (
+              <div className="modal-section">
+                <label>Current Chapter ({editChapter}/{selected.chapter_total || selected.chapter_count})</label>
+                <input type="range" min="0" max={selected.chapter_total || selected.chapter_count}
+                  value={editChapter} onChange={e => setEditChapter(parseInt(e.target.value))}
+                  style={{ width: '100%', accentColor: 'var(--accent)' }} />
+                <div className="progress-bar"><div className="progress-fill" style={{ width: `${(editChapter / (selected.chapter_total || selected.chapter_count)) * 100}%` }}></div></div>
+              </div>
+            )}
+
+            <div className="modal-section">
+              <label>Notes</label>
+              <textarea placeholder="Your thoughts, favorite moments, etc..." value={editNotes} onChange={e => setEditNotes(e.target.value)} />
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)', marginRight: 'auto' }}
+                onClick={() => { if (confirm('Remove this fic from your library?')) deleteWork(selected.id); }}>Remove</button>
+              {selected.ao3_id && selected.ao3_id > 0 && (
+                <a className="btn btn-ghost btn-sm" href={`https://archiveofourown.org/works/${selected.ao3_id}`} target="_blank" rel="noopener"
+                  onClick={e => e.stopPropagation()}
+                  style={{ textDecoration: 'none' }}>Open on AO3</a>
+              )}
+              <button className="btn btn-ghost" onClick={() => setSelected(null)}>Cancel</button>
+              <button className="btn btn-accent" onClick={saveWorkDetails}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Root() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
+  if (loading) return <div className="app"><div className="loading">Loading...</div></div>;
+  if (!session) return <LoginPage />;
+  return <App session={session} />;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+</script>
+</body>
+</html>
