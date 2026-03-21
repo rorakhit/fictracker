@@ -13,12 +13,28 @@ export default function Library({
 }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('recent');
+  const [sortBy, setSortBy] = useState('shuffle');
   const [addUrl, setAddUrl] = useState('');
+
+  // Seeded shuffle rotates every 2 hours so the library feels fresh
+  // without flickering on re-renders. Same approach as queue recs.
+  const shuffleSeed = useMemo(() => Math.floor(Date.now() / (2 * 60 * 60 * 1000)), []);
+
+  function hashCode(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+    }
+    return h;
+  }
 
   function getStatusForWork(workId) {
     return statuses[workId] || null;
   }
+
+  // Switch to a deterministic sort when user applies a filter or search
+  const isFiltered = statusFilter !== 'all' || search.length > 0;
+  const effectiveSort = (sortBy === 'shuffle' && isFiltered) ? 'recent' : sortBy;
 
   const filtered = useMemo(() => {
     let result = works.map(w => ({ ...w, _status: getStatusForWork(w.id) }));
@@ -36,15 +52,20 @@ export default function Library({
       );
     }
     result.sort((a, b) => {
-      if (sortBy === 'recent') return new Date(b.imported_at) - new Date(a.imported_at);
-      if (sortBy === 'words') return (b.word_count || 0) - (a.word_count || 0);
-      if (sortBy === 'kudos') return (b.kudos || 0) - (a.kudos || 0);
-      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
-      if (sortBy === 'rating') return (b._status?.rating_personal || 0) - (a._status?.rating_personal || 0);
+      if (effectiveSort === 'shuffle') {
+        const ha = (hashCode(a.id + ':' + shuffleSeed) & 0x7fffffff);
+        const hb = (hashCode(b.id + ':' + shuffleSeed) & 0x7fffffff);
+        return ha - hb;
+      }
+      if (effectiveSort === 'recent') return new Date(b.imported_at) - new Date(a.imported_at);
+      if (effectiveSort === 'words') return (b.word_count || 0) - (a.word_count || 0);
+      if (effectiveSort === 'kudos') return (b.kudos || 0) - (a.kudos || 0);
+      if (effectiveSort === 'title') return (a.title || '').localeCompare(b.title || '');
+      if (effectiveSort === 'rating') return (b._status?.rating_personal || 0) - (a._status?.rating_personal || 0);
       return 0;
     });
     return result;
-  }, [works, statuses, statusFilter, search, sortBy]);
+  }, [works, statuses, statusFilter, search, effectiveSort, shuffleSeed]);
 
   function selectAllVisible() {
     const allIds = new Set(filtered.map(w => w.id));
@@ -155,6 +176,7 @@ export default function Library({
         ))}
         <span style={{ width: 1, background: 'var(--border)', margin: '0 2px', height: 20, display: 'inline-block' }}></span>
         <select style={{ width: 130, padding: '5px 8px', fontSize: 12, borderRadius: 18 }} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+          <option value="shuffle">Shuffle</option>
           <option value="recent">Recent</option>
           <option value="title">Title</option>
           <option value="words">Word Count</option>
