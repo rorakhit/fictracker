@@ -455,6 +455,11 @@ export function useLibrary(userId) {
   }, [works, statuses]);
 
   // --- Queue recommendations (in-library: to_read + reading, matching taste) ---
+  // Rotates every 2 hours so the same fics don't sit at the top forever.
+  // Uses a seeded shuffle: deterministic within a 2-hour window so it
+  // doesn't flicker on re-renders, but gives a fresh order each rotation.
+  const queueRotationSeed = useMemo(() => Math.floor(Date.now() / (2 * 60 * 60 * 1000)), []);
+
   const queueRecs = useMemo(() => {
     const { likedFandoms, likedShips } = tasteProfile;
     const queue = works.filter(w => {
@@ -477,8 +482,27 @@ export function useLibrary(userId) {
       return { ...w, score, reasons: [...new Set(reasons)].slice(0, 3) };
     });
 
-    return scored.filter(w => w.score > 0).sort((a, b) => b.score - a.score).slice(0, 10);
-  }, [works, statuses, tasteProfile]);
+    const eligible = scored.filter(w => w.score > 0);
+
+    // Seeded shuffle: mix a hash of the work ID with the rotation seed
+    // to get a stable-but-rotating pseudo-random order. Works with the
+    // same score get shuffled; higher-scored works still tend to rank
+    // higher because we add a random jitter rather than fully randomizing.
+    function hashCode(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+      }
+      return h;
+    }
+
+    const shuffled = eligible.map(w => {
+      const jitter = (hashCode(w.id + ':' + queueRotationSeed) & 0x7fffffff) % 100 / 100;
+      return { ...w, sortKey: w.score + jitter };
+    }).sort((a, b) => b.sortKey - a.sortKey).slice(0, 10);
+
+    return shuffled;
+  }, [works, statuses, tasteProfile, queueRotationSeed]);
 
   // --- Discovery recommendations (fics NOT in your library, from the community) ---
   const [discoveryRecs, setDiscoveryRecs] = useState([]);
