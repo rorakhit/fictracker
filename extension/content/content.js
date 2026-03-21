@@ -300,7 +300,7 @@
           <div class="ft-chapter-controls">
             <button class="ft-btn ft-btn-sm ft-btn-ghost" id="ft-ch-minus" ${currentCh <= 0 ? 'disabled' : ''}>−</button>
             <span class="ft-chapter-num">${currentCh}</span>
-            <button class="ft-btn ft-btn-sm ft-btn-ghost" id="ft-ch-plus">+</button>
+            <button class="ft-btn ft-btn-sm ft-btn-ghost" id="ft-ch-plus" ${chapTotal !== '?' && currentCh >= chapTotal ? 'disabled' : ''}>+</button>
           </div>
         </div>
       ` : ''}
@@ -389,6 +389,11 @@
 
   async function init() {
     const meta = scrapeWorkMetadata();
+
+    // Remove existing panel if re-initializing (e.g. after login)
+    const existingPanel = document.getElementById('fictracker-panel');
+    if (existingPanel) existingPanel.remove();
+
     const panel = createPanel();
 
     // Check if user is logged in

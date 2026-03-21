@@ -90,6 +90,9 @@ function Dashboard({ session }) {
           checkWipUpdates={lib.checkWipUpdates}
           dismissWipUpdate={lib.dismissWipUpdate}
           dismissAllWipUpdates={lib.dismissAllWipUpdates}
+          isAtFicLimit={lib.isAtFicLimit}
+          ficsRemaining={lib.ficsRemaining}
+          ficLimit={lib.FREE_FIC_LIMIT}
           onOpenWork={openWork}
         />
       )}

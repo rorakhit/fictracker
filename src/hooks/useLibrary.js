@@ -4,6 +4,12 @@ import JSZip from 'jszip';
 
 const SUPABASE_URL = 'https://nivqfnrkpuoyjtugavtj.supabase.co';
 
+// Free tier limit — enforced client-side for now. When Stripe is
+// integrated, this check will also happen server-side in the Edge
+// Function. The subscription_tier field on user_preferences will
+// be set by the Stripe webhook.
+const FREE_FIC_LIMIT = 50;
+
 export function useLibrary(userId) {
   const [works, setWorks] = useState([]);
   const [statuses, setStatuses] = useState({});
@@ -16,6 +22,7 @@ export function useLibrary(userId) {
   const [wipCheckMsg, setWipCheckMsg] = useState('');
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
+  const [subscriptionTier, setSubscriptionTier] = useState('free'); // 'free' | 'plus'
 
   useEffect(() => {
     async function claimData() {
@@ -65,6 +72,14 @@ export function useLibrary(userId) {
       const wipMap = {};
       (wipRows || []).forEach(row => { wipMap[row.work_id] = row; });
       setWipTracking(wipMap);
+
+      // Load subscription tier (defaults to 'free' if no row or no column yet)
+      const { data: prefs } = await supabase
+        .from('user_preferences')
+        .select('subscription_tier')
+        .eq('user_id', userId)
+        .single();
+      if (prefs?.subscription_tier) setSubscriptionTier(prefs.subscription_tier);
     } catch (e) { console.error('Load error:', e); }
     setLoading(false);
   }, [userId]);
@@ -181,8 +196,19 @@ export function useLibrary(userId) {
     setBulkMode(false);
   }
 
+  // Check if user has hit the free tier fic limit.
+  // 'plus' and 'beta' users get unlimited fics — beta is the same as
+  // plus but without payment, for testers.
+  const isPremium = subscriptionTier === 'plus' || subscriptionTier === 'beta';
+  const isAtFicLimit = !isPremium && works.length >= FREE_FIC_LIMIT;
+  const ficsRemaining = isPremium ? Infinity : Math.max(0, FREE_FIC_LIMIT - works.length);
+
   async function addByUrl(url) {
     if (!url.trim()) return;
+    if (isAtFicLimit) {
+      setImportMsg(`You've reached the free tier limit of ${FREE_FIC_LIMIT} fics. Upgrade to Plus for unlimited fics!`);
+      return;
+    }
     const match = url.match(/works\/(\d+)/);
     if (!match) { setImportMsg('Could not find an AO3 work ID in that URL'); return; }
     const ao3Id = parseInt(match[1]);
@@ -442,6 +468,7 @@ export function useLibrary(userId) {
     checkingWips, wipCheckMsg, setWipCheckMsg,
     bulkMode, setBulkMode, bulkSelected, setBulkSelected,
     stats, recommendations,
+    subscriptionTier, isPremium, isAtFicLimit, ficsRemaining, FREE_FIC_LIMIT,
     loadData, getStatusForWork, updateStatus, deleteWork,
     toggleBulkSelect, bulkSetStatus, bulkDelete,
     addByUrl, handleEpubFiles,

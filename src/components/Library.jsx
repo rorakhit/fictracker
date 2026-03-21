@@ -8,6 +8,7 @@ export default function Library({
   toggleBulkSelect, bulkSetStatus, bulkDelete,
   importing, importMsg, addByUrl,
   checkingWips, wipCheckMsg, checkWipUpdates, dismissWipUpdate, dismissAllWipUpdates,
+  isAtFicLimit, ficsRemaining, ficLimit,
   onOpenWork
 }) {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -93,10 +94,46 @@ export default function Library({
                 <button className="btn btn-ghost btn-sm" onClick={dismissAllWipUpdates} style={{ alignSelf: 'flex-start' }}>Dismiss all</button>
               </div>
             )}
+            {isAtFicLimit && (
+              <div style={{
+                background: 'rgba(139,92,246,0.08)',
+                border: '1px solid rgba(139,92,246,0.25)',
+                borderRadius: 12,
+                padding: '12px 16px',
+                marginBottom: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+              }}>
+                <span style={{ fontSize: 18 }}>✨</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--purple)' }}>
+                    You've reached {ficLimit} fics — the free tier limit
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                    Upgrade to Plus for unlimited fics, analytics, reading wrapped, and more.
+                  </div>
+                </div>
+                <button className="btn btn-sm" style={{ background: 'var(--purple)', color: 'white' }}>
+                  Upgrade
+                </button>
+              </div>
+            )}
+            {!isAtFicLimit && ficsRemaining <= 10 && ficsRemaining > 0 && (
+              <div style={{
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                marginBottom: 8,
+                textAlign: 'center',
+              }}>
+                {ficsRemaining} fic{ficsRemaining !== 1 ? 's' : ''} remaining on free tier
+              </div>
+            )}
             <div className="add-url-bar">
-              <input type="url" placeholder="Paste AO3 URL to add a fic..." value={addUrl} onChange={e => setAddUrl(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { addByUrl(addUrl); setAddUrl(''); } }} />
-              <button className="btn btn-accent btn-sm" onClick={() => { addByUrl(addUrl); setAddUrl(''); }} disabled={importing}>Add</button>
+              <input type="url" placeholder={isAtFicLimit ? 'Upgrade to Plus to add more fics' : 'Paste AO3 URL to add a fic...'} value={addUrl} onChange={e => setAddUrl(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { addByUrl(addUrl); setAddUrl(''); } }}
+                disabled={isAtFicLimit} />
+              <button className="btn btn-accent btn-sm" onClick={() => { addByUrl(addUrl); setAddUrl(''); }} disabled={importing || isAtFicLimit}>Add</button>
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={checkWipUpdates}
