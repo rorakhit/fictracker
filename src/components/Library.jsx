@@ -82,7 +82,7 @@ export default function Library({
                       const oldCh = wip?.last_known_chapters || w.chapter_count;
                       return (
                         <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                          <span>📖 {w.title}{newCh ? ` (${oldCh} → ${newCh} ch)` : ''}</span>
+                          <span>📖 {w.title}{newCh ? ` — Ch. ${newCh} is out!` : ''}</span>
                           <button className="btn btn-ghost" style={{ fontSize: 11, padding: '1px 6px', minHeight: 0 }}
                             onClick={e => { e.stopPropagation(); dismissWipUpdate(w.id); }}>dismiss</button>
                         </div>
