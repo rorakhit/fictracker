@@ -67,14 +67,26 @@ function AiRecCard({ rec, onAddToLibrary, addingIds, addedIds }) {
 
   return (
     <div className="rec-card" style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-        {rec.verified ? (
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
+        {(() => {
+          const catStyles = {
+            core: { bg: 'rgba(96,165,250,0.15)', color: '#60a5fa', label: 'Core' },
+            adjacent: { bg: 'rgba(52,211,153,0.15)', color: '#34d399', label: 'Adjacent' },
+            wildcard: { bg: 'rgba(251,191,36,0.15)', color: '#fbbf24', label: 'Wildcard' },
+          };
+          const cat = catStyles[rec.category] || catStyles.core;
+          return (
+            <span style={{
+              fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6,
+              background: cat.bg, color: cat.color, letterSpacing: 0.3, textTransform: 'uppercase',
+            }}>
+              {cat.label}
+            </span>
+          );
+        })()}
+        {rec.verified && (
           <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 8, background: 'var(--accent-teal)', color: '#fff', fontWeight: 600 }}>
             Verified
-          </span>
-        ) : (
-          <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 8, background: 'var(--surface)', color: 'var(--text-muted)', border: '1px solid var(--border)', fontWeight: 600 }}>
-            AI Pick
           </span>
         )}
         {rec.kudos_estimate && !rec.kudos && (
@@ -298,29 +310,49 @@ export default function RecsView({
                       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
                         Explore more on AO3
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {aiSearchLinks.map((link, i) => (
-                          <a
-                            key={i}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              fontSize: 12,
-                              color: 'var(--accent-purple, #a78bfa)',
-                              textDecoration: 'none',
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            <span style={{ fontWeight: 600 }}>
-                              {[link.fandom, link.relationship].filter(Boolean).join(' · ')}
-                            </span>
-                            <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>
-                              — {link.reason}
-                            </span>
-                            <span style={{ marginLeft: 4 }}>→</span>
-                          </a>
-                        ))}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {aiSearchLinks.map((link, i) => {
+                          const catColors = {
+                            core: { bg: 'rgba(96,165,250,0.15)', text: '#60a5fa', label: 'Core' },
+                            adjacent: { bg: 'rgba(52,211,153,0.15)', text: '#34d399', label: 'Adjacent' },
+                            wildcard: { bg: 'rgba(251,191,36,0.15)', text: '#fbbf24', label: 'Wildcard' },
+                          };
+                          const cat = catColors[link.category] || catColors.core;
+                          return (
+                            <a
+                              key={i}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                fontSize: 12,
+                                color: 'var(--accent-purple, #a78bfa)',
+                                textDecoration: 'none',
+                                lineHeight: 1.6,
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 8,
+                              }}
+                            >
+                              <span style={{
+                                fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6,
+                                background: cat.bg, color: cat.text, whiteSpace: 'nowrap', marginTop: 2,
+                                letterSpacing: 0.3, textTransform: 'uppercase',
+                              }}>
+                                {cat.label}
+                              </span>
+                              <span>
+                                <span style={{ fontWeight: 600 }}>
+                                  {[link.fandom, link.relationship].filter(Boolean).join(' · ')}
+                                </span>
+                                <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>
+                                  — {link.reason}
+                                </span>
+                                <span style={{ marginLeft: 4 }}>→</span>
+                              </span>
+                            </a>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
