@@ -23,6 +23,7 @@ export function useLibrary(userId) {
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
   const [subscriptionTier, setSubscriptionTier] = useState('free'); // 'free' | 'plus'
+  const [ao3Username, setAo3Username] = useState('');
 
   useEffect(() => {
     async function claimData() {
@@ -76,10 +77,11 @@ export function useLibrary(userId) {
       // Load subscription tier (defaults to 'free' if no row or no column yet)
       const { data: prefs } = await supabase
         .from('user_preferences')
-        .select('subscription_tier')
+        .select('subscription_tier, ao3_username')
         .eq('user_id', userId)
         .single();
       if (prefs?.subscription_tier) setSubscriptionTier(prefs.subscription_tier);
+      if (prefs?.ao3_username) setAo3Username(prefs.ao3_username);
     } catch (e) { console.error('Load error:', e); }
     setLoading(false);
   }, [userId]);
@@ -559,6 +561,64 @@ export function useLibrary(userId) {
   // but point it at queueRecs so existing code doesn't break.
   const recommendations = queueRecs;
 
+  // --- Server-side bookmark sync ---
+  // Calls the sync-bookmarks Edge Function, which scrapes the user's
+  // public AO3 bookmarks page server-side. The function creates/resumes
+  // an import_jobs row to track progress. If it times out (150s limit),
+  // the user can call again to resume from where it left off.
+  const [syncingBookmarks, setSyncingBookmarks] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
+  const [syncJob, setSyncJob] = useState(null); // latest import_jobs row
+
+  const syncBookmarks = useCallback(async () => {
+    setSyncingBookmarks(true);
+    setSyncMsg('Starting AO3 bookmark sync...');
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-bookmarks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.error) {
+        setSyncMsg(data.error);
+      } else {
+        setSyncMsg(data.message || `Imported ${data.imported} fics.`);
+        if (data.job_id) {
+          // Fetch the full job record for progress display
+          const { data: job } = await supabase
+            .from('import_jobs')
+            .select('*')
+            .eq('id', data.job_id)
+            .single();
+          setSyncJob(job);
+        }
+        loadData(); // Refresh library with new imports
+      }
+    } catch (e) {
+      setSyncMsg('Sync failed: ' + e.message);
+    }
+    setSyncingBookmarks(false);
+  }, [loadData]);
+
+  // Load latest sync job on mount for progress display
+  useEffect(() => {
+    async function loadLatestJob() {
+      const { data: jobs } = await supabase
+        .from('import_jobs')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('job_type', 'bookmarks')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (jobs && jobs.length > 0) setSyncJob(jobs[0]);
+    }
+    loadLatestJob();
+  }, [userId]);
+
   // --- AI-powered recommendations (Plus feature) ---
   const [aiRecs, setAiRecs] = useState([]);
   const [aiSearchLinks, setAiSearchLinks] = useState([]);
@@ -601,6 +661,8 @@ export function useLibrary(userId) {
     bulkMode, setBulkMode, bulkSelected, setBulkSelected,
     stats, recommendations, discoveryRecs, discoveryLoading, tasteProfile,
     aiRecs, aiSearchLinks, aiRecsLoading, aiRecsError, aiRecsRemaining, fetchAiRecs,
+    syncingBookmarks, syncMsg, syncJob, syncBookmarks,
+    ao3Username,
     subscriptionTier, isPremium, isAtFicLimit, ficsRemaining, FREE_FIC_LIMIT,
     loadData, getStatusForWork, updateStatus, deleteWork,
     toggleBulkSelect, bulkSetStatus, bulkDelete,

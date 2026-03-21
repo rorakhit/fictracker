@@ -75,6 +75,114 @@ export function generatePersistentChapterSyncBookmarklet(refreshToken) {
   return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
 }
 
+// ---- Reading History Import Bookmarklet ----
+// AO3 reading history (/users/{username}/readings) is PRIVATE — only
+// the logged-in user can see it. So this MUST be a client-side bookmarklet
+// (not a server-side Edge Function). The user runs it while logged into AO3
+// and viewing their readings page.
+//
+// It scrapes li.work.blurb elements (same structure as bookmarks),
+// auto-paginates with a 10s delay between pages, and sends each page
+// of works to our import-works Edge Function.
+
+function buildHistoryScraperCode() {
+  // This is a self-contained scraper that runs on the AO3 readings page.
+  // It parses work blurbs, extracts metadata, paginates, and imports.
+  return `
+var S='${SUPABASE_URL}';
+var K='${SUPABASE_KEY}';
+
+function parseBlurbs(doc){
+  var items=doc.querySelectorAll('li.blurb.group');
+  var works=[];
+  items.forEach(function(li){
+    var link=li.querySelector('h4.heading a[href*="/works/"]');
+    if(!link)return;
+    var m=link.getAttribute('href').match(/\\/works\\/(\\d+)/);
+    if(!m)return;
+    var q=function(s){var e=li.querySelector(s);return e?e.textContent.trim():null};
+    var qa=function(s){return Array.from(li.querySelectorAll(s)).map(function(e){return e.textContent.trim()})};
+    var w={ao3_id:parseInt(m[1]),title:link.textContent.trim(),authors:qa('[rel=author]'),fandoms:qa('h5.fandoms a.tag'),relationships:[],characters:[],freeform_tags:[]};
+    var tags=li.querySelector('ul.tags');
+    if(tags){
+      tags.querySelectorAll('li.relationships a.tag').forEach(function(a){w.relationships.push(a.textContent.trim())});
+      tags.querySelectorAll('li.characters a.tag').forEach(function(a){w.characters.push(a.textContent.trim())});
+      tags.querySelectorAll('li.freeforms a.tag').forEach(function(a){w.freeform_tags.push(a.textContent.trim())});
+    }
+    var wc=q('dd.words');if(wc)w.word_count=parseInt(wc.replace(/,/g,''));
+    var ch=q('dd.chapters');if(ch){var cm=ch.match(/(\\d+)\\s*\\/\\s*(\\d+|\\?)/);if(cm){w.chapter_count=parseInt(cm[1]);w.chapter_total=cm[2]==='?'?null:parseInt(cm[2]);w.is_complete=w.chapter_total!==null&&w.chapter_count>=w.chapter_total}}
+    var k=q('dd.kudos');if(k)w.kudos=parseInt(k.replace(/,/g,''));
+    var h=q('dd.hits');if(h)w.hits=parseInt(h.replace(/,/g,''));
+    var rt=li.querySelector('span.rating');if(rt)w.rating=rt.getAttribute('title')||null;
+    works.push(w);
+  });
+  return works;
+}
+
+function getTotalPages(doc){
+  var pg=doc.querySelector('ol.pagination');
+  if(!pg)return 1;
+  var links=pg.querySelectorAll('a');
+  var max=1;
+  links.forEach(function(a){var n=parseInt(a.textContent);if(n>max)max=n});
+  return max;
+}
+
+async function importPage(works,token){
+  var r=await fetch(S+'/functions/v1/import-works',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({works:works,source:'history'})});
+  return r.json();
+}
+
+async function run(token){
+  var ov=document.createElement('div');
+  ov.id='ft-history-overlay';
+  ov.style.cssText='position:fixed;top:0;left:0;right:0;padding:16px;background:#0f1318;border-bottom:2px solid rgba(20,184,166,0.4);color:#14b8a6;font:600 14px -apple-system,sans-serif;z-index:999999;text-align:center';
+  document.body.appendChild(ov);
+  function msg(t){ov.textContent=t}
+
+  if(!location.href.match(/archiveofourown\\.org\\/users\\/[^\\/]+\\/readings/)){
+    msg('Navigate to your AO3 Reading History page first!');
+    setTimeout(function(){ov.remove()},4000);
+    return;
+  }
+
+  var totalPages=getTotalPages(document);
+  msg('Found '+totalPages+' page(s) of reading history. Importing page 1...');
+
+  var works=parseBlurbs(document);
+  var totalImported=0;
+  if(works.length>0){
+    var d=await importPage(works,token);
+    totalImported+=d.imported||0;
+  }
+
+  for(var p=2;p<=totalPages;p++){
+    msg('Importing page '+p+' of '+totalPages+'... ('+totalImported+' imported so far) — 10s delay for AO3 rate limits');
+    await new Promise(function(r){setTimeout(r,10000)});
+    try{
+      var resp=await fetch(location.href.split('?')[0]+'?page='+p);
+      if(resp.status===429){msg('Rate limited by AO3 on page '+p+'. Wait a minute and try again from this page.');return}
+      var html=await resp.text();
+      var parser=new DOMParser();
+      var doc2=parser.parseFromString(html,'text/html');
+      var pw=parseBlurbs(doc2);
+      if(pw.length>0){var d2=await importPage(pw,token);totalImported+=d2.imported||0}
+    }catch(e){msg('Error on page '+p+': '+e.message);return}
+  }
+
+  msg('Done! Imported '+totalImported+' fics from your reading history.');
+  setTimeout(function(){ov.remove()},5000);
+}
+`;
+}
+
+export function generatePersistentHistoryBookmarklet(refreshToken) {
+  const scraperCode = buildHistoryScraperCode();
+  const inner = `(function(){${scraperCode}fetch('${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':K,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:'${refreshToken}'})}).then(function(r){return r.json()}).then(function(auth){if(auth.error){alert('Session expired — regenerate bookmarklet in FicTracker Settings');return}run(auth.access_token)}).catch(function(e){alert('Error: '+e.message)})})()`;
+
+  return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
+}
+
 // Generate a long-lived refresh token URL that auto-refreshes before adding
 export async function generatePersistentBookmarklet(refreshToken) {
   const inner = `(function(){var S='${SUPABASE_URL}',K='${SUPABASE_KEY}',R='${refreshToken}';${buildToastCode()}${buildPayloadCode()}toast('Adding to FicTracker...');fetch(S+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':K,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:R})}).then(function(r){return r.json()}).then(function(auth){if(auth.error){toast('Session expired — regenerate bookmarklet in Settings',true);return}return fetch(S+'/functions/v1/import-works',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth.access_token},body:JSON.stringify({works:[w],source:'bookmarklet',defaultStatus:'reading'})})${buildResultHandler()}})})()`;

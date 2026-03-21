@@ -123,6 +123,11 @@ function Dashboard({ session }) {
           importMsg={lib.importMsg}
           addByUrl={lib.addByUrl}
           handleEpubFiles={lib.handleEpubFiles}
+          syncingBookmarks={lib.syncingBookmarks}
+          syncMsg={lib.syncMsg}
+          syncJob={lib.syncJob}
+          onSyncBookmarks={lib.syncBookmarks}
+          ao3Username={lib.ao3Username}
         />
       )}
       {view === 'settings' && <SettingsView userId={userId} session={session} />}

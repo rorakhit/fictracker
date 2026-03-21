@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabase';
-import { generatePersistentBookmarklet, generatePersistentChapterSyncBookmarklet } from '../utils/bookmarklet';
+import { generatePersistentBookmarklet, generatePersistentChapterSyncBookmarklet, generatePersistentHistoryBookmarklet } from '../utils/bookmarklet';
 
 // React blocks javascript: URLs in href as a security measure.
 // This component sets the href directly on the DOM node via a ref
@@ -42,9 +42,11 @@ export default function SettingsView({ userId, session }) {
   const [saving, setSaving] = useState(false);
   const [bookmarkletUrl, setBookmarkletUrl] = useState(null);
   const [chapterSyncUrl, setChapterSyncUrl] = useState(null);
+  const [historyUrl, setHistoryUrl] = useState(null);
   const [bmGenerating, setBmGenerating] = useState(false);
   const [bmCopied, setBmCopied] = useState(false);
   const [csCopied, setCsCopied] = useState(false);
+  const [hsCopied, setHsCopied] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -85,13 +87,15 @@ export default function SettingsView({ userId, session }) {
         setBmGenerating(false);
         return;
       }
-      // Generate both bookmarklets from the same refresh token
-      const [quickAdd, chapterSync] = await Promise.all([
+      // Generate all three bookmarklets from the same refresh token
+      const [quickAdd, chapterSync, historyImport] = await Promise.all([
         generatePersistentBookmarklet(currentSession.refresh_token),
         generatePersistentChapterSyncBookmarklet(currentSession.refresh_token),
+        Promise.resolve(generatePersistentHistoryBookmarklet(currentSession.refresh_token)),
       ]);
       setBookmarkletUrl(quickAdd);
       setChapterSyncUrl(chapterSync);
+      setHistoryUrl(historyImport);
     } catch (e) {
       console.error('Bookmarklet generation error:', e);
     }
@@ -128,13 +132,16 @@ export default function SettingsView({ userId, session }) {
       </div>
 
       <div className="form-group">
-        <label>AO3 Username (optional)</label>
+        <label>AO3 Username</label>
         <input
           type="text"
           placeholder="Your AO3 username"
           value={ao3Username}
           onChange={e => setAo3Username(e.target.value)}
         />
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+          Used for server-side bookmark sync in the Import tab. Must match your AO3 profile exactly.
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
@@ -154,7 +161,7 @@ export default function SettingsView({ userId, session }) {
           display: 'grid',
           gap: 10,
           marginBottom: 14,
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: '1fr 1fr 1fr',
         }}>
           <div style={{ padding: '10px 12px', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📚 Quick Add</div>
@@ -166,6 +173,12 @@ export default function SettingsView({ userId, session }) {
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📖 Chapter Sync</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
               Sync your reading progress. Tap on any chapter page to save where you are.
+            </div>
+          </div>
+          <div style={{ padding: '10px 12px', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📜 Reading History</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              Import fics from your AO3 reading history. Catches fics you read but never bookmarked.
             </div>
           </div>
         </div>
@@ -237,6 +250,33 @@ export default function SettingsView({ userId, session }) {
               </div>
             )}
 
+            {/* Reading History Import */}
+            {historyUrl && (
+              <div style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                padding: 14,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>📜 Reading History Import</div>
+                <BookmarkletDragLink url={historyUrl} label="📜 History Import" />
+
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  <button className="btn btn-accent btn-sm" onClick={() => copyToClipboard(historyUrl, setHsCopied)}>
+                    {hsCopied ? 'Copied!' : 'Copy History Import'}
+                  </button>
+                </div>
+
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  Go to your AO3 Reading History page while logged in, then click this bookmarklet.
+                  It imports fics you've read but never bookmarked. Auto-paginates with a 10-second delay.
+                  <br /><br />
+                  <strong style={{ color: 'var(--text)' }}>Note:</strong> AO3 reading history is private,
+                  so this must run in your browser (not server-side). You need to be logged into AO3.
+                </div>
+              </div>
+            )}
+
             {/* Setup instructions + regenerate */}
             <div style={{
               background: 'var(--surface)',
@@ -258,7 +298,7 @@ export default function SettingsView({ userId, session }) {
               </div>
             </div>
 
-            <button className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => { setBookmarkletUrl(null); setChapterSyncUrl(null); }}>
+            <button className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => { setBookmarkletUrl(null); setChapterSyncUrl(null); setHistoryUrl(null); }}>
               Regenerate Bookmarklets
             </button>
           </div>
