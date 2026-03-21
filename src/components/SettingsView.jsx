@@ -144,12 +144,32 @@ export default function SettingsView({ userId, session }) {
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
-        <h3 style={{ fontSize: 16, marginBottom: 4 }}>📚 Quick Add — AO3 Bookmarklet</h3>
+        <h3 style={{ fontSize: 16, marginBottom: 4 }}>AO3 Bookmarklets</h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
-          Add a single fic to your library with one click while browsing AO3.
-          Tap the bookmarklet on any fic page and it's instantly added as "reading."
-          Works on iPad, iPhone, and desktop.
+          Two bookmarklets for tracking fics while browsing AO3.
+          Works on iPad, iPhone, and desktop — no extension needed.
         </p>
+
+        <div style={{
+          display: 'grid',
+          gap: 10,
+          marginBottom: 14,
+          gridTemplateColumns: '1fr 1fr',
+        }}>
+          <div style={{ padding: '10px 12px', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📚 Quick Add</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              Add a fic to your library with one tap. Instantly marked as "reading."
+            </div>
+          </div>
+          <div style={{ padding: '10px 12px', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📖 Chapter Sync</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              Sync your reading progress. Tap on any chapter page to save where you are.
+            </div>
+          </div>
+        </div>
+
         <div style={{
           fontSize: 11,
           color: 'var(--text-muted)',
@@ -171,74 +191,79 @@ export default function SettingsView({ userId, session }) {
             {bmGenerating ? 'Generating...' : 'Generate Bookmarklets'}
           </button>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Quick Add */}
             <div style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
               borderRadius: 10,
               padding: 14,
             }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>📚 Quick Add</div>
               <BookmarkletDragLink url={bookmarkletUrl} label="📚 Quick Add" />
 
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                <button className="btn btn-accent btn-sm" onClick={() => copyToClipboard(bookmarkletUrl, setBmCopied)}>
+                  {bmCopied ? 'Copied!' : 'Copy Quick Add'}
+                </button>
+              </div>
+
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                Tap on any AO3 fic page to add it to your library as "reading."
+              </div>
+            </div>
+
+            {/* Chapter Sync */}
+            {chapterSyncUrl && (
+              <div style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                padding: 14,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>📖 Chapter Sync</div>
+                <BookmarkletDragLink url={chapterSyncUrl} label="📖 Ch. Sync" />
+
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  <button className="btn btn-accent btn-sm" onClick={() => copyToClipboard(chapterSyncUrl, setCsCopied)}>
+                    {csCopied ? 'Copied!' : 'Copy Ch. Sync'}
+                  </button>
+                </div>
+
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  Tap on any chapter page to sync your progress. FicTracker auto-detects which chapter you're on.
+                  In the app, "Continue Ch. N on AO3" will take you right back.
+                </div>
+              </div>
+            )}
+
+            {/* Setup instructions + regenerate */}
+            <div style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 10,
+              padding: 14,
+            }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                <strong style={{ color: 'var(--text)' }}>Desktop:</strong> Drag the button above to your bookmarks bar. Make sure the bookmarks bar is visible (Ctrl+Shift+B / Cmd+Shift+B) when you're on AO3, then click it on any fic page.
+                <strong style={{ color: 'var(--text)' }}>Desktop:</strong> Drag the buttons above to your bookmarks bar (Ctrl+Shift+B / Cmd+Shift+B to show it).
                 <br /><br />
                 <strong style={{ color: 'var(--text)' }}>iPad / iPhone:</strong>
                 <ol style={{ margin: '4px 0 0 16px', padding: 0 }}>
-                  <li>Tap "Copy Bookmarklet" below</li>
+                  <li>Tap a "Copy" button above</li>
                   <li>Bookmark any page in Safari</li>
                   <li>Edit the bookmark → replace the URL with the copied text</li>
-                  <li>Name it "📚 Quick Add"</li>
-                  <li>On any AO3 fic page, tap the address bar and select the bookmark</li>
+                  <li>Repeat for the other bookmarklet</li>
+                  <li>On any AO3 page, tap the address bar and select the bookmark</li>
                 </ol>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-accent btn-sm" onClick={() => copyToClipboard(bookmarkletUrl, setBmCopied)}>
-                {bmCopied ? 'Copied!' : 'Copy Bookmarklet'}
-              </button>
-              <button className="btn btn-ghost btn-sm" onClick={() => { setBookmarkletUrl(null); setChapterSyncUrl(null); }}>
-                Regenerate
-              </button>
-            </div>
+            <button className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => { setBookmarkletUrl(null); setChapterSyncUrl(null); }}>
+              Regenerate Bookmarklets
+            </button>
           </div>
         )}
       </div>
-
-      {chapterSyncUrl && (
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 20 }}>
-          <h3 style={{ fontSize: 16, marginBottom: 4 }}>📖 Chapter Sync — AO3 Bookmarklet</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
-            Sync your reading progress while browsing AO3.
-            Tap this bookmarklet on any chapter page and FicTracker will save which chapter you're on.
-            Next time you open the fic in FicTracker, "Continue Ch. N on AO3" will take you right back.
-          </p>
-
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            padding: 14,
-            marginBottom: 10,
-          }}>
-            <BookmarkletDragLink url={chapterSyncUrl} label="📖 Ch. Sync" />
-
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              <strong style={{ color: 'var(--text)' }}>How it works:</strong> Open any chapter of a fic you've already added to FicTracker, then tap this bookmarklet.
-              It auto-detects which chapter you're on and syncs your progress.
-              <br /><br />
-              <strong style={{ color: 'var(--text)' }}>Tip:</strong> On mobile, set up both bookmarklets — Quick Add for new fics, Chapter Sync for tracking progress.
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-accent btn-sm" onClick={() => copyToClipboard(chapterSyncUrl, setCsCopied)}>
-              {csCopied ? 'Copied!' : 'Copy Ch. Sync'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

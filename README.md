@@ -30,6 +30,20 @@ See your reading life at a glance: top fandoms, favorite ships, word count distr
 
 Never lose track of an update. FicTracker flags your incomplete works when new chapters drop, right in your library view — no email noise, just a quiet badge when something you're reading has new content.
 
+### Chrome extension
+
+The FicTracker extension lives on every AO3 page. Add fics to your library, update your reading status, and advance chapters — all without leaving AO3. It auto-detects which chapter you're on and silently syncs your progress as you read.
+
+The panel has three modes: full (everything visible), mini (compact status badge + chapter controls), and hidden (floating button only). Your preference persists across page navigations.
+
+### Chapter tracking everywhere
+
+Whether you use the Chrome extension (auto-detects your chapter), the Chapter Sync bookmarklet (one tap on mobile), or the chapter slider in the web app — your progress syncs to the same place. Open a fic in FicTracker and "Continue Ch. 5 on AO3" takes you directly to that chapter page.
+
+### Reading Wrapped
+
+Spotify Wrapped, but for fic. See monthly and yearly summaries of your reading: total words, chapters, fics completed, top fandom, top ship, and longest fic — all rendered as shareable cards.
+
 ## Quick start
 
 1. **Sign up** at [fictracker.app](https://fictracker.app) *(coming soon)*
@@ -53,13 +67,15 @@ Never lose track of an update. FicTracker flags your incomplete works when new c
 | **Price** | $0 | $4/month (or $36/year) |
 | Fics tracked | Up to 50 | Unlimited |
 | Import bookmarks | ✓ | ✓ |
+| Quick Add bookmarklet | ✓ | ✓ |
+| Chapter Sync bookmarklet | ✓ | ✓ |
+| Chrome extension | ✓ | ✓ |
 | Search, filter, sort | ✓ | ✓ |
-| Status tracking | ✓ | ✓ |
+| Status & chapter tracking | ✓ | ✓ |
 | WIP update badges | ✓ | ✓ |
 | Stats & analytics | — | ✓ |
 | Reading Wrapped | — | ✓ |
 | Personalized recs | — | ✓ |
-| Browser extension | — | ✓ |
 | EPUB import | — | ✓ |
 
 ## Development
@@ -102,7 +118,17 @@ fictracker/
 │   │   ├── useLibrary.js   # Data layer (fetching, CRUD, bulk ops, import)
 │   │   └── useAnalytics.js # Analytics engine (timelines, pace, streaks, wrapped)
 │   └── utils/
-│       └── helpers.js      # Shared utilities
+│       ├── helpers.js      # Shared utilities
+│       └── bookmarklet.js  # Bookmarklet generators (Quick Add + Chapter Sync)
+├── extension/              # Chrome Extension (manifest v3)
+│   ├── manifest.json       # Content scripts on AO3, service worker
+│   ├── background/
+│   │   └── service-worker.js  # Supabase API proxy, auth, message handler
+│   ├── content/
+│   │   ├── content.js      # AO3 panel (full/mini/hidden), chapter tracking
+│   │   └── content.css     # Scoped styles with !important overrides
+│   ├── popup/              # Extension popup UI
+│   └── icons/              # Extension icons (16/48/128px)
 ├── FicTracker_Brand_Board.html  # Brand identity reference
 ├── README.md
 └── .gitignore
