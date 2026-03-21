@@ -114,6 +114,8 @@ function parseBlurbs(doc){
     var k=q('dd.kudos');if(k)w.kudos=parseInt(k.replace(/,/g,''));
     var h=q('dd.hits');if(h)w.hits=parseInt(h.replace(/,/g,''));
     var rt=li.querySelector('span.rating');if(rt)w.rating=rt.getAttribute('title')||null;
+    var viewed=li.querySelector('h4.viewed');
+    if(viewed){var dm=viewed.textContent.match(/Last visited:\\s*(.+)/);if(dm){w._lastVisited=new Date(dm[1].trim())}}
     works.push(w);
   });
   return works;
@@ -128,9 +130,25 @@ function getTotalPages(doc){
   return max;
 }
 
-async function importPage(works,token){
-  var r=await fetch(S+'/functions/v1/import-works',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({works:works,source:'history'})});
+async function importBatch(works,token,defaultStatus){
+  var r=await fetch(S+'/functions/v1/import-works',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({works:works,source:'history',defaultStatus:defaultStatus})});
   return r.json();
+}
+
+// Split works by age + completion: if a fic was last visited over 1 year
+// ago AND is complete, you almost certainly finished it → "completed".
+// Everything else (recent fics, or old but unfinished) → "reading".
+async function importPage(works,token){
+  var oneYearAgo=new Date();oneYearAgo.setFullYear(oneYearAgo.getFullYear()-1);
+  var completed=[];var reading=[];
+  works.forEach(function(w){
+    var old=w._lastVisited&&w._lastVisited<oneYearAgo;
+    if(old&&w.is_complete){completed.push(w)}else{reading.push(w)}
+  });
+  var total=0;
+  if(completed.length>0){var d=await importBatch(completed,token,'completed');total+=d.imported||0}
+  if(reading.length>0){var d2=await importBatch(reading,token,'reading');total+=d2.imported||0}
+  return{imported:total};
 }
 
 async function run(token){
