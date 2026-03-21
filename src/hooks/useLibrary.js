@@ -561,8 +561,10 @@ export function useLibrary(userId) {
 
   // --- AI-powered recommendations (Plus feature) ---
   const [aiRecs, setAiRecs] = useState([]);
+  const [aiSearchLinks, setAiSearchLinks] = useState([]);
   const [aiRecsLoading, setAiRecsLoading] = useState(false);
   const [aiRecsError, setAiRecsError] = useState('');
+  const [aiRecsRemaining, setAiRecsRemaining] = useState(3); // default to max
 
   const fetchAiRecs = useCallback(async () => {
     if (!isPremium) return;
@@ -578,11 +580,14 @@ export function useLibrary(userId) {
         },
       });
       const data = await res.json();
+      // Update remaining count from server response
+      if (data.rate_limit) setAiRecsRemaining(data.rate_limit.remaining ?? (data.rate_limit.max - data.rate_limit.used));
       if (data.error) {
         setAiRecsError(data.error);
-        setAiRecs([]);
+        if (!data.rate_limit) { setAiRecs([]); setAiSearchLinks([]); }
       } else {
         setAiRecs(data.recommendations || []);
+        setAiSearchLinks(data.ao3_search_links || []);
       }
     } catch (e) {
       setAiRecsError('Failed to get AI recommendations: ' + e.message);
@@ -595,7 +600,7 @@ export function useLibrary(userId) {
     checkingWips, wipCheckMsg, setWipCheckMsg,
     bulkMode, setBulkMode, bulkSelected, setBulkSelected,
     stats, recommendations, discoveryRecs, discoveryLoading, tasteProfile,
-    aiRecs, aiRecsLoading, aiRecsError, fetchAiRecs,
+    aiRecs, aiSearchLinks, aiRecsLoading, aiRecsError, aiRecsRemaining, fetchAiRecs,
     subscriptionTier, isPremium, isAtFicLimit, ficsRemaining, FREE_FIC_LIMIT,
     loadData, getStatusForWork, updateStatus, deleteWork,
     toggleBulkSelect, bulkSetStatus, bulkDelete,

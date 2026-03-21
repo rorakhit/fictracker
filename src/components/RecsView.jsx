@@ -162,8 +162,10 @@ export default function RecsView({
   onAddToLibrary,
   isPremium,
   aiRecs,
+  aiSearchLinks,
   aiRecsLoading,
   aiRecsError,
+  aiRecsRemaining,
   onFetchAiRecs,
 }) {
   const [addingIds, setAddingIds] = useState(new Set());
@@ -228,28 +230,32 @@ export default function RecsView({
           {isPremium ? (
             <>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
-                Claude analyzes your taste and suggests fics you'd love — even ones no FicTracker user has imported yet.
+                Claude analyzes your taste and finds fics you'd love, plus curated AO3 searches to explore.
               </p>
 
-              {!hasAiRecs && !aiRecsLoading && (
-                <button
-                  className="btn btn-accent"
-                  onClick={onFetchAiRecs}
-                  disabled={aiRecsLoading}
-                  style={{
-                    marginBottom: 16,
-                    background: 'linear-gradient(135deg, #a78bfa, #6d28d9)',
-                    border: 'none',
-                    color: '#fff',
-                    padding: '10px 20px',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    borderRadius: 10,
-                    cursor: 'pointer',
-                  }}
-                >
-                  ✨ Get AI Picks
-                </button>
+              {!hasAiRecs && !aiRecsLoading && !aiRecsError && (
+                <div style={{ marginBottom: 16 }}>
+                  <button
+                    className="btn btn-accent"
+                    onClick={onFetchAiRecs}
+                    disabled={aiRecsLoading || aiRecsRemaining <= 0}
+                    style={{
+                      background: aiRecsRemaining <= 0 ? 'var(--surface)' : 'linear-gradient(135deg, #a78bfa, #6d28d9)',
+                      border: aiRecsRemaining <= 0 ? '1px solid var(--border)' : 'none',
+                      color: aiRecsRemaining <= 0 ? 'var(--text-muted)' : '#fff',
+                      padding: '10px 20px',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      borderRadius: 10,
+                      cursor: aiRecsRemaining <= 0 ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    ✨ Get AI Picks
+                  </button>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 10 }}>
+                    {aiRecsRemaining} of 3 remaining today
+                  </span>
+                </div>
               )}
 
               {aiRecsLoading && (
@@ -268,7 +274,7 @@ export default function RecsView({
                 </div>
               )}
 
-              {hasAiRecs && (
+              {(hasAiRecs || (aiSearchLinks && aiSearchLinks.length > 0)) && (
                 <>
                   {aiRecs.map((rec, i) => (
                     <AiRecCard
@@ -279,14 +285,59 @@ export default function RecsView({
                       addedIds={aiAddedIds}
                     />
                   ))}
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={onFetchAiRecs}
-                    disabled={aiRecsLoading}
-                    style={{ marginTop: 8, fontSize: 12 }}
-                  >
-                    {aiRecsLoading ? 'Generating...' : '↻ Get fresh picks'}
-                  </button>
+
+                  {/* AO3 search links — Claude-curated searches for deeper exploration */}
+                  {aiSearchLinks && aiSearchLinks.length > 0 && (
+                    <div style={{
+                      marginTop: 16,
+                      padding: '14px 18px',
+                      background: 'var(--surface)',
+                      borderRadius: 10,
+                      border: '1px solid var(--border)',
+                    }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
+                        Explore more on AO3
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {aiSearchLinks.map((link, i) => (
+                          <a
+                            key={i}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              fontSize: 12,
+                              color: 'var(--accent-purple, #a78bfa)',
+                              textDecoration: 'none',
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            <span style={{ fontWeight: 600 }}>
+                              {[link.fandom, link.relationship].filter(Boolean).join(' · ')}
+                            </span>
+                            <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>
+                              — {link.reason}
+                            </span>
+                            <span style={{ marginLeft: 4 }}>→</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={onFetchAiRecs}
+                      disabled={aiRecsLoading || aiRecsRemaining <= 0}
+                      style={{ fontSize: 12 }}
+                    >
+                      {aiRecsLoading ? 'Generating...' : '↻ Get fresh picks'}
+                    </button>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {aiRecsRemaining} of 3 remaining today
+                    </span>
+                  </div>
                 </>
               )}
             </>

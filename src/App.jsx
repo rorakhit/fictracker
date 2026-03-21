@@ -109,8 +109,10 @@ function Dashboard({ session }) {
           onAddToLibrary={lib.addByUrl}
           isPremium={lib.isPremium}
           aiRecs={lib.aiRecs}
+          aiSearchLinks={lib.aiSearchLinks}
           aiRecsLoading={lib.aiRecsLoading}
           aiRecsError={lib.aiRecsError}
+          aiRecsRemaining={lib.aiRecsRemaining}
           onFetchAiRecs={lib.fetchAiRecs}
         />
       )}
