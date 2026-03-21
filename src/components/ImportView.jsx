@@ -11,10 +11,23 @@ export default function ImportView({ session, importing, importMsg, addByUrl, ha
   return (
     <>
       <div className="import-section">
-        <h3>📥 Import AO3 Bookmarks</h3>
-        <p>Click "Copy Bookmarklet" below, then create a new bookmark in your browser and paste it as the URL. Or drag the purple button to your bookmarks bar. Then visit your AO3 bookmarks page and click it.</p>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
-          <button className="btn btn-accent" onClick={() => {
+        <h3>📥 Bulk Import — AO3 Bookmarks</h3>
+        <p style={{ lineHeight: 1.6 }}>
+          Import your entire AO3 bookmarks library at once. This bookmarklet scrapes all pages of your AO3 bookmarks
+          and adds every fic to FicTracker. Use this for your <strong>initial import</strong> or to catch up on new bookmarks.
+        </p>
+        <div style={{
+          background: 'var(--bg)',
+          borderRadius: 10,
+          padding: 14,
+          marginBottom: 14,
+          border: '1px solid var(--border)',
+        }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+            <a className="bookmarklet-link" href={bookmarkletCode} style={{ fontSize: 13, padding: '8px 16px' }}>📥 Bulk Import</a>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>← drag to bookmarks bar</span>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={() => {
             navigator.clipboard.writeText(bookmarkletCode).then(() => {
               const btn = document.activeElement;
               const orig = btn.textContent;
@@ -22,10 +35,24 @@ export default function ImportView({ session, importing, importMsg, addByUrl, ha
               setTimeout(() => btn.textContent = orig, 2000);
             });
           }}>Copy Bookmarklet</button>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Then: right-click bookmarks bar → Add page → paste as URL</span>
         </div>
-        <a className="bookmarklet-link" href={bookmarkletCode}>📖 Import to FicTracker</a>
-        <p style={{ marginTop: 12, fontSize: 12 }}>Starts from whatever page you're on and goes forward. 10-second delay between pages, 60-second backoff if rate-limited. To resume after a rate limit, navigate to the page it stopped at and click again.</p>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+          <strong style={{ color: 'var(--text)' }}>How it works:</strong> Go to your AO3 bookmarks page and click the bookmarklet.
+          It auto-paginates through all your bookmarks with a 10-second delay between pages. If rate-limited,
+          navigate to where it stopped and click again.
+        </div>
+        <div style={{
+          fontSize: 11,
+          color: 'var(--text-muted)',
+          marginTop: 10,
+          padding: '8px 12px',
+          background: 'rgba(59,130,246,0.06)',
+          borderRadius: 8,
+          border: '1px solid rgba(59,130,246,0.12)',
+        }}>
+          Looking for the <strong style={{ color: 'var(--blue)' }}>Quick Add</strong> bookmarklet to add individual fics while reading?
+          Head to the <strong style={{ color: 'var(--blue)' }}>Settings</strong> tab.
+        </div>
       </div>
 
       <div className="import-section">

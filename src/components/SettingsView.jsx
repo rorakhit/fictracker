@@ -29,7 +29,7 @@ function BookmarkletDragLink({ url }) {
         }}
         title="Drag this to your bookmarks bar"
       >
-        📚 + FicTracker
+        📚 Quick Add
       </a>
       <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>← drag to bookmarks bar</span>
     </div>
@@ -138,11 +138,23 @@ export default function SettingsView({ userId, session }) {
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
-        <h3 style={{ fontSize: 16, marginBottom: 4 }}>AO3 Bookmarklet</h3>
+        <h3 style={{ fontSize: 16, marginBottom: 4 }}>📚 Quick Add — AO3 Bookmarklet</h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
-          Add fics to FicTracker from any AO3 page — works on iPad, iPhone, and desktop.
-          Tap the bookmarklet while reading a fic and it gets added to your library instantly.
+          Add a single fic to your library with one click while browsing AO3.
+          Tap the bookmarklet on any fic page and it's instantly added as "reading."
+          Works on iPad, iPhone, and desktop.
         </p>
+        <div style={{
+          fontSize: 11,
+          color: 'var(--text-muted)',
+          marginBottom: 14,
+          padding: '8px 12px',
+          background: 'rgba(224,70,102,0.06)',
+          borderRadius: 8,
+          border: '1px solid rgba(224,70,102,0.12)',
+        }}>
+          Need to import your whole AO3 bookmarks library? Use the <strong style={{ color: 'var(--accent)' }}>Bulk Import</strong> bookmarklet in the <strong style={{ color: 'var(--accent)' }}>Import</strong> tab instead.
+        </div>
 
         {!bookmarkletUrl ? (
           <button

@@ -12,7 +12,9 @@ yarn.lock
 
 # Vite
 dist/
+dist2/
 .vite/
+vite.config.js.timestamp-*
 
 # Environment
 .env
