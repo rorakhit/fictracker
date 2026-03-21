@@ -437,7 +437,8 @@ export function useLibrary(userId) {
     return { total, totalWords, statusCounts, wips, topFandoms, ratingDist, topShips, wcDist };
   }, [works, statuses]);
 
-  const recommendations = useMemo(() => {
+  // --- Taste profile (shared by queue recs + discovery) ---
+  const tasteProfile = useMemo(() => {
     const rated = works.filter(w => (statuses[w.id]?.rating_personal || 0) >= 4);
     const likedFandoms = {};
     const likedShips = {};
@@ -445,29 +446,156 @@ export function useLibrary(userId) {
       (w.fandoms || []).forEach(f => { likedFandoms[f] = (likedFandoms[f] || 0) + 1; });
       (w.relationships || []).forEach(r => { likedShips[r] = (likedShips[r] || 0) + 1; });
     });
+    // Top fandoms and ships, sorted by how often the user rates them highly
+    const topFandoms = Object.entries(likedFandoms).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name]) => name);
+    const topShips = Object.entries(likedShips).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name]) => name);
+    return { likedFandoms, likedShips, topFandoms, topShips, ratedCount: rated.length };
+  }, [works, statuses]);
 
-    const unread = works.filter(w => {
+  // --- Queue recommendations (in-library: to_read + reading, matching taste) ---
+  const queueRecs = useMemo(() => {
+    const { likedFandoms, likedShips } = tasteProfile;
+    const queue = works.filter(w => {
       const st = statuses[w.id]?.status || 'to_read';
-      return st === 'to_read';
+      return st === 'to_read' || st === 'reading';
     });
 
-    const scored = unread.map(w => {
+    const scored = queue.map(w => {
       let score = 0;
       let reasons = [];
-      (w.fandoms || []).forEach(f => { if (likedFandoms[f]) { score += likedFandoms[f] * 2; reasons.push(`You like ${f}`); } });
-      (w.relationships || []).forEach(r => { if (likedShips[r]) { score += likedShips[r] * 3; reasons.push(`You enjoy ${r}`); } });
+      (w.fandoms || []).forEach(f => {
+        if (likedFandoms[f]) { score += likedFandoms[f] * 2; reasons.push(`You like ${f}`); }
+      });
+      (w.relationships || []).forEach(r => {
+        if (likedShips[r]) { score += likedShips[r] * 3; reasons.push(`You enjoy ${r}`); }
+      });
       if (w.kudos > 1000) { score += 1; reasons.push('Popular fic'); }
-      return { ...w, score, reasons: [...new Set(reasons)].slice(0, 2) };
+      const st = statuses[w.id]?.status;
+      if (st === 'reading') { score += 2; reasons.unshift('Currently reading'); }
+      return { ...w, score, reasons: [...new Set(reasons)].slice(0, 3) };
     });
 
     return scored.filter(w => w.score > 0).sort((a, b) => b.score - a.score).slice(0, 10);
-  }, [works, statuses]);
+  }, [works, statuses, tasteProfile]);
+
+  // --- Discovery recommendations (fics NOT in your library, from the community) ---
+  const [discoveryRecs, setDiscoveryRecs] = useState([]);
+  const [discoveryLoading, setDiscoveryLoading] = useState(false);
+  // Track which works we've fetched for so we don't re-fetch unnecessarily
+  const discoveryFetchKey = useRef('');
+
+  // Score a discovery work against the user's taste profile
+  function scoreDiscoveryWork(w, likedFandoms, likedShips) {
+    let score = 0;
+    let reasons = [];
+    (w.fandoms || []).forEach(f => {
+      if (likedFandoms[f]) { score += likedFandoms[f] * 2; reasons.push(`You like ${f}`); }
+    });
+    (w.relationships || []).forEach(r => {
+      if (likedShips[r]) { score += likedShips[r] * 3; reasons.push(`You enjoy ${r}`); }
+    });
+    // Popularity signals — kudos and hits give a small boost, not dominant
+    if (w.kudos > 5000) { score += 3; reasons.push('Highly popular'); }
+    else if (w.kudos > 1000) { score += 1; reasons.push('Popular fic'); }
+    // Completed fics get a small nudge — readers prefer not picking up abandoned WIPs
+    if (w.is_complete) { score += 1; }
+    return { ...w, score, reasons: [...new Set(reasons)].slice(0, 3) };
+  }
+
+  const fetchDiscoveryRecs = useCallback(async () => {
+    const { topFandoms, topShips, likedFandoms, likedShips, ratedCount } = tasteProfile;
+    if (ratedCount < 1 || topFandoms.length === 0) {
+      setDiscoveryRecs([]);
+      return;
+    }
+
+    // Build a cache key to avoid re-fetching when nothing changed
+    const key = topFandoms.join('|') + '::' + topShips.join('|') + '::' + works.length;
+    if (key === discoveryFetchKey.current) return;
+    discoveryFetchKey.current = key;
+
+    setDiscoveryLoading(true);
+    try {
+      // IDs of works already in the user's library — we exclude these
+      const libraryWorkIds = new Set(works.map(w => w.id));
+
+      // Query the shared works table for fics matching the user's top fandoms.
+      // We use PostgREST's `cs` (contains) filter: fandoms.cs.["Fandom Name"]
+      // means "the fandoms JSONB array contains this value". Combined with .or()
+      // this gives us "matches ANY of these fandoms".
+      const fandomFilters = topFandoms.map(f => `fandoms.cs.${JSON.stringify([f])}`).join(',');
+      // Also query by ships if we have them
+      const shipFilters = topShips.slice(0, 4).map(r => `relationships.cs.${JSON.stringify([r])}`).join(',');
+      const allFilters = [fandomFilters, shipFilters].filter(Boolean).join(',');
+
+      const { data: candidates, error } = await supabase
+        .from('works')
+        .select('*')
+        .or(allFilters)
+        .order('kudos', { ascending: false, nullsFirst: false })
+        .limit(200);
+
+      if (error) { console.error('Discovery fetch error:', error); setDiscoveryLoading(false); return; }
+
+      // Filter out works already in library, score, and rank
+      const scored = (candidates || [])
+        .filter(w => !libraryWorkIds.has(w.id))
+        .map(w => scoreDiscoveryWork(w, likedFandoms, likedShips))
+        .filter(w => w.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 20);
+
+      setDiscoveryRecs(scored);
+    } catch (e) { console.error('Discovery recs error:', e); }
+    setDiscoveryLoading(false);
+  }, [tasteProfile, works]);
+
+  // Fetch discovery recs when taste profile or library changes
+  useEffect(() => {
+    if (!loading) fetchDiscoveryRecs();
+  }, [fetchDiscoveryRecs, loading]);
+
+  // Keep the old `recommendations` name as an alias for backward compat,
+  // but point it at queueRecs so existing code doesn't break.
+  const recommendations = queueRecs;
+
+  // --- AI-powered recommendations (Plus feature) ---
+  const [aiRecs, setAiRecs] = useState([]);
+  const [aiRecsLoading, setAiRecsLoading] = useState(false);
+  const [aiRecsError, setAiRecsError] = useState('');
+
+  const fetchAiRecs = useCallback(async () => {
+    if (!isPremium) return;
+    setAiRecsLoading(true);
+    setAiRecsError('');
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-recommendations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.error) {
+        setAiRecsError(data.error);
+        setAiRecs([]);
+      } else {
+        setAiRecs(data.recommendations || []);
+      }
+    } catch (e) {
+      setAiRecsError('Failed to get AI recommendations: ' + e.message);
+    }
+    setAiRecsLoading(false);
+  }, [isPremium]);
 
   return {
     works, statuses, readingLog, wipTracking, loading, importing, importMsg, setImportMsg,
     checkingWips, wipCheckMsg, setWipCheckMsg,
     bulkMode, setBulkMode, bulkSelected, setBulkSelected,
-    stats, recommendations,
+    stats, recommendations, discoveryRecs, discoveryLoading, tasteProfile,
+    aiRecs, aiRecsLoading, aiRecsError, fetchAiRecs,
     subscriptionTier, isPremium, isAtFicLimit, ficsRemaining, FREE_FIC_LIMIT,
     loadData, getStatusForWork, updateStatus, deleteWork,
     toggleBulkSelect, bulkSetStatus, bulkDelete,

@@ -99,7 +99,21 @@ function Dashboard({ session }) {
 
       {view === 'stats' && <StatsView stats={lib.stats} works={lib.works} />}
       {view === 'analytics' && <AnalyticsView analytics={analytics} works={lib.works} />}
-      {view === 'recs' && <RecsView recommendations={lib.recommendations} onOpenWork={openWork} />}
+      {view === 'recs' && (
+        <RecsView
+          recommendations={lib.recommendations}
+          discoveryRecs={lib.discoveryRecs}
+          discoveryLoading={lib.discoveryLoading}
+          tasteProfile={lib.tasteProfile}
+          onOpenWork={openWork}
+          onAddToLibrary={lib.addByUrl}
+          isPremium={lib.isPremium}
+          aiRecs={lib.aiRecs}
+          aiRecsLoading={lib.aiRecsLoading}
+          aiRecsError={lib.aiRecsError}
+          onFetchAiRecs={lib.fetchAiRecs}
+        />
+      )}
       {view === 'import' && (
         <ImportView
           session={session}
