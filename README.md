@@ -20,7 +20,7 @@ Set reading status (to read, reading, completed, on hold, dropped), rate fics 1�
 
 ### Smart recommendations
 
-FicTracker learns what you love. Rate a few fics and the For You tab surfaces unread works that match your favorite fandoms and ships, weighted by what you've enjoyed most.
+FicTracker learns what you love. Rate a few fics and the For You tab lights up with three ways to find your next read: **AI Picks** uses Claude to craft AO3 searches tailored to your taste — including wildcard suggestions from fandoms you've never explored. **Discover** surfaces popular works from across the community that match your favorite fandoms and ships. **Your Queue** highlights the best unread fics already in your library, so buried bookmarks don't stay buried.
 
 ### Stats that tell a story
 
@@ -58,6 +58,7 @@ Spotify Wrapped, but for fic. See monthly and yearly summaries of your reading: 
 - **Backend:** [Supabase](https://supabase.com) (Postgres, Auth, Edge Functions, Row Level Security)
 - **Hosting:** [Vercel](https://vercel.com) (auto-deploys from GitHub)
 - **Charts:** Recharts
+- **AI:** Claude Haiku (recommendation search strategies via Supabase Edge Functions)
 - **Payments:** Stripe *(planned)*
 
 ## Pricing
@@ -75,7 +76,7 @@ Spotify Wrapped, but for fic. See monthly and yearly summaries of your reading: 
 | WIP update badges | ✓ | ✓ |
 | Stats & analytics | — | ✓ |
 | Reading Wrapped | — | ✓ |
-| Personalized recs | — | ✓ |
+| AI-powered recs (3/day) | — | ✓ |
 | EPUB import | — | ✓ |
 
 ## Development
@@ -109,7 +110,7 @@ fictracker/
 │   │   ├── LoginPage.jsx   # Email/password + OAuth
 │   │   ├── Library.jsx     # Fic list, filters, sorting, bulk actions
 │   │   ├── StatsView.jsx   # Charts (fandoms, ratings, word count, ships)
-│   │   ├── RecsView.jsx    # Recommendation cards
+│   │   ├── RecsView.jsx    # For You tab (AI Picks, Discover, Your Queue)
 │   │   ├── ImportView.jsx  # Bookmarklet, EPUB import, add-by-URL
 │   │   ├── SettingsView.jsx
 │   │   ├── WorkModal.jsx   # Work detail modal
@@ -142,7 +143,7 @@ FicTracker uses Supabase with Row Level Security for full multi-user data isolat
 - **reading_status** — Per-user reading state, ratings, notes, chapter progress
 - **reading_log** — Per-user reading session history (for stats over time)
 - **wip_tracking** — Per-user WIP monitoring
-- **user_preferences** — Per-user settings (AO3 username, notification prefs)
+- **user_preferences** — Per-user settings (AO3 username, subscription tier, AI rec rate limits)
 
 ## Contributing
 
