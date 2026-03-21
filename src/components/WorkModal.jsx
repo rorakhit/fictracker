@@ -1,8 +1,31 @@
+import { useMemo } from 'react';
 import Stars from './Stars';
 import { ratingClass } from '../utils/helpers';
 
 export default function WorkModal({ work, status, editStatus, setEditStatus, editRating, setEditRating, editNotes, setEditNotes, editChapter, setEditChapter, onSave, onDelete, onClose }) {
   if (!work) return null;
+
+  // Build the best AO3 link we can for this work + reading progress.
+  // Priority: direct chapter link > chapter index (navigate) > plain work URL.
+  const ao3Link = useMemo(() => {
+    if (!work.ao3_id || work.ao3_id <= 0) return null;
+    const base = `https://archiveofourown.org/works/${work.ao3_id}`;
+
+    // If user is actively reading and has chapter progress, try to deep-link
+    if (editChapter > 0 && editStatus === 'reading') {
+      const chapterIds = work.chapter_ids || [];
+      const match = chapterIds.find(ch => ch.num === editChapter);
+      if (match?.ao3_id) {
+        // Direct chapter link — best UX
+        return { url: `${base}/chapters/${match.ao3_id}`, label: `Continue Ch. ${editChapter} on AO3` };
+      }
+      // No chapter IDs stored yet — fall back to navigate page
+      // (the extension will populate chapter_ids next time they visit the work)
+      return { url: `${base}/navigate`, label: `Continue Ch. ${editChapter} on AO3` };
+    }
+
+    return { url: base, label: 'Open on AO3' };
+  }, [work.ao3_id, work.chapter_ids, editChapter, editStatus]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -59,10 +82,10 @@ export default function WorkModal({ work, status, editStatus, setEditStatus, edi
         <div className="modal-actions">
           <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)', marginRight: 'auto' }}
             onClick={() => { if (confirm('Remove this fic from your library?')) onDelete(work.id); }}>Remove</button>
-          {work.ao3_id && work.ao3_id > 0 && (
-            <a className="btn btn-ghost btn-sm" href={`https://archiveofourown.org/works/${work.ao3_id}`} target="_blank" rel="noopener"
+          {ao3Link && (
+            <a className="btn btn-ghost btn-sm" href={ao3Link.url} target="_blank" rel="noopener"
               onClick={e => e.stopPropagation()}
-              style={{ textDecoration: 'none' }}>Open on AO3</a>
+              style={{ textDecoration: 'none' }}>{ao3Link.label}</a>
           )}
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-accent" onClick={onSave}>Save</button>

@@ -7,6 +7,17 @@
  * stylesheets are quite aggressive with global selectors.
  */
 
+/* Reset box-sizing for every element inside the panel so padding
+ * never causes children to overflow the panel's fixed width.
+ * AO3 doesn't set a global border-box rule, so without this
+ * a 100%-width button with padding will be wider than the panel. */
+#fictracker-panel,
+#fictracker-panel *,
+#fictracker-panel *::before,
+#fictracker-panel *::after {
+  box-sizing: border-box !important;
+}
+
 #fictracker-panel {
   position: fixed !important;
   bottom: 16px !important;
@@ -278,3 +289,121 @@
 #fictracker-fab:hover {
   transform: scale(1.1) !important;
 }
+
+/* ── Mini mode ─────────────────────────────────────────────
+ * When the panel has .ft-mini, we hide the full header and body
+ * and show a compact horizontal bar instead. The panel shrinks
+ * to auto-width so it only takes up as much room as the content
+ * needs. We keep the same bottom-right anchor and rounded style
+ * so it feels like a natural "collapsed" version of the panel
+ * rather than a separate element.
+ */
+#fictracker-panel.ft-mini {
+  width: auto !important;
+  min-width: 0 !important;
+  border-radius: 22px !important;
+}
+
+#fictracker-panel.ft-mini .ft-header,
+#fictracker-panel.ft-mini .ft-body {
+  display: none !important;
+}
+
+#fictracker-panel.ft-mini .ft-mini-bar {
+  display: flex !important;
+}
+
+/* The mini bar is hidden by default, only visible in mini mode */
+.ft-mini-bar {
+  display: none !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 12px !important;
+  white-space: nowrap !important;
+}
+
+/* Status badge — small colored pill matching the full panel badge */
+.ft-mini-badge {
+  display: inline-block !important;
+  padding: 2px 8px !important;
+  border-radius: 10px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: white !important;
+  text-transform: capitalize !important;
+}
+
+/* Chapter controls cluster: − [Ch. 3/12] + */
+.ft-mini-chapters {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.ft-mini-ch-btn {
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 4px !important;
+  color: #e8e6e3 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  width: 22px !important;
+  height: 22px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  transition: background 0.15s !important;
+}
+.ft-mini-ch-btn:hover {
+  background: rgba(255,255,255,0.15) !important;
+}
+
+.ft-mini-ch-num {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #e8e6e3 !important;
+  min-width: 52px !important;
+  text-align: center !important;
+}
+
+/* Expand arrow — restores full panel */
+.ft-mini-expand {
+  background: none !important;
+  border: none !important;
+  color: #888 !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  padding: 0 2px !important;
+  line-height: 1 !important;
+  transition: color 0.15s !important;
+}
+.ft-mini-expand:hover {
+  color: #e8e6e3 !important;
+}
+
+/* Label text shown for new works / logged-out state in mini bar */
+.ft-mini-label {
+  font-size: 11px !important;
+  color: #888 !important;
+}
+
+/* ── Header action buttons (minimize + close) ──────────── */
+.ft-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+
+.ft-minimize {
+  background: none !important;
+  border: none !important;
+  color: #666 !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  padding: 0 4px !important;
+  line-height: 1 !important;
+}
+.ft-minimize:hover { color: #e8e6e3 !important; }

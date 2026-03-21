@@ -2,6 +2,10 @@
 // Injected on archiveofourown.org/works/* pages.
 // Scrapes work metadata from the DOM and adds a floating FicTracker
 // panel so users can add/track fics without leaving AO3.
+//
+// Panel states: 'full' → 'mini' → 'hidden' (FAB only).
+// State is persisted in chrome.storage.local so it remembers your
+// preference across page navigations.
 
 (function () {
   'use strict';
@@ -13,6 +17,12 @@
   const ao3Id = parseInt(workMatch[1]);
   let currentWorkData = null;
   let currentStatus = null;
+
+  // Panel display mode — persisted across navigations.
+  // 'full': full panel with header, body, status select, link
+  // 'mini': slim bar with just status badge + chapter controls
+  // 'hidden': collapsed to FAB button only
+  let panelMode = 'full';
 
   // ---- DOM Scraping ----
   // AO3's HTML is well-structured with semantic classes, so we can
@@ -78,6 +88,20 @@
       }
     }
 
+    // Chapter IDs — scraped from AO3's chapter navigation dropdown.
+    // Each <option> in <select id="selected_id"> has value = AO3's
+    // internal chapter ID, and text like "1. Chapter Title".
+    // We store these so the web app can deep-link directly to a chapter.
+    const chapterSelect = document.querySelector('select#selected_id');
+    if (chapterSelect) {
+      meta.chapter_ids = Array.from(chapterSelect.options).map(opt => ({
+        num: parseInt(opt.textContent.match(/^(\d+)\./)?.[1] || '0'),
+        ao3_id: opt.value,
+      })).filter(ch => ch.num > 0 && ch.ao3_id);
+    } else {
+      meta.chapter_ids = [];
+    }
+
     // Stats
     const kudosEl = document.querySelector('dd.kudos');
     meta.kudos = kudosEl ? parseInt(kudosEl.textContent.replace(/,/g, '')) : null;
@@ -105,6 +129,42 @@
     return meta;
   }
 
+  // ---- Panel State Management ----
+
+  async function savePanelMode(mode) {
+    panelMode = mode;
+    try {
+      await chrome.storage.local.set({ fictracker_panel_mode: mode });
+    } catch (e) { /* storage may fail in some contexts */ }
+  }
+
+  async function loadPanelMode() {
+    try {
+      const result = await chrome.storage.local.get('fictracker_panel_mode');
+      if (result.fictracker_panel_mode) {
+        panelMode = result.fictracker_panel_mode;
+      }
+    } catch (e) { /* default to 'full' */ }
+    return panelMode;
+  }
+
+  function applyPanelMode() {
+    const panel = document.getElementById('fictracker-panel');
+    const fab = document.getElementById('fictracker-fab');
+    if (!panel) return;
+
+    panel.classList.remove('ft-collapsed', 'ft-mini');
+    if (fab) fab.style.display = 'none';
+
+    if (panelMode === 'hidden') {
+      panel.classList.add('ft-collapsed');
+      showFloatingButton();
+    } else if (panelMode === 'mini') {
+      panel.classList.add('ft-mini');
+    }
+    // 'full' — no extra class needed
+  }
+
   // ---- UI ----
 
   function createPanel() {
@@ -113,18 +173,28 @@
     panel.innerHTML = `
       <div class="ft-header">
         <span class="ft-logo"><span class="ft-fic">Fic</span><span class="ft-tracker">Tracker</span></span>
-        <button class="ft-close" title="Close">&times;</button>
+        <div class="ft-header-actions">
+          <button class="ft-minimize" title="Minimize">▾</button>
+          <button class="ft-close" title="Hide">&times;</button>
+        </div>
       </div>
       <div class="ft-body" id="ft-body">
         <div class="ft-loading">Checking library...</div>
       </div>
+      <div class="ft-mini-bar" id="ft-mini-bar"></div>
     `;
     document.body.appendChild(panel);
 
-    // Close button
+    // Minimize button: full → mini
+    panel.querySelector('.ft-minimize').addEventListener('click', () => {
+      savePanelMode('mini');
+      applyPanelMode();
+    });
+
+    // Close button: any → hidden (FAB)
     panel.querySelector('.ft-close').addEventListener('click', () => {
-      panel.classList.add('ft-collapsed');
-      showFloatingButton();
+      savePanelMode('hidden');
+      applyPanelMode();
     });
 
     return panel;
@@ -138,9 +208,8 @@
       btn.textContent = '📚';
       btn.title = 'Open FicTracker';
       btn.addEventListener('click', () => {
-        btn.style.display = 'none';
-        const panel = document.getElementById('fictracker-panel');
-        panel.classList.remove('ft-collapsed');
+        savePanelMode('full');
+        applyPanelMode();
       });
       document.body.appendChild(btn);
     }
@@ -159,6 +228,19 @@
         <div id="ft-login-msg" style="display:none"></div>
       </div>
     `;
+
+    // Mini bar shows "sign in" prompt
+    const miniBar = document.getElementById('ft-mini-bar');
+    if (miniBar) {
+      miniBar.innerHTML = `
+        <span class="ft-mini-label">FicTracker — not signed in</span>
+        <button class="ft-mini-expand" title="Expand">▴</button>
+      `;
+      miniBar.querySelector('.ft-mini-expand').addEventListener('click', () => {
+        savePanelMode('full');
+        applyPanelMode();
+      });
+    }
 
     body.querySelector('#ft-sign-in').addEventListener('click', async () => {
       const email = body.querySelector('#ft-email').value.trim();
@@ -222,6 +304,19 @@
       </div>
       <button class="ft-btn ft-btn-accent" id="ft-add-btn">Add to Library</button>
     `;
+
+    // Mini bar for new works
+    const miniBar = document.getElementById('ft-mini-bar');
+    if (miniBar) {
+      miniBar.innerHTML = `
+        <span class="ft-mini-label">Not in library</span>
+        <button class="ft-mini-expand" title="Expand">▴</button>
+      `;
+      miniBar.querySelector('.ft-mini-expand').addEventListener('click', () => {
+        savePanelMode('full');
+        applyPanelMode();
+      });
+    }
 
     body.querySelector('#ft-add-btn').addEventListener('click', async () => {
       const status = body.querySelector('#ft-add-status').value;
@@ -314,7 +409,41 @@
       <a class="ft-open-app" href="https://fictracker.vercel.app" target="_blank">Open FicTracker →</a>
     `;
 
-    // Chapter controls
+    // ---- Mini bar: compact view with just status + chapter controls ----
+    const miniBar = document.getElementById('ft-mini-bar');
+    if (miniBar) {
+      const miniChapterHtml = st === 'reading' ? `
+        <div class="ft-mini-chapters">
+          <button class="ft-mini-ch-btn" id="ft-mini-ch-minus" ${currentCh <= 0 ? 'disabled' : ''}>−</button>
+          <span class="ft-mini-ch-num">Ch. ${currentCh}/${chapTotal}</span>
+          <button class="ft-mini-ch-btn" id="ft-mini-ch-plus" ${chapTotal !== '?' && currentCh >= chapTotal ? 'disabled' : ''}>+</button>
+        </div>
+      ` : '';
+
+      miniBar.innerHTML = `
+        <span class="ft-mini-badge" style="background:${statusColors[st]}">${statusLabels[st]}</span>
+        ${miniChapterHtml}
+        <button class="ft-mini-expand" title="Expand">▴</button>
+      `;
+
+      // Mini bar expand button
+      miniBar.querySelector('.ft-mini-expand').addEventListener('click', () => {
+        savePanelMode('full');
+        applyPanelMode();
+      });
+
+      // Mini bar chapter controls
+      const miniMinus = miniBar.querySelector('#ft-mini-ch-minus');
+      const miniPlus = miniBar.querySelector('#ft-mini-ch-plus');
+      if (miniMinus) {
+        miniMinus.addEventListener('click', () => updateChapter(work.id, currentCh - 1, chapTotal));
+      }
+      if (miniPlus) {
+        miniPlus.addEventListener('click', () => updateChapter(work.id, currentCh + 1, chapTotal));
+      }
+    }
+
+    // Chapter controls (full panel)
     const minusBtn = body.querySelector('#ft-ch-minus');
     const plusBtn = body.querySelector('#ft-ch-plus');
 
@@ -385,14 +514,44 @@
     return n.toString();
   }
 
+  // Detect which chapter the user is currently viewing on AO3.
+  // Uses the chapter select dropdown's selected option first (most
+  // reliable), then falls back to matching the URL's /chapters/{id}
+  // against the scraped chapter_ids map.
+  function detectCurrentChapter(chapterIds) {
+    // Method 1: selected option in chapter dropdown
+    const sel = document.querySelector('select#selected_id');
+    if (sel) {
+      const selectedOpt = sel.options[sel.selectedIndex];
+      if (selectedOpt) {
+        const match = selectedOpt.textContent.match(/^(\d+)\./);
+        if (match) return parseInt(match[1]);
+      }
+    }
+
+    // Method 2: match URL chapter ID against scraped map
+    const urlMatch = window.location.pathname.match(/\/chapters\/(\d+)/);
+    if (urlMatch && chapterIds?.length > 0) {
+      const found = chapterIds.find(ch => ch.ao3_id === urlMatch[1]);
+      if (found) return found.num;
+    }
+
+    return null; // Can't determine — don't update
+  }
+
   // ---- Init ----
 
   async function init() {
     const meta = scrapeWorkMetadata();
 
+    // Load saved panel mode before creating UI
+    await loadPanelMode();
+
     // Remove existing panel if re-initializing (e.g. after login)
     const existingPanel = document.getElementById('fictracker-panel');
     if (existingPanel) existingPanel.remove();
+    const existingFab = document.getElementById('fictracker-fab');
+    if (existingFab) existingFab.remove();
 
     const panel = createPanel();
 
@@ -400,6 +559,7 @@
     const sessionResponse = await chrome.runtime.sendMessage({ type: 'GET_SESSION' });
     if (!sessionResponse?.session?.user) {
       renderNotLoggedIn();
+      applyPanelMode();
       return;
     }
 
@@ -411,9 +571,59 @@
 
     if (checkResponse.result?.work) {
       renderExistingWork(checkResponse.result.work, checkResponse.result.status);
+
+      // Sync chapter IDs if we scraped any — fire-and-forget so it
+      // doesn't block UI rendering. This keeps the DB's chapter_ids
+      // up to date every time a user visits a tracked work on AO3.
+      if (meta.chapter_ids?.length > 0) {
+        chrome.runtime.sendMessage({
+          type: 'UPDATE_CHAPTER_IDS',
+          workId: checkResponse.result.work.id,
+          chapterIds: meta.chapter_ids,
+        }).catch(() => {}); // non-critical, don't block
+      }
+
+      // Auto-detect current chapter and sync progress.
+      // Only fires when the user is on a specific chapter page (not the
+      // work index) and the detected chapter differs from their saved
+      // progress. This means simply visiting a chapter while reading
+      // auto-updates your progress — zero taps required.
+      const detectedCh = detectCurrentChapter(meta.chapter_ids);
+      const savedCh = checkResponse.result.status?.current_chapter || 0;
+      const status = checkResponse.result.status?.status;
+
+      if (detectedCh && detectedCh !== savedCh && (status === 'reading' || status === 'to_read')) {
+        const updates = { current_chapter: detectedCh };
+
+        // Auto-transition to_read → reading on first chapter visit
+        if (status === 'to_read') {
+          updates.status = 'reading';
+          updates.started_at = new Date().toISOString();
+        }
+
+        // Auto-complete if at the last chapter
+        const total = checkResponse.result.work.chapter_total || checkResponse.result.work.chapter_count;
+        if (total && detectedCh >= total) {
+          updates.status = 'completed';
+          updates.completed_at = new Date().toISOString();
+        }
+
+        chrome.runtime.sendMessage({
+          type: 'UPDATE_STATUS',
+          workId: checkResponse.result.work.id,
+          updates,
+        }).then(() => {
+          // Re-render panel with updated progress so the UI is accurate
+          const updatedStatus = { ...checkResponse.result.status, ...updates };
+          renderExistingWork(checkResponse.result.work, updatedStatus);
+        }).catch(() => {});
+      }
     } else {
       renderNewWork(meta);
     }
+
+    // Apply saved mode after content is rendered
+    applyPanelMode();
   }
 
   init();

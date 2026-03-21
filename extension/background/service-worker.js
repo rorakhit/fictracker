@@ -212,6 +212,18 @@ async function updateStatus(workId, updates) {
   }
 }
 
+// Update chapter IDs for a work — called by the content script
+// after scraping AO3's chapter dropdown. This is a non-critical
+// background sync so the web app can deep-link to specific chapters.
+async function updateChapterIds(workId, chapterIds) {
+  return supabaseRequest(
+    `works?id=eq.${workId}`, {
+      method: 'PATCH',
+      body: { chapter_ids: chapterIds },
+    }
+  );
+}
+
 // Message handler — all communication from popup and content script
 // goes through here. This keeps auth logic centralized.
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -233,6 +245,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           return { result: await addWork(msg.workData) };
         case 'UPDATE_STATUS':
           return { result: await updateStatus(msg.workId, msg.updates) };
+        case 'UPDATE_CHAPTER_IDS':
+          return { result: await updateChapterIds(msg.workId, msg.chapterIds) };
         default:
           return { error: 'Unknown message type' };
       }

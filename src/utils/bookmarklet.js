@@ -42,6 +42,39 @@ export function generateBookmarklet(accessToken) {
   return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
 }
 
+// ---- Chapter Sync Bookmarklet ----
+// A dedicated bookmarklet for syncing reading progress. The user taps it
+// while reading a chapter on AO3, and it:
+// 1. Scrapes the chapter dropdown to get chapter ID mapping
+// 2. Auto-detects which chapter they're currently viewing
+// 3. POSTs to the sync-chapter Edge Function
+//
+// This gives mobile/bookmarklet users the same chapter tracking experience
+// as the Chrome extension — and actually better, since it auto-detects
+// the current chapter from the page context.
+
+function buildChapterScrapeCode() {
+  // Scrapes AO3's <select id="selected_id"> for chapter IDs,
+  // then detects which chapter is currently being viewed.
+  return `var m=location.href.match(/archiveofourown\\.org\\/works\\/(\\d+)/);if(!m){alert('Open an AO3 work page first!');return}var ao3Id=parseInt(m[1]);var sel=document.querySelector('select#selected_id');var cids=[];var curCh=0;if(sel){cids=Array.from(sel.options).map(function(o){return{num:parseInt((o.textContent.match(/^(\\d+)\\./) || [0,0])[1]),ao3_id:o.value}}).filter(function(c){return c.num>0&&c.ao3_id});var so=sel.options[sel.selectedIndex];if(so)curCh=parseInt((so.textContent.match(/^(\\d+)\\./) || [0,0])[1])||0}if(!curCh&&cids.length){var cu=location.href.match(/\\/chapters\\/(\\d+)/);if(cu){var fm=cids.find(function(c){return c.ao3_id===cu[1]});if(fm)curCh=fm.num}}if(!curCh)curCh=1;var chapTotal='?';var ce=document.querySelector('dd.chapters');if(ce){var cm2=ce.textContent.trim().match(/(\\d+)\\s*\\/\\s*(\\d+|\\?)/);if(cm2)chapTotal=cm2[2]==='?'?'?':cm2[2]}`;
+}
+
+function buildSyncResultHandler() {
+  return `.then(function(r){if(!r.ok)return r.json().then(function(d){if(d.error==='not_in_library'){toast('Not in library \\u2014 use Quick Add first!',true)}else{toast(d.message||d.error||'Sync failed',true)}});return r.json().then(function(d){toast('Synced to Ch. '+curCh+(chapTotal!=='?'?'/'+chapTotal:'')+' \\u{1F4D6}')})}).catch(function(e){toast('Error: '+e.message,true)})`;
+}
+
+export function generateChapterSyncBookmarklet(accessToken) {
+  const inner = `(function(){var S='${SUPABASE_URL}';var T='${accessToken}';${buildToastCode()}${buildChapterScrapeCode()}toast('Syncing chapter...');fetch(S+'/functions/v1/sync-chapter',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+T},body:JSON.stringify({ao3_id:ao3Id,chapter_ids:cids,current_chapter:curCh})})${buildSyncResultHandler()}})()`;
+
+  return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
+}
+
+export function generatePersistentChapterSyncBookmarklet(refreshToken) {
+  const inner = `(function(){var S='${SUPABASE_URL}',K='${SUPABASE_KEY}',R='${refreshToken}';${buildToastCode()}${buildChapterScrapeCode()}toast('Syncing chapter...');fetch(S+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':K,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:R})}).then(function(r){return r.json()}).then(function(auth){if(auth.error){toast('Session expired \\u2014 regenerate bookmarklet in Settings',true);return}return fetch(S+'/functions/v1/sync-chapter',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth.access_token},body:JSON.stringify({ao3_id:ao3Id,chapter_ids:cids,current_chapter:curCh})})${buildSyncResultHandler()}})})()`;
+
+  return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
+}
+
 // Generate a long-lived refresh token URL that auto-refreshes before adding
 export async function generatePersistentBookmarklet(refreshToken) {
   const inner = `(function(){var S='${SUPABASE_URL}',K='${SUPABASE_KEY}',R='${refreshToken}';${buildToastCode()}${buildPayloadCode()}toast('Adding to FicTracker...');fetch(S+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':K,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:R})}).then(function(r){return r.json()}).then(function(auth){if(auth.error){toast('Session expired — regenerate bookmarklet in Settings',true);return}return fetch(S+'/functions/v1/import-works',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth.access_token},body:JSON.stringify({works:[w],source:'bookmarklet',defaultStatus:'reading'})})${buildResultHandler()}})})()`;
