@@ -1,0 +1,280 @@
+/* FicTracker Panel — injected on AO3 work pages.
+ *
+ * Uses a fixed position panel in the bottom-right corner, similar to
+ * how Grammarly or 1Password overlays work. All selectors are prefixed
+ * with #fictracker- or .ft- to avoid clashing with AO3's existing styles.
+ * We also use !important sparingly on reset properties since AO3's
+ * stylesheets are quite aggressive with global selectors.
+ */
+
+#fictracker-panel {
+  position: fixed !important;
+  bottom: 16px !important;
+  right: 16px !important;
+  width: 280px !important;
+  background: #0f1318 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-size: 13px !important;
+  color: #e8e6e3 !important;
+  z-index: 999999 !important;
+  overflow: hidden !important;
+  transition: opacity 0.2s, transform 0.2s !important;
+}
+
+#fictracker-panel.ft-collapsed {
+  opacity: 0 !important;
+  transform: translateY(10px) scale(0.95) !important;
+  pointer-events: none !important;
+}
+
+/* Header */
+.ft-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+.ft-logo {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+
+.ft-fic { color: #e04666 !important; }
+.ft-tracker { color: #e8e6e3 !important; }
+
+.ft-close {
+  background: none !important;
+  border: none !important;
+  color: #666 !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  padding: 0 4px !important;
+  line-height: 1 !important;
+}
+.ft-close:hover { color: #e8e6e3 !important; }
+
+/* Body */
+.ft-body {
+  padding: 14px !important;
+}
+
+.ft-loading {
+  text-align: center !important;
+  color: #666 !important;
+  padding: 8px 0 !important;
+}
+
+.ft-message {
+  color: #999 !important;
+  font-size: 12px !important;
+  margin-bottom: 10px !important;
+}
+
+/* Inline login form */
+.ft-login-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.ft-input {
+  background: #1a1f26 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 6px !important;
+  padding: 8px 10px !important;
+  color: #e8e6e3 !important;
+  font-size: 12px !important;
+  outline: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.ft-input:focus { border-color: #e04666 !important; }
+.ft-input::placeholder { color: #555 !important; }
+
+/* Work preview */
+.ft-work-preview {
+  background: #1a1f26 !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  margin-bottom: 10px !important;
+}
+
+.ft-work-title {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+  margin-bottom: 4px !important;
+}
+
+.ft-work-meta {
+  font-size: 11px !important;
+  color: #888 !important;
+}
+
+/* Status picker */
+.ft-status-picker {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 10px !important;
+  font-size: 12px !important;
+}
+
+.ft-status-picker label {
+  color: #999 !important;
+  white-space: nowrap !important;
+}
+
+.ft-status-picker select,
+.ft-status-update select {
+  flex: 1 !important;
+  background: #1a1f26 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 6px !important;
+  padding: 6px 8px !important;
+  color: #e8e6e3 !important;
+  font-size: 12px !important;
+  outline: none !important;
+}
+
+/* Buttons */
+.ft-btn {
+  display: block !important;
+  width: 100% !important;
+  padding: 8px 14px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: opacity 0.15s !important;
+  text-align: center !important;
+}
+.ft-btn:hover { opacity: 0.85 !important; }
+.ft-btn:disabled { opacity: 0.5 !important; cursor: not-allowed !important; }
+
+.ft-btn-accent {
+  background: #e04666 !important;
+  color: white !important;
+}
+.ft-btn-ghost {
+  background: transparent !important;
+  color: #999 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+.ft-btn-sm {
+  display: inline-flex !important;
+  width: auto !important;
+  padding: 4px 12px !important;
+  font-size: 16px !important;
+  border-radius: 6px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* In-library state */
+.ft-in-library {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+.ft-badge {
+  display: inline-block !important;
+  padding: 3px 10px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: white !important;
+}
+
+.ft-check {
+  font-size: 12px !important;
+  color: #22c55e !important;
+}
+
+/* Progress section */
+.ft-progress-section {
+  margin-bottom: 12px !important;
+}
+
+.ft-progress-label {
+  font-size: 11px !important;
+  color: #999 !important;
+  margin-bottom: 6px !important;
+}
+
+.ft-progress-bar {
+  height: 4px !important;
+  background: #1a1f26 !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+  margin-bottom: 8px !important;
+}
+
+.ft-progress-fill {
+  height: 100% !important;
+  background: linear-gradient(90deg, #e04666, #f59e0b) !important;
+  border-radius: 2px !important;
+  transition: width 0.3s !important;
+}
+
+.ft-chapter-controls {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+}
+
+.ft-chapter-num {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  min-width: 30px !important;
+  text-align: center !important;
+}
+
+/* Status update */
+.ft-status-update {
+  margin-bottom: 8px !important;
+}
+
+/* Open app link */
+.ft-open-app {
+  display: block !important;
+  text-align: center !important;
+  color: #e04666 !important;
+  font-size: 11px !important;
+  text-decoration: none !important;
+  margin-top: 6px !important;
+}
+.ft-open-app:hover { text-decoration: underline !important; }
+
+/* Floating action button (shown when panel is closed) */
+#fictracker-fab {
+  position: fixed !important;
+  bottom: 16px !important;
+  right: 16px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  background: #0f1318 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  z-index: 999998 !important;
+  display: none;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.15s !important;
+}
+
+#fictracker-fab:hover {
+  transform: scale(1.1) !important;
+}

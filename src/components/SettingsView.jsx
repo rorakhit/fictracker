@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { generatePersistentBookmarklet } from '../utils/bookmarklet';
 
 export default function SettingsView({ userId, session }) {
   const [ao3Username, setAo3Username] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [bookmarkletUrl, setBookmarkletUrl] = useState(null);
+  const [bmGenerating, setBmGenerating] = useState(false);
+  const [bmCopied, setBmCopied] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -34,6 +38,44 @@ export default function SettingsView({ userId, session }) {
     setSaving(false);
   }
 
+  async function generateBookmarklet() {
+    setBmGenerating(true);
+    try {
+      // Get the current session's refresh token — this lets the bookmarklet
+      // auto-refresh the access token on each use, so it doesn't expire
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession?.refresh_token) {
+        alert('Could not get session. Try signing out and back in.');
+        setBmGenerating(false);
+        return;
+      }
+      const url = await generatePersistentBookmarklet(currentSession.refresh_token);
+      setBookmarkletUrl(url);
+    } catch (e) {
+      console.error('Bookmarklet generation error:', e);
+    }
+    setBmGenerating(false);
+  }
+
+  async function copyBookmarklet() {
+    if (!bookmarkletUrl) return;
+    try {
+      await navigator.clipboard.writeText(bookmarkletUrl);
+      setBmCopied(true);
+      setTimeout(() => setBmCopied(false), 2000);
+    } catch (e) {
+      // Fallback for iPad Safari which may block clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = bookmarkletUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setBmCopied(true);
+      setTimeout(() => setBmCopied(false), 2000);
+    }
+  }
+
   if (loading) return <div className="loading">Loading settings...</div>;
 
   return (
@@ -55,10 +97,80 @@ export default function SettingsView({ userId, session }) {
         />
       </div>
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
         <button className="btn btn-accent" onClick={saveSettings} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </button>
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 4 }}>AO3 Bookmarklet</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
+          Add fics to FicTracker from any AO3 page — works on iPad, iPhone, and desktop.
+          Tap the bookmarklet while reading a fic and it gets added to your library instantly.
+        </p>
+
+        {!bookmarkletUrl ? (
+          <button
+            className="btn btn-accent"
+            onClick={generateBookmarklet}
+            disabled={bmGenerating}
+          >
+            {bmGenerating ? 'Generating...' : 'Generate Bookmarklet'}
+          </button>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 10,
+              padding: 14,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                <a
+                  href={bookmarkletUrl}
+                  onClick={e => e.preventDefault()}
+                  style={{
+                    display: 'inline-block',
+                    padding: '8px 16px',
+                    background: 'linear-gradient(135deg, #e04666, #d63384)',
+                    color: 'white',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    textDecoration: 'none',
+                    cursor: 'grab',
+                  }}
+                  title="Drag this to your bookmarks bar"
+                >
+                  📚 + FicTracker
+                </a>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>← drag to bookmarks bar</span>
+              </div>
+
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                <strong style={{ color: 'var(--text)' }}>Desktop:</strong> Drag the button above to your bookmarks bar.
+                <br />
+                <strong style={{ color: 'var(--text)' }}>iPad / iPhone:</strong>
+                <ol style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                  <li>Tap "Copy Bookmarklet" below</li>
+                  <li>Bookmark any page in Safari</li>
+                  <li>Edit the bookmark → replace the URL with the copied text</li>
+                  <li>Name it "📚 + FicTracker"</li>
+                </ol>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-accent btn-sm" onClick={copyBookmarklet}>
+                {bmCopied ? 'Copied!' : 'Copy Bookmarklet'}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setBookmarkletUrl(null); }}>
+                Regenerate
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
