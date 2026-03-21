@@ -163,7 +163,7 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
 .form-group input { width: 100%; }
 
 /* WIP update badges */
-.wip-update-banner { display: flex; align-items: center; gap: 10px; background: rgba(20,184,166,0.08); border: 1px solid rgba(20,184,166,0.25); border-radius: 12px; padding: 10px 16px; margin-bottom: 12px; }
+.wip-update-banner { display: flex; align-items: flex-start; gap: 10px; background: rgba(20,184,166,0.08); border: 1px solid rgba(20,184,166,0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
 .wip-update-banner-icon { font-size: 16px; }
 .wip-update-banner-text { flex: 1; font-size: 13px; color: var(--teal); font-weight: 500; }
 .tag.wip-updated { background: rgba(20,184,166,0.18); color: var(--teal); cursor: pointer; font-weight: 600; transition: all 0.15s; }

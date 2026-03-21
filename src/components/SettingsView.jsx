@@ -163,14 +163,15 @@ export default function SettingsView({ userId, session }) {
               <BookmarkletDragLink url={bookmarkletUrl} />
 
               <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                <strong style={{ color: 'var(--text)' }}>Desktop:</strong> Drag the button above to your bookmarks bar.
-                <br />
+                <strong style={{ color: 'var(--text)' }}>Desktop:</strong> Drag the button above to your bookmarks bar. Make sure the bookmarks bar is visible (Ctrl+Shift+B / Cmd+Shift+B) when you're on AO3, then click it on any fic page.
+                <br /><br />
                 <strong style={{ color: 'var(--text)' }}>iPad / iPhone:</strong>
                 <ol style={{ margin: '4px 0 0 16px', padding: 0 }}>
                   <li>Tap "Copy Bookmarklet" below</li>
                   <li>Bookmark any page in Safari</li>
                   <li>Edit the bookmark → replace the URL with the copied text</li>
                   <li>Name it "📚 + FicTracker"</li>
+                  <li>On any AO3 fic page, tap the address bar and select the bookmark</li>
                 </ol>
               </div>
             </div>
