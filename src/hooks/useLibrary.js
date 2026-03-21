@@ -334,9 +334,16 @@ export function useLibrary(userId) {
       } else if (data?.error) {
         setWipCheckMsg('Error: ' + data.error);
       } else if (data?.updated > 0) {
-        setWipCheckMsg(`Found ${data.updated} fic${data.updated > 1 ? 's' : ''} with new chapters!`);
+        // Show which fics actually got new chapters — the Edge Function
+        // returns an updates array with { title, oldChapters, newChapters }
+        const lines = data.updates.map(u =>
+          `📖 ${u.title}: ${u.oldChapters} → ${u.newChapters} chapters`
+        );
+        const suffix = data.timedOut ? ` (checked ${data.checked} of ${data.total})` : '';
+        setWipCheckMsg(`Found ${data.updated} with new chapters!${suffix}\n${lines.join('\n')}`);
       } else {
-        setWipCheckMsg(`Checked ${data?.checked || 0} WIPs — no new chapters yet.`);
+        const suffix = data?.timedOut ? ` of ${data.total}` : '';
+        setWipCheckMsg(`Checked ${data?.checked || 0}${suffix} WIPs — no new chapters yet.`);
       }
       loadData(); // Refresh to pick up new has_update flags
     } catch (e) {

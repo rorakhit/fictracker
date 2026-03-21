@@ -73,10 +73,24 @@ export default function Library({
             {hasUpdates && (
               <div className="wip-update-banner">
                 <span className="wip-update-banner-icon">✨</span>
-                <span className="wip-update-banner-text">
-                  {updatedWips.length} fic{updatedWips.length > 1 ? 's have' : ' has'} new chapters!
-                </span>
-                <button className="btn btn-ghost btn-sm" onClick={dismissAllWipUpdates}>Dismiss all</button>
+                <div className="wip-update-banner-text">
+                  <strong>{updatedWips.length} fic{updatedWips.length > 1 ? 's have' : ' has'} new chapters!</strong>
+                  <div style={{ fontSize: 12, marginTop: 4, opacity: 0.9 }}>
+                    {updatedWips.map(w => {
+                      const wip = wipTracking[w.id];
+                      const newCh = wip?.updated_chapter_count;
+                      const oldCh = wip?.last_known_chapters || w.chapter_count;
+                      return (
+                        <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                          <span>📖 {w.title}{newCh ? ` (${oldCh} → ${newCh} ch)` : ''}</span>
+                          <button className="btn btn-ghost" style={{ fontSize: 11, padding: '1px 6px', minHeight: 0 }}
+                            onClick={e => { e.stopPropagation(); dismissWipUpdate(w.id); }}>dismiss</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={dismissAllWipUpdates} style={{ alignSelf: 'flex-start' }}>Dismiss all</button>
               </div>
             )}
             <div className="add-url-bar">
@@ -96,7 +110,7 @@ export default function Library({
         );
       })()}
       {importMsg && <div style={{ fontSize: 12, color: 'var(--accent-hover)', marginBottom: 12 }}>{importMsg}</div>}
-      {wipCheckMsg && <div style={{ fontSize: 12, color: 'var(--teal)', marginBottom: 12 }}>{wipCheckMsg}</div>}
+      {wipCheckMsg && <div style={{ fontSize: 12, color: 'var(--teal)', marginBottom: 12, whiteSpace: 'pre-line' }}>{wipCheckMsg}</div>}
 
       <div className="filters">
         {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dropped','Dropped']].map(([k,l]) => (
