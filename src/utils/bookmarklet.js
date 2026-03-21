@@ -141,13 +141,13 @@ async function run(token){
   function msg(t){ov.textContent=t}
 
   if(!location.href.match(/archiveofourown\\.org\\/users\\/[^\\/]+\\/readings/)){
-    msg('Navigate to your AO3 Reading History page first!');
+    msg('Navigate to your AO3 History page first!');
     setTimeout(function(){ov.remove()},4000);
     return;
   }
 
   var totalPages=getTotalPages(document);
-  msg('Found '+totalPages+' page(s) of reading history. Importing page 1...');
+  msg('Found '+totalPages+' page(s) of history. Importing page 1...');
 
   var works=parseBlurbs(document);
   var totalImported=0;
@@ -170,7 +170,7 @@ async function run(token){
     }catch(e){msg('Error on page '+p+': '+e.message);return}
   }
 
-  msg('Done! Imported '+totalImported+' fics from your reading history.');
+  msg('Done! Imported '+totalImported+' fics from your AO3 history.');
   setTimeout(function(){ov.remove()},5000);
 }
 `;

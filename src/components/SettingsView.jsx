@@ -176,9 +176,9 @@ export default function SettingsView({ userId, session }) {
             </div>
           </div>
           <div style={{ padding: '10px 12px', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📜 Reading History</div>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📜 History Import</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-              Import fics from your AO3 reading history. Catches fics you read but never bookmarked.
+              Import fics from your AO3 History page. Catches fics you read but never bookmarked.
             </div>
           </div>
         </div>
@@ -258,7 +258,7 @@ export default function SettingsView({ userId, session }) {
                 borderRadius: 10,
                 padding: 14,
               }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>📜 Reading History Import</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>📜 History Import</div>
                 <BookmarkletDragLink url={historyUrl} label="📜 History Import" />
 
                 <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
@@ -268,12 +268,12 @@ export default function SettingsView({ userId, session }) {
                 </div>
 
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  Go to your AO3 Reading History page while logged in, then click this bookmarklet.
+                  Go to your AO3 History page while logged in, then click this bookmarklet.
                   It imports fics you've read but never bookmarked. Auto-paginates with a 10-second delay.
                   <br /><br />
-                  <strong style={{ color: 'var(--text)' }}>Note:</strong> AO3 reading history is private,
+                  <strong style={{ color: 'var(--text)' }}>Note:</strong> Your AO3 History is private,
                   so this must run in your browser (not server-side). You need to be logged into AO3.
-                  If your history page is empty, enable it on AO3 under My Preferences → Misc → "Turn on History."
+                  If your History page is empty, enable it on AO3 under My Preferences → Misc → "Turn on History."
                 </div>
               </div>
             )}
