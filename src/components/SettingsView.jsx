@@ -273,6 +273,7 @@ export default function SettingsView({ userId, session }) {
                   <br /><br />
                   <strong style={{ color: 'var(--text)' }}>Note:</strong> AO3 reading history is private,
                   so this must run in your browser (not server-side). You need to be logged into AO3.
+                  If your history page is empty, enable it on AO3 under My Preferences → Misc → "Turn on History."
                 </div>
               </div>
             )}
