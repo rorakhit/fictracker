@@ -10,25 +10,29 @@ AO3 is incredible for hosting fanfiction, but its tools for *managing* your read
 
 FicTracker fixes all of that.
 
-### Import in seconds
+### Import your library
 
-Drag a bookmarklet to your browser bar, click it on your AO3 bookmarks page, and watch your entire library flow in — metadata, tags, stats, and all. Got EPUBs downloaded on your device? Drop them in too. FicTracker reads AO3 metadata from the files automatically.
+Multiple ways to get your fics into FicTracker. **Server-side sync** pulls your public AO3 bookmarks automatically — just enter your AO3 username and click. The **bulk import bookmarklet** scrapes your AO3 bookmarks page directly from your browser. The **reading history bookmarklet** catches fics you read but never bookmarked (runs client-side since AO3 history is private). You can also add individual fics by URL or drag in EPUB files — FicTracker reads AO3 metadata from them automatically.
 
 ### Track everything
 
-Set reading status (to read, reading, completed, on hold, dropped), rate fics 1–5 stars, track your current chapter in long multi-chapter works with a visual progress bar, and add personal notes. Your library, your way.
+Set reading status (to read, reading, completed, on hold, dropped), rate fics 1–5 stars, track your current chapter in long multi-chapter works with a visual progress bar, and add personal notes. Your library shuffles on every visit so buried bookmarks surface naturally.
 
 ### Smart recommendations
 
-FicTracker learns what you love. Rate a few fics and the For You tab lights up with three ways to find your next read: **AI Picks** uses Claude to craft AO3 searches tailored to your taste — including wildcard suggestions from fandoms you've never explored. **Discover** surfaces popular works from across the community that match your favorite fandoms and ships. **Your Queue** highlights the best unread fics already in your library, so buried bookmarks don't stay buried.
+FicTracker learns what you love. Rate a few fics and the For You tab lights up with three ways to find your next read: **AI Picks** uses Claude to craft AO3 searches tailored to your taste — including wildcard suggestions from fandoms you've never explored. **Discover** surfaces popular works from across the community that match your favorite fandoms and ships. **Your Queue** highlights the best unread fics already in your library, scored by how well they match your taste.
 
-### Stats that tell a story
+### Stats and analytics
 
-See your reading life at a glance: top fandoms, favorite ships, word count distributions, rating breakdowns, and aggregate stats across your entire library. (Reading Wrapped coming soon.)
+See your reading life at a glance: top fandoms, favorite ships, word count distributions, rating breakdowns, and aggregate stats across your entire library. The **Analytics dashboard** goes deeper with reading activity over time (weekly or monthly), fandom timelines, reading pace, streak tracking, and completion rates.
+
+### Reading Wrapped
+
+Spotify Wrapped, but for fic. Monthly and yearly summaries of your reading: total words, chapters, fics completed, top fandom, top ship, and longest fic — rendered as shareable image cards you can export and post.
 
 ### WIP badges
 
-Never lose track of an update. FicTracker flags your incomplete works when new chapters drop, right in your library view — no email noise, just a quiet badge when something you're reading has new content.
+Never lose track of an update. FicTracker checks your incomplete works for new chapters and shows per-fic banners right in your library — no email noise, just a quiet badge when something you're reading has new content.
 
 ### Chrome extension
 
@@ -40,13 +44,9 @@ The panel has three modes: full (everything visible), mini (compact status badge
 
 Whether you use the Chrome extension (auto-detects your chapter), the Chapter Sync bookmarklet (one tap on mobile), or the chapter slider in the web app — your progress syncs to the same place. Open a fic in FicTracker and "Continue Ch. 5 on AO3" takes you directly to that chapter page.
 
-### Reading Wrapped
-
-Spotify Wrapped, but for fic. See monthly and yearly summaries of your reading: total words, chapters, fics completed, top fandom, top ship, and longest fic — all rendered as shareable cards.
-
 ## Quick start
 
-1. **Sign up** at [fictracker.app](https://fictracker.app) *(coming soon)*
+1. **Sign up** at [fictracker.vercel.app](https://fictracker.vercel.app)
 2. **Import** your AO3 bookmarks with one click
 3. **Browse, filter, and sort** your library by status, fandom, ship, rating, word count, or tags
 4. **Rate and track** your way through your reading list
@@ -140,7 +140,7 @@ fictracker/
 │       └── import-works/       # Edge Function source (server-side fic cap)
 ├── vercel.json                 # Vercel config (framework, rewrites)
 ├── .env                        # Vite env vars (price IDs — gitignored)
-├── FicTracker_Brand_Board.html # Brand identity reference
+├── FicTracker_Brand_Board.html # Brand identity reference (gitignored)
 ├── README.md
 └── .gitignore
 ```

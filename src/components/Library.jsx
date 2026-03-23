@@ -20,8 +20,8 @@ export default function Library({
   // without flickering on re-renders. Same approach as queue recs.
   const shuffleSeed = useMemo(() => Math.floor(Date.now() / (2 * 60 * 60 * 1000)), []);
 
-  function hashCode(str) {
-    let h = 0;
+  function hashCode(str, seed = 0) {
+    let h = seed | 0;
     for (let i = 0; i < str.length; i++) {
       h = ((h << 5) - h + str.charCodeAt(i)) | 0;
     }
@@ -53,8 +53,8 @@ export default function Library({
     }
     result.sort((a, b) => {
       if (effectiveSort === 'shuffle') {
-        const ha = (hashCode(a.id + ':' + shuffleSeed) & 0x7fffffff);
-        const hb = (hashCode(b.id + ':' + shuffleSeed) & 0x7fffffff);
+        const ha = (hashCode(a.id, shuffleSeed) & 0x7fffffff);
+        const hb = (hashCode(b.id, shuffleSeed) & 0x7fffffff);
         return ha - hb;
       }
       if (effectiveSort === 'recent') return new Date(b.imported_at) - new Date(a.imported_at);

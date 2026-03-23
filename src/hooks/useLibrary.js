@@ -488,8 +488,8 @@ export function useLibrary(userId) {
     // to get a stable-but-rotating pseudo-random order. Works with the
     // same score get shuffled; higher-scored works still tend to rank
     // higher because we add a random jitter rather than fully randomizing.
-    function hashCode(str) {
-      let h = 0;
+    function hashCode(str, seed = 0) {
+      let h = seed | 0;
       for (let i = 0; i < str.length; i++) {
         h = ((h << 5) - h + str.charCodeAt(i)) | 0;
       }
@@ -497,7 +497,7 @@ export function useLibrary(userId) {
     }
 
     const shuffled = eligible.map(w => {
-      const jitter = (hashCode(w.id + ':' + queueRotationSeed) & 0x7fffffff) % 100 / 100;
+      const jitter = (hashCode(w.id, queueRotationSeed) & 0x7fffffff) % 100 / 100;
       return { ...w, sortKey: w.score + jitter };
     }).sort((a, b) => b.sortKey - a.sortKey).slice(0, 10);
 
