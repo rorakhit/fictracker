@@ -59,7 +59,7 @@ Spotify Wrapped, but for fic. See monthly and yearly summaries of your reading: 
 - **Hosting:** [Vercel](https://vercel.com) (auto-deploys from GitHub)
 - **Charts:** Recharts
 - **AI:** Claude Haiku (recommendation search strategies via Supabase Edge Functions)
-- **Payments:** Stripe *(planned)*
+- **Payments:** [Stripe](https://stripe.com) (Checkout + Customer Portal via Vercel serverless functions)
 
 ## Pricing
 
@@ -130,7 +130,17 @@ fictracker/
 │   │   └── content.css     # Scoped styles with !important overrides
 │   ├── popup/              # Extension popup UI
 │   └── icons/              # Extension icons (16/48/128px)
-├── FicTracker_Brand_Board.html  # Brand identity reference
+├── api/                        # Vercel serverless functions
+│   ├── create-checkout-session.js  # Stripe Checkout (creates session, returns URL)
+│   ├── stripe-webhook.js           # Stripe webhook (subscription lifecycle → DB)
+│   └── create-portal-session.js    # Stripe Customer Portal (manage billing)
+├── supabase/
+│   ├── migrations/             # SQL migration files (schema history)
+│   └── functions/
+│       └── import-works/       # Edge Function source (server-side fic cap)
+├── vercel.json                 # Vercel config (framework, rewrites)
+├── .env                        # Vite env vars (price IDs — gitignored)
+├── FicTracker_Brand_Board.html # Brand identity reference
 ├── README.md
 └── .gitignore
 ```
@@ -144,6 +154,8 @@ FicTracker uses Supabase with Row Level Security for full multi-user data isolat
 - **reading_log** — Per-user reading session history (for stats over time)
 - **wip_tracking** — Per-user WIP monitoring
 - **user_preferences** — Per-user settings (AO3 username, subscription tier, AI rec rate limits)
+- **subscriptions** — Stripe subscription lifecycle (customer ID, plan, period dates, cancel status)
+- **import_jobs** — Server-side AO3 scraping progress tracking
 
 ## Contributing
 

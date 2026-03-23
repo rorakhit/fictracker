@@ -1,6 +1,8 @@
 # Planning & session docs (not part of the app)
 FICTRACKER_SESSION_NOTES.md
 FicTracker_SaaS_Plan.docx
+FicTracker_SaaS_Plan.md
+FicTracker_Brand_Board.html
 
 # Editor/IDE artifacts
 .Rhistory
@@ -13,6 +15,7 @@ yarn.lock
 # Vite
 dist/
 dist2/
+dist2_stripe/
 .vite/
 vite.config.js.timestamp-*
 
@@ -34,5 +37,3 @@ pnpm-debug.log*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-FicTracker_SaaS_Plan.md
-FicTracker_Brand_Board.html
