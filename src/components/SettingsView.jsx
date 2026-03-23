@@ -36,7 +36,7 @@ function BookmarkletDragLink({ url, label = '📚 Quick Add' }) {
   );
 }
 
-export default function SettingsView({ userId, session }) {
+export default function SettingsView({ userId, session, subscriptionTier, isPremium }) {
   const [ao3Username, setAo3Username] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,6 +47,7 @@ export default function SettingsView({ userId, session }) {
   const [bmCopied, setBmCopied] = useState(false);
   const [csCopied, setCsCopied] = useState(false);
   const [hsCopied, setHsCopied] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -120,6 +121,57 @@ export default function SettingsView({ userId, session }) {
     }
   }
 
+  async function handleUpgrade(interval) {
+    setBillingLoading(true);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const priceId = interval === 'year'
+        ? import.meta.env.VITE_STRIPE_YEARLY_PRICE_ID
+        : import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID;
+
+      const resp = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
+      const data = await resp.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error('No checkout URL returned:', data);
+      }
+    } catch (e) {
+      console.error('Upgrade error:', e);
+    }
+    setBillingLoading(false);
+  }
+
+  async function handleManageBilling() {
+    setBillingLoading(true);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const resp = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        },
+      });
+      const data = await resp.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error('No portal URL returned:', data);
+      }
+    } catch (e) {
+      console.error('Manage billing error:', e);
+    }
+    setBillingLoading(false);
+  }
+
   if (loading) return <div className="loading">Loading settings...</div>;
 
   return (
@@ -148,6 +200,91 @@ export default function SettingsView({ userId, session }) {
         <button className="btn btn-accent" onClick={saveSettings} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </button>
+      </div>
+
+      {/* Billing Section */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginBottom: 24 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 12 }}>Subscription</h3>
+
+        {subscriptionTier === 'beta' ? (
+          <div style={{
+            padding: '12px 16px',
+            background: 'linear-gradient(135deg, rgba(224,168,114,0.1), rgba(139,157,196,0.1))',
+            borderRadius: 10,
+            border: '1px solid rgba(224,168,114,0.2)',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Beta Tester</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              You have full Plus access as a beta tester. All premium features are unlocked.
+            </div>
+          </div>
+        ) : isPremium ? (
+          <div>
+            <div style={{
+              padding: '12px 16px',
+              background: 'linear-gradient(135deg, rgba(224,168,114,0.1), rgba(139,157,196,0.1))',
+              borderRadius: 10,
+              border: '1px solid rgba(224,168,114,0.2)',
+              marginBottom: 12,
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
+                FicTracker Plus
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  background: 'var(--accent)',
+                  color: 'white',
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                  marginLeft: 8,
+                }}>Active</span>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                Unlimited fics, analytics, reading wrapped, and AI recommendations.
+              </div>
+            </div>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={handleManageBilling}
+              disabled={billingLoading}
+            >
+              {billingLoading ? 'Loading...' : 'Manage Billing'}
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div style={{
+              padding: '12px 16px',
+              background: 'var(--surface)',
+              borderRadius: 10,
+              border: '1px solid var(--border)',
+              marginBottom: 12,
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Free Plan</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 12 }}>
+                Up to 50 fics in your library. Upgrade to Plus for unlimited fics, analytics, reading wrapped, and AI-powered recommendations.
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-accent"
+                  onClick={() => handleUpgrade('month')}
+                  disabled={billingLoading}
+                  style={{ fontSize: 13 }}
+                >
+                  {billingLoading ? 'Loading...' : 'Upgrade — $4/month'}
+                </button>
+                <button
+                  className="btn btn-accent"
+                  onClick={() => handleUpgrade('year')}
+                  disabled={billingLoading}
+                  style={{ fontSize: 13, background: 'linear-gradient(135deg, #e04666, #d63384)' }}
+                >
+                  {billingLoading ? 'Loading...' : 'Upgrade — $36/year (save 25%)'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>

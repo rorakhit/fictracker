@@ -22,6 +22,23 @@ function Dashboard({ session }) {
 
   const lib = useLibrary(userId);
   const analytics = useAnalytics(lib.works, lib.statuses, lib.readingLog);
+  const [upgradeMsg, setUpgradeMsg] = useState('');
+
+  // Handle return from Stripe Checkout — show a brief confirmation
+  // and reload data so the new subscription tier is picked up.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('upgraded') === 'true') {
+      setUpgradeMsg('Welcome to FicTracker Plus! Your upgrade is being activated...');
+      setView('settings');
+      // Clean the URL so refreshing doesn't re-trigger
+      window.history.replaceState({}, '', window.location.pathname);
+      // Reload data after a short delay to let the webhook process
+      setTimeout(() => { lib.loadData(); setUpgradeMsg(''); }, 3000);
+    } else if (params.get('upgraded') === 'false') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   function openWork(w) {
     const st = lib.statuses[w.id];
@@ -62,6 +79,21 @@ function Dashboard({ session }) {
           <button className="btn btn-ghost btn-sm" onClick={async () => { await supabase.auth.signOut(); }}>Sign Out</button>
         </div>
       </div>
+
+      {upgradeMsg && (
+        <div style={{
+          padding: '10px 16px',
+          background: 'linear-gradient(135deg, rgba(224,168,114,0.15), rgba(139,157,196,0.15))',
+          borderRadius: 8,
+          border: '1px solid rgba(224,168,114,0.3)',
+          marginBottom: 12,
+          fontSize: 13,
+          fontWeight: 600,
+          textAlign: 'center',
+        }}>
+          {upgradeMsg}
+        </div>
+      )}
 
       <div className="tabs">
         {[['library', 'Library'], ['stats', 'Stats'], ['analytics', 'Analytics'], ['recs', 'For You'], ['import', 'Import'], ['settings', 'Settings']].map(([k, l]) => (
@@ -130,7 +162,7 @@ function Dashboard({ session }) {
           ao3Username={lib.ao3Username}
         />
       )}
-      {view === 'settings' && <SettingsView userId={userId} session={session} />}
+      {view === 'settings' && <SettingsView userId={userId} session={session} subscriptionTier={lib.subscriptionTier} isPremium={lib.isPremium} />}
 
       {selected && (
         <WorkModal
