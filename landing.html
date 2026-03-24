@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FicTracker — Your reading nook, organized.</title>
+  <meta name="description" content="A personal reading tracker for AO3 fans. Import your bookmarks, track chapter progress, get AI-powered recommendations, and never lose your place again.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #171520;
+      --bg-card: #1e1b2a;
+      --bg-card-hover: #252236;
+      --amber: #e0a872;
+      --twilight: #8b9dc4;
+      --blush: #8b9dc4;
+      --gold: #c4b470;
+      --text: #e8e4df;
+      --text-muted: #9590a0;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; }
+
+    a { color: var(--amber); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Nav ──────────────────────────────── */
+    nav {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .nav-logo .fic { color: var(--blush); }
+    .nav-logo .tracker { color: var(--text); }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .btn-nav {
+      background: var(--amber);
+      color: var(--bg);
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: opacity 0.15s;
+    }
+    .btn-nav:hover { opacity: 0.9; text-decoration: none; }
+
+    /* ── Hero ─────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .hero h1 .accent { color: var(--amber); }
+    .hero .subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 560px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+    .hero-ctas {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      background: var(--amber);
+      color: var(--bg);
+      padding: 14px 32px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: opacity 0.15s;
+      display: inline-block;
+    }
+    .btn-primary:hover { opacity: 0.9; text-decoration: none; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--twilight);
+      padding: 14px 32px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      border: 1px solid var(--twilight);
+      transition: background 0.15s;
+      display: inline-block;
+    }
+    .btn-secondary:hover { background: rgba(139,157,196,0.1); text-decoration: none; }
+
+    /* ── Features ─────────────────────────── */
+    .features {
+      padding: 60px 0;
+    }
+    .features h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 40px;
+      color: var(--text);
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: background 0.2s;
+    }
+    .feature-card:hover { background: var(--bg-card-hover); }
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--amber);
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ── Extension section ────────────────── */
+    .extension {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+    .extension h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    .extension .section-sub {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 520px;
+      margin: 0 auto 36px;
+    }
+    .ext-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .ext-feature {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .ext-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--blush);
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+    .ext-feature p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* ── Pricing ──────────────────────────── */
+    .pricing {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+    .pricing h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 36px;
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .price-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      text-align: center;
+    }
+    .price-card.featured {
+      border-color: var(--amber);
+      position: relative;
+    }
+    .price-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--amber);
+      color: var(--bg);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .price-tier {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .price-amount {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--amber);
+      margin-bottom: 4px;
+    }
+    .price-amount span { font-size: 16px; font-weight: 400; color: var(--text-muted); }
+    .price-note {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .price-features {
+      list-style: none;
+      text-align: left;
+      font-size: 14px;
+    }
+    .price-features li {
+      padding: 6px 0;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .price-features li::before {
+      content: '✓';
+      color: var(--gold);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ───────────────────────────── */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    footer p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    footer a { color: var(--twilight); }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    .footer-links a { font-size: 13px; }
+
+    /* ── Responsive ───────────────────────── */
+    @media (max-width: 600px) {
+      .hero { padding: 50px 0 40px; }
+      .hero-ctas { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-secondary { width: 100%; max-width: 280px; text-align: center; }
+      .nav-links a:not(.btn-nav) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="container">
+      <div class="nav-logo"><span class="fic">Fic</span><span class="tracker">Tracker</span></div>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#extension">Extension</a>
+        <a href="#pricing">Pricing</a>
+        <a href="https://fictracker.vercel.app" class="btn-nav">Open App</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Your reading nook, <span class="accent">organized.</span></h1>
+      <p class="subtitle">A personal reading tracker for AO3 fans. Import your bookmarks, track your progress, and discover your next favorite fic.</p>
+      <div class="hero-ctas">
+        <a href="https://fictracker.vercel.app" class="btn-primary">Start tracking — it's free</a>
+        <a href="#extension" class="btn-secondary">Get the extension</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="container">
+      <h2>Everything your AO3 bookmarks can't do</h2>
+      <div class="feature-grid">
+
+        <div class="feature-card">
+          <span class="feature-icon">📥</span>
+          <h3>Import your library</h3>
+          <p>Sync your public AO3 bookmarks with one click, or use a bookmarklet to import reading history. EPUB import too. All your fics, all your metadata.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">📖</span>
+          <h3>Track everything</h3>
+          <p>Status, chapter progress, personal ratings, notes. Your library shuffles on every visit so buried bookmarks surface naturally.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">🔔</span>
+          <h3>WIP alerts</h3>
+          <p>FicTracker checks your incomplete works for new chapters and shows per-fic banners right in your library. No email noise.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">🤖</span>
+          <h3>AI recommendations</h3>
+          <p>Rate a few fics and AI Picks crafts AO3 searches tailored to your taste — including wildcard fandoms you've never explored. Real fics, not hallucinations.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h3>Stats &amp; analytics</h3>
+          <p>Top fandoms, reading pace, streak tracking, fandom timelines. See your reading life unfold over time with interactive charts.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">🎁</span>
+          <h3>Reading Wrapped</h3>
+          <p>Monthly and yearly summaries — words, chapters, top fandom, longest fic. Rendered as shareable image cards you can export and post.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="extension" id="extension">
+    <div class="container">
+      <h2>The Chrome extension</h2>
+      <p class="section-sub">Track your reading without ever leaving AO3. The FicTracker panel lives on every work page.</p>
+
+      <div class="ext-features">
+        <div class="ext-feature">
+          <div class="ext-dot"></div>
+          <p>Add any fic to your library with one click</p>
+        </div>
+        <div class="ext-feature">
+          <div class="ext-dot"></div>
+          <p>Auto-detects which chapter you're reading</p>
+        </div>
+        <div class="ext-feature">
+          <div class="ext-dot"></div>
+          <p>Chapter +/– controls with auto-complete</p>
+        </div>
+        <div class="ext-feature">
+          <div class="ext-dot"></div>
+          <p>Three panel modes: full, mini, or hidden</p>
+        </div>
+        <div class="ext-feature">
+          <div class="ext-dot"></div>
+          <p>Silently syncs progress as you read</p>
+        </div>
+        <div class="ext-feature">
+          <div class="ext-dot"></div>
+          <p>Deep-links back to your current chapter</p>
+        </div>
+      </div>
+
+      <div style="text-align: center;">
+        <a href="https://fictracker.vercel.app" class="btn-primary">Sign up to get started</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <h2>Simple pricing</h2>
+      <div class="pricing-grid">
+
+        <div class="price-card">
+          <div class="price-tier">Free</div>
+          <div class="price-amount">$0</div>
+          <div class="price-note">Up to 50 fics</div>
+          <ul class="price-features">
+            <li>Import bookmarks &amp; reading history</li>
+            <li>Quick Add &amp; Chapter Sync bookmarklets</li>
+            <li>Chrome extension</li>
+            <li>Search, filter, sort</li>
+            <li>Status &amp; chapter tracking</li>
+            <li>WIP update alerts</li>
+          </ul>
+        </div>
+
+        <div class="price-card featured">
+          <div class="price-badge">Best value</div>
+          <div class="price-tier">Plus</div>
+          <div class="price-amount">$4<span>/month</span></div>
+          <div class="price-note">or $36/year (save 25%)</div>
+          <ul class="price-features">
+            <li>Unlimited fics</li>
+            <li>Stats &amp; analytics dashboard</li>
+            <li>Reading Wrapped</li>
+            <li>AI-powered recommendations</li>
+            <li>EPUB import</li>
+            <li>Everything in Free</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://fictracker.vercel.app">Open App</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="mailto:ro.rakhit@gmail.com">Contact</a>
+      </div>
+      <p>Built by a fanfic reader, for fanfic readers.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

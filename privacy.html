@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FicTracker — Privacy Policy</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1318;
+      color: #e8e6e3;
+      line-height: 1.7;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 28px;
+      margin-bottom: 8px;
+      color: #e04666;
+    }
+    p {
+      margin-bottom: 12px;
+      font-size: 15px;
+      color: #ccc;
+    }
+    a { color: #e04666; }
+    .logo span:first-child { color: #e04666; font-weight: 700; }
+    .logo span:last-child { color: #e8e6e3; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p class="logo"><span>Fic</span><span>Tracker</span></p>
+    <h1>Privacy Policy</h1>
+    <p class="subtitle">Last updated: March 23, 2026</p>
+
+    <h2>What FicTracker is</h2>
+    <p>FicTracker is a personal reading tracker for Archive of Our Own (AO3) users. It helps you organize your fanfiction library, track reading progress, and discover new works. FicTracker is built and operated by an independent developer.</p>
+
+    <h2>What we collect</h2>
+    <p>When you create an account, we store your email address and, if you provide one, your AO3 username. We also store the reading data you create within FicTracker: your library of works (metadata imported from AO3 such as titles, authors, tags, and word counts), reading statuses, ratings, notes, chapter progress, and reading activity logs.</p>
+    <p>If you subscribe to FicTracker Plus, payment processing is handled entirely by Stripe. We store your Stripe customer ID and subscription status but never see or store your credit card number, bank details, or other payment credentials.</p>
+
+    <h2>What we don't collect</h2>
+    <p>We do not collect your AO3 password or login credentials. We do not track your browsing activity outside of FicTracker. We do not use analytics or tracking scripts. We do not sell, share, or provide your data to advertisers or third parties.</p>
+
+    <h2>How the Chrome extension works</h2>
+    <p>The FicTracker browser extension runs only on archiveofourown.org pages. It reads publicly visible metadata (title, author, tags, chapter count) from AO3 work pages to let you add fics to your library and track chapter progress. The extension communicates only with FicTracker's backend (hosted on Supabase) to sync your reading data. It does not access any other websites or send data anywhere else.</p>
+
+    <h2>How bookmarklets work</h2>
+    <p>FicTracker's bookmarklets run in your browser on AO3 pages when you activate them. They read AO3 page content (bookmark lists, reading history, or individual work pages) and send the extracted metadata to FicTracker's backend. The reading history bookmarklet accesses your private AO3 reading history page, but this data is processed entirely in your browser and only the extracted work metadata is sent to FicTracker — we never see your AO3 session or cookies.</p>
+
+    <h2>How AO3 data is handled</h2>
+    <p>FicTracker imports publicly available metadata from AO3 (titles, authors, tags, stats). We do not store the full text of any fanwork. Imported metadata is cached in a shared database so it doesn't need to be re-scraped, but your personal reading data (statuses, ratings, notes, progress) is private to your account and isolated via row-level security.</p>
+
+    <h2>Where your data lives</h2>
+    <p>Your data is stored in a Supabase-hosted PostgreSQL database with row-level security enabled, meaning each user can only access their own reading data. The application is hosted on Vercel. Both services use industry-standard encryption in transit and at rest.</p>
+
+    <h2>Data deletion</h2>
+    <p>You can remove individual works from your library at any time. If you want your entire account and all associated data deleted, email <a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a> and it will be done promptly.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If this policy changes in any meaningful way, the update date at the top of this page will be revised. FicTracker is a small, independent project — the goal is always to collect as little as possible and keep your data private.</p>
+
+    <h2>Contact</h2>
+    <p>Questions or concerns? Email <a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a>.</p>
+  </div>
+</body>
+</html>
