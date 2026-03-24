@@ -11,11 +11,33 @@
  * never causes children to overflow the panel's fixed width.
  * AO3 doesn't set a global border-box rule, so without this
  * a 100%-width button with padding will be wider than the panel. */
+/* Nuclear reset — AO3 site skins (e.g. Reversi) use wildcard selectors
+ * with !important and -webkit-text-fill-color that override everything
+ * including inline styles. We must reset ALL inherited properties on
+ * every element inside the panel to reclaim full control. */
 #fictracker-panel,
 #fictracker-panel *,
 #fictracker-panel *::before,
 #fictracker-panel *::after {
   box-sizing: border-box !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+#fictracker-panel button,
+#fictracker-panel input,
+#fictracker-panel select {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: none !important;
+  text-indent: 0 !important;
+  letter-spacing: normal !important;
 }
 
 #fictracker-panel {
@@ -157,21 +179,28 @@
 .ft-btn {
   display: block !important;
   width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
   padding: 8px 14px !important;
+  margin: 0 !important;
   border: none !important;
   border-radius: 8px !important;
   font-size: 13px !important;
   font-weight: 600 !important;
+  line-height: 1.4 !important;
   cursor: pointer !important;
   transition: opacity 0.15s !important;
   text-align: center !important;
+  overflow: visible !important;
 }
 .ft-btn:hover { opacity: 0.85 !important; }
 .ft-btn:disabled { opacity: 0.5 !important; cursor: not-allowed !important; }
 
-.ft-btn-accent {
+.ft-btn-accent,
+#fictracker-panel button.ft-btn-accent {
   background: #e04666 !important;
-  color: white !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 .ft-btn-ghost {
   background: transparent !important;

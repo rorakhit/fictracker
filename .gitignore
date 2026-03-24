@@ -4,6 +4,9 @@ FicTracker_SaaS_Plan.docx
 FicTracker_SaaS_Plan.md
 FicTracker_Brand_Board.html
 
+# Build artifacts
+*.zip
+
 # Editor/IDE artifacts
 .Rhistory
 

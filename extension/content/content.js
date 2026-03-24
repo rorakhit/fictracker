@@ -302,7 +302,7 @@
           <option value="completed">Completed</option>
         </select>
       </div>
-      <button class="ft-btn ft-btn-accent" id="ft-add-btn">Add to Library</button>
+      <button class="ft-btn ft-btn-accent" id="ft-add-btn" style="color: #ffffff !important;">Add to Library</button>
     `;
 
     // Mini bar for new works
@@ -317,6 +317,11 @@
         applyPanelMode();
       });
     }
+
+    // Force white text on accent buttons — AO3 skins can override even inline !important
+    body.querySelectorAll('.ft-btn-accent').forEach(b => {
+      b.style.setProperty('color', '#ffffff', 'important');
+    });
 
     body.querySelector('#ft-add-btn').addEventListener('click', async () => {
       const status = body.querySelector('#ft-add-status').value;
