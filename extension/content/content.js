@@ -383,7 +383,7 @@
       completed: '#22c55e',
       on_hold: '#8b5cf6',
       dropped: '#ef4444',
-      author_abandoned: '#e04666',
+      author_abandoned: '#14b8a6',
     };
 
     const chapTotal = work.chapter_total || work.chapter_count || '?';
