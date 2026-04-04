@@ -73,7 +73,7 @@ function Dashboard({ session }) {
   return (
     <div className="app">
       <div className="header">
-        <h1>📖 Fic<span>Tracker</span></h1>
+        <h1><img src="/logo.svg" alt="" style={{ height: '1.4em', verticalAlign: 'middle', marginRight: 6 }} />Fic<span>Tracker</span></h1>
         <div className="header-right">
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{session.user.email}</span>
           <button className="btn btn-ghost btn-sm" onClick={async () => { await supabase.auth.signOut(); }}>Sign Out</button>

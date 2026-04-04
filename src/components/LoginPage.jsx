@@ -41,7 +41,7 @@ export default function LoginPage() {
     <div className="app">
       <div className="login-page">
         <div className="login-card">
-          <h2>📖 FicTracker</h2>
+          <h2><img src="/logo.svg" alt="" style={{ height: '1.4em', verticalAlign: 'middle', marginRight: 6 }} />FicTracker</h2>
           <div className="subtitle">{isSignUp ? 'Create an account' : 'Sign in to your library'}</div>
           {error && <div className="login-error">{error}</div>}
 
