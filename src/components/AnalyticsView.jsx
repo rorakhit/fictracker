@@ -7,7 +7,7 @@ import ReadingWrapped from './ReadingWrapped';
 
 // Color palette for fandom stacked areas — pulled from the brand board's
 // warm/cool tension. These need to be visually distinct when stacked.
-const FANDOM_COLORS = ['#e04666', '#3b82f6', '#8b5cf6', '#14b8a6', '#f59e0b'];
+const FANDOM_COLORS = ['#14b8a6', '#3b82f6', '#8b5cf6', '#e04666', '#f59e0b'];
 
 const tooltipStyle = {
   background: '#1a1d27',

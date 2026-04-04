@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Dark background circle -->
+  <circle cx="64" cy="64" r="64" fill="#1a1d27"/>
+
+  <!-- Teal ambient glow behind chair area -->
+  <ellipse cx="64" cy="72" rx="34" ry="30" fill="#14b8a6" opacity="0.07"/>
+
+  <!-- Light cone from lamp shade -->
+  <path d="M50 40 L66 40 L84 94 L32 94 Z" fill="#14b8a6" opacity="0.10"/>
+  <path d="M52 42 L64 42 L76 94 L38 94 Z" fill="#14b8a6" opacity="0.06"/>
+
+  <!-- Floor lamp pole -->
+  <line x1="36" y1="100" x2="36" y2="34" stroke="#6b6e7a" stroke-width="2" stroke-linecap="round"/>
+  <!-- Lamp arm curving right -->
+  <path d="M36 34 Q36 28 44 28 L56 28" stroke="#6b6e7a" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Lamp shade -->
+  <path d="M48 28 L64 28 L66 40 L46 40 Z" fill="#14b8a6" opacity="0.9"/>
+  <!-- Shade highlight -->
+  <path d="M50 32 L62 32 L63 37 L49 37 Z" fill="#2dd4bf" opacity="0.25"/>
+  <!-- Lamp base -->
+  <ellipse cx="36" cy="100" rx="6" ry="1.5" fill="#6b6e7a" opacity="0.4"/>
+
+  <!-- Cozy armchair -->
+  <!-- Chair back -->
+  <path d="M46 94 L46 66 Q46 56 56 54 Q62 53 64 54 Q66 53 72 54 Q82 56 82 66 L82 94 Z"
+        fill="#3d4155"/>
+  <!-- Left armrest -->
+  <path d="M39 70 Q37 70 37 74 L37 90 Q37 94 41 94 L50 94 L50 70 Q46 68 39 70 Z"
+        fill="#454a60"/>
+  <!-- Right armrest -->
+  <path d="M89 70 Q91 70 91 74 L91 90 Q91 94 87 94 L78 94 L78 70 Q82 68 89 70 Z"
+        fill="#454a60"/>
+  <!-- Armrest top highlights -->
+  <path d="M39 70 Q46 68 50 70" stroke="#14b8a6" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <path d="M89 70 Q82 68 78 70" stroke="#14b8a6" stroke-width="0.8" fill="none" opacity="0.3"/>
+  <!-- Chair back inner -->
+  <path d="M50 68 Q50 60 58 58 L70 58 Q78 60 78 68 L78 80 L50 80 Z"
+        fill="#2e3245"/>
+  <!-- Seat cushion -->
+  <rect x="50" y="80" width="28" height="6" rx="3" fill="#454a60"/>
+  <!-- Cushion highlight -->
+  <line x1="51" y1="80.5" x2="77" y2="80.5" stroke="#14b8a6" stroke-width="0.7" opacity="0.3"/>
+
+  <!-- Open book on the chair — teal lit by the lamp -->
+  <!-- Left page -->
+  <path d="M54 78 L54 66 Q54 64 58 63 L64 62 L64 74 Z" fill="#14b8a6" opacity="0.7"/>
+  <!-- Right page -->
+  <path d="M74 78 L74 66 Q74 64 70 63 L64 62 L64 74 Z" fill="#14b8a6" opacity="0.55"/>
+  <!-- Book spine -->
+  <line x1="64" y1="62" x2="64" y2="74" stroke="#2dd4bf" stroke-width="1.5"/>
+  <!-- Page lines left -->
+  <line x1="57" y1="67" x2="62" y2="66" stroke="#e4e4e7" stroke-width="0.6" opacity="0.4"/>
+  <line x1="57" y1="70" x2="62" y2="69" stroke="#e4e4e7" stroke-width="0.6" opacity="0.35"/>
+  <line x1="57" y1="73" x2="62" y2="72" stroke="#e4e4e7" stroke-width="0.6" opacity="0.3"/>
+  <!-- Page lines right -->
+  <line x1="71" y1="67" x2="66" y2="66" stroke="#e4e4e7" stroke-width="0.6" opacity="0.35"/>
+  <line x1="71" y1="70" x2="66" y2="69" stroke="#e4e4e7" stroke-width="0.6" opacity="0.3"/>
+  <line x1="71" y1="73" x2="66" y2="72" stroke="#e4e4e7" stroke-width="0.6" opacity="0.25"/>
+
+  <!-- Floor line -->
+  <line x1="28" y1="94" x2="100" y2="94" stroke="#6b6e7a" stroke-width="1" opacity="0.15" stroke-linecap="round"/>
+
+  <!-- Light particles -->
+  <circle cx="53" cy="50" r="1" fill="#14b8a6" opacity="0.2"/>
+  <circle cx="62" cy="54" r="1.2" fill="#14b8a6" opacity="0.18"/>
+  <circle cx="57" cy="60" r="0.8" fill="#2dd4bf" opacity="0.12"/>
+</svg>

@@ -19,7 +19,7 @@ function BookmarkletDragLink({ url, label = '📚 Quick Add' }) {
         style={{
           display: 'inline-block',
           padding: '8px 16px',
-          background: 'linear-gradient(135deg, #e04666, #d63384)',
+          background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
           color: 'white',
           borderRadius: 8,
           fontWeight: 700,
@@ -277,7 +277,7 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
                   className="btn btn-accent"
                   onClick={() => handleUpgrade('year')}
                   disabled={billingLoading}
-                  style={{ fontSize: 13, background: 'linear-gradient(135deg, #e04666, #d63384)' }}
+                  style={{ fontSize: 13, background: 'linear-gradient(135deg, #14b8a6, #0d9488)' }}
                 >
                   {billingLoading ? 'Loading...' : 'Upgrade — $36/year (save 25%)'}
                 </button>

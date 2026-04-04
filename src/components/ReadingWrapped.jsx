@@ -31,7 +31,7 @@ const COLORS = {
   border: '#2a2d3a',
   text: '#e4e4e7',
   muted: '#8b8d97',
-  accent: '#e04666',
+  accent: '#14b8a6',
   success: '#22c55e',
   blue: '#3b82f6',
   purple: '#8b5cf6',

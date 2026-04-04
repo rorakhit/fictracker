@@ -16,7 +16,7 @@ export default function StatsView({ stats, works }) {
               <XAxis type="number" hide />
               <YAxis type="category" dataKey="name" width={140} tick={{ fill: '#8b8d97', fontSize: 11 }} />
               <Tooltip contentStyle={{ background: '#1a1d27', border: '1px solid #2a2d3a', borderRadius: 8 }} />
-              <Bar dataKey="value" fill="#e04666" radius={[0, 6, 6, 0]} />
+              <Bar dataKey="value" fill="#14b8a6" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
