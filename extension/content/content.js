@@ -375,6 +375,7 @@
       completed: 'Completed',
       on_hold: 'On Hold',
       dropped: 'Dropped',
+      author_abandoned: 'Author Abandoned',
     };
     const statusColors = {
       to_read: '#3b82f6',
@@ -382,6 +383,7 @@
       completed: '#22c55e',
       on_hold: '#8b5cf6',
       dropped: '#ef4444',
+      author_abandoned: '#b45309',
     };
 
     const chapTotal = work.chapter_total || work.chapter_count || '?';

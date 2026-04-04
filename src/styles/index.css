@@ -58,6 +58,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sa
 .status-completed { background: rgba(34,197,94,0.15); color: var(--success); }
 .status-dropped { background: rgba(139,141,151,0.15); color: var(--text-muted); }
 .status-on_hold { background: rgba(139,92,246,0.15); color: var(--purple); }
+.status-author_abandoned { background: rgba(161,98,7,0.15); color: #b45309; }
 
 /* Stars */
 .stars { display: inline-flex; gap: 2px; cursor: pointer; }

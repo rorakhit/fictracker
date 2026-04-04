@@ -56,6 +56,7 @@ export default function WorkModal({ work, status, editStatus, setEditStatus, edi
               <option value="completed">Completed</option>
               <option value="on_hold">On Hold</option>
               <option value="dropped">Dropped</option>
+              <option value="author_abandoned">Author Abandoned</option>
             </select>
           </div>
           <div className="modal-section">

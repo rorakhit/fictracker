@@ -24,7 +24,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // in javascript: URLs. The script tag runs in the page context where
 // fetch is unrestricted.
 function buildPayloadCode() {
-  return `var m=location.href.match(/archiveofourown\\.org\\/works\\/(\\d+)/);if(!m){alert('Open an AO3 work page first!');return}var q=function(s){var e=document.querySelector(s);return e?e.textContent.trim():null},qa=function(s){return Array.from(document.querySelectorAll(s)).map(function(e){return e.textContent.trim()})};var w={ao3_id:parseInt(m[1]),title:q('.title.heading')||'Untitled',authors:qa('[rel=author]'),rating:q('dd.rating.tags a.tag'),warnings:qa('dd.warning.tags a.tag'),categories:qa('dd.category.tags a.tag'),fandoms:qa('dd.fandom.tags a.tag'),relationships:qa('dd.relationship.tags a.tag'),characters:qa('dd.character.tags a.tag'),freeform_tags:qa('dd.freeform.tags a.tag'),language:q('dd.language')||'English',summary:(q('.summary .userstuff')||'').substring(0,2000)};var wc=q('dd.words');if(wc)w.word_count=parseInt(wc.replace(/,/g,''));var ch=q('dd.chapters');if(ch){var cm=ch.match(/(\\d+)\\s*\\/\\s*(\\d+|\\?)/);if(cm){w.chapter_count=parseInt(cm[1]);w.chapter_total=cm[2]==='?'?null:parseInt(cm[2]);w.is_complete=w.chapter_total!==null&&w.chapter_count>=w.chapter_total}}var k=q('dd.kudos');if(k)w.kudos=parseInt(k.replace(/,/g,''));var h=q('dd.hits');if(h)w.hits=parseInt(h.replace(/,/g,''));`;
+  return `var m=location.href.match(/archiveofourown\\.org\\/works\\/(\\d+)/);if(!m){alert('Open an AO3 work page first!');return}var q=function(s){var e=document.querySelector(s);return e?e.textContent.trim():null},qa=function(s){return Array.from(document.querySelectorAll(s)).map(function(e){return e.textContent.trim()})};var w={ao3_id:parseInt(m[1]),title:q('.title.heading')||'Untitled',authors:qa('[rel=author]'),rating:q('dd.rating.tags a.tag'),warnings:qa('dd.warning.tags a.tag'),categories:qa('dd.category.tags a.tag'),fandoms:qa('dd.fandom.tags a.tag'),relationships:qa('dd.relationship.tags a.tag'),characters:qa('dd.character.tags a.tag'),freeform_tags:qa('dd.freeform.tags a.tag'),language:q('dd.language')||'English',summary:(q('.summary .userstuff')||'').substring(0,2000)};var wc=q('dd.words');if(wc)w.word_count=parseInt(wc.replace(/,/g,''));var ch=q('dd.chapters');if(ch){var cm=ch.match(/(\\d+)\\s*\\/\\s*(\\d+|\\?)/);if(cm){w.chapter_count=parseInt(cm[1]);w.chapter_total=cm[2]==='?'?null:parseInt(cm[2]);w.is_complete=w.chapter_total!==null&&w.chapter_count>=w.chapter_total}}var k=q('dd.kudos');if(k)w.kudos=parseInt(k.replace(/,/g,''));var h=q('dd.hits');if(h)w.hits=parseInt(h.replace(/,/g,''));var du=q('dd.status');if(du)w.date_updated=du;var dp=q('dd.published');if(dp)w.date_published=dp;`;
 }
 
 function buildToastCode() {
@@ -135,18 +135,23 @@ async function importBatch(works,token,defaultStatus){
   return r.json();
 }
 
-// Split works by age + completion: if a fic was last visited over 1 year
-// ago AND is complete, you almost certainly finished it → "completed".
-// Everything else (recent fics, or old but unfinished) → "reading".
+// Split works by age + completion:
+//   • Last visited >1yr ago AND complete → "completed"
+//   • Incomplete AND not updated in 2+ years → "author_abandoned"
+//   • Everything else (recent, or old-but-unfinished within 2yr) → "reading"
 async function importPage(works,token){
   var oneYearAgo=new Date();oneYearAgo.setFullYear(oneYearAgo.getFullYear()-1);
-  var completed=[];var reading=[];
+  var twoYearsAgo=new Date();twoYearsAgo.setFullYear(twoYearsAgo.getFullYear()-2);
+  var completed=[];var reading=[];var abandoned=[];
   works.forEach(function(w){
     var old=w._lastVisited&&w._lastVisited<oneYearAgo;
-    if(old&&w.is_complete){completed.push(w)}else{reading.push(w)}
+    if(old&&w.is_complete){completed.push(w)}
+    else if(!w.is_complete&&w._lastVisited&&w._lastVisited<twoYearsAgo){abandoned.push(w)}
+    else{reading.push(w)}
   });
   var total=0;
   if(completed.length>0){var d=await importBatch(completed,token,'completed');total+=d.imported||0}
+  if(abandoned.length>0){var d3=await importBatch(abandoned,token,'author_abandoned');total+=d3.imported||0}
   if(reading.length>0){var d2=await importBatch(reading,token,'reading');total+=d2.imported||0}
   return{imported:total};
 }

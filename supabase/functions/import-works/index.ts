@@ -150,11 +150,28 @@ Deno.serve(async (req: Request) => {
           continue;
         }
 
+        // Determine the right status for newly-imported works.
+        // For bookmark syncs we infer status from AO3 metadata:
+        //   • Complete fic → 'completed'
+        //   • Incomplete but updated within the last 2 years → 'reading'
+        //   • Incomplete and NOT updated in 2+ years → 'author_abandoned'
+        // The 2-year threshold is a pragmatic cutoff: most active fics get
+        // at least one update within two years, so silence beyond that is a
+        // strong signal the author has moved on.
         let statusForNew;
         if (defaultStatus) {
           statusForNew = defaultStatus;
         } else if (source === 'bookmarks') {
-          statusForNew = work.is_complete ? 'completed' : 'reading';
+          if (work.is_complete) {
+            statusForNew = 'completed';
+          } else {
+            const twoYearsAgo = new Date();
+            twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+            const lastUpdated = work.date_updated ? new Date(work.date_updated) : null;
+            statusForNew = (lastUpdated && lastUpdated < twoYearsAgo)
+              ? 'author_abandoned'
+              : 'reading';
+          }
         } else {
           statusForNew = 'to_read';
         }

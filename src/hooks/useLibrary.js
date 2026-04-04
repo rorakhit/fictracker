@@ -405,7 +405,7 @@ export function useLibrary(userId) {
   const stats = useMemo(() => {
     const total = works.length;
     const totalWords = works.reduce((s, w) => s + (w.word_count || 0), 0);
-    const statusCounts = { to_read: 0, reading: 0, completed: 0, dropped: 0, on_hold: 0 };
+    const statusCounts = { to_read: 0, reading: 0, completed: 0, dropped: 0, on_hold: 0, author_abandoned: 0 };
     works.forEach(w => {
       const st = statuses[w.id]?.status || 'to_read';
       if (statusCounts[st] !== undefined) statusCounts[st]++;
