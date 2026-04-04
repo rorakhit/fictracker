@@ -383,7 +383,7 @@
       completed: '#22c55e',
       on_hold: '#8b5cf6',
       dropped: '#ef4444',
-      author_abandoned: '#b45309',
+      author_abandoned: '#e04666',
     };
 
     const chapTotal = work.chapter_total || work.chapter_count || '?';
@@ -413,7 +413,7 @@
           ).join('')}
         </select>
       </div>
-      <a class="ft-open-app" href="https://fictracker.vercel.app" target="_blank">Open FicTracker →</a>
+      <a class="ft-open-app" href="https://fictracker.app" target="_blank">Open FicTracker →</a>
     `;
 
     // ---- Mini bar: compact view with just status + chapter controls ----

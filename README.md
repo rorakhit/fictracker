@@ -46,7 +46,7 @@ Whether you use the Chrome extension (auto-detects your chapter), the Chapter Sy
 
 ## Quick start
 
-1. **Sign up** at [fictracker.vercel.app](https://fictracker.vercel.app)
+1. **Sign up** at [fictracker.app](https://fictracker.app)
 2. **Import** your AO3 bookmarks with one click
 3. **Browse, filter, and sort** your library by status, fandom, ship, rating, word count, or tags
 4. **Rate and track** your way through your reading list

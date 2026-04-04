@@ -2,7 +2,7 @@
 //
 // Why embed the token in the URL? Cross-origin storage access is blocked on
 // iPad Safari (and most browsers). A bookmarklet runs in the context of the
-// current page (archiveofourown.org), so it can't read fictracker.vercel.app's
+// current page (archiveofourown.org), so it can't read fictracker.app's
 // localStorage or cookies. Embedding the token in the bookmarklet itself
 // sidesteps this entirely — it's self-contained.
 //
