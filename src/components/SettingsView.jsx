@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabase';
-import { generatePersistentBookmarklet, generatePersistentChapterSyncBookmarklet, generatePersistentHistoryBookmarklet } from '../utils/bookmarklet';
+import { generatePersistentBookmarklet, generatePersistentChapterSyncBookmarklet, generatePersistentHistoryBookmarklet, generateDateScraperBookmarklet } from '../utils/bookmarklet';
 
 // React blocks javascript: URLs in href as a security measure.
 // This component sets the href directly on the DOM node via a ref
@@ -47,6 +47,8 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
   const [bmCopied, setBmCopied] = useState(false);
   const [csCopied, setCsCopied] = useState(false);
   const [hsCopied, setHsCopied] = useState(false);
+  const [dateScraperUrl, setDateScraperUrl] = useState(null);
+  const [dsCopied, setDsCopied] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
 
   useEffect(() => {
@@ -89,14 +91,16 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
         return;
       }
       // Generate all three bookmarklets from the same refresh token
-      const [quickAdd, chapterSync, historyImport] = await Promise.all([
+      const [quickAdd, chapterSync, historyImport, dateScraper] = await Promise.all([
         generatePersistentBookmarklet(currentSession.refresh_token),
         generatePersistentChapterSyncBookmarklet(currentSession.refresh_token),
         Promise.resolve(generatePersistentHistoryBookmarklet(currentSession.refresh_token)),
+        Promise.resolve(generateDateScraperBookmarklet(currentSession.refresh_token)),
       ]);
       setBookmarkletUrl(quickAdd);
       setChapterSyncUrl(chapterSync);
       setHistoryUrl(historyImport);
+      setDateScraperUrl(dateScraper);
     } catch (e) {
       console.error('Bookmarklet generation error:', e);
     }
@@ -298,7 +302,7 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
           display: 'grid',
           gap: 10,
           marginBottom: 14,
-          gridTemplateColumns: '1fr 1fr 1fr',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
         }}>
           <div style={{ padding: '10px 12px', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📚 Quick Add</div>
@@ -316,6 +320,12 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>📜 History Import</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
               Import fics from your AO3 History page. Catches fics you read but never bookmarked.
+            </div>
+          </div>
+          <div style={{ padding: '10px 12px', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>🔍 Date Scraper</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              Fills in missing dates by visiting each fic's page. Auto-detects abandoned fics.
             </div>
           </div>
         </div>
@@ -415,6 +425,33 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
               </div>
             )}
 
+            {/* Date Scraper (maintenance tool) */}
+            {dateScraperUrl && (
+              <div style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                padding: 14,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>🔍 Date Scraper</div>
+                <BookmarkletDragLink url={dateScraperUrl} label="🔍 Date Scraper" />
+
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  <button className="btn btn-accent btn-sm" onClick={() => copyToClipboard(dateScraperUrl, setDsCopied)}>
+                    {dsCopied ? 'Copied!' : 'Copy Date Scraper'}
+                  </button>
+                </div>
+
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  <strong style={{ color: 'var(--text)' }}>Maintenance tool.</strong> Fills in missing date_updated for incomplete fics by visiting each work's AO3 page.
+                  Fics not updated in 2+ years are automatically reclassified as "author abandoned."
+                  <br /><br />
+                  Run this on any AO3 page. It pauses 15 seconds between requests to respect rate limits.
+                  For large libraries this may take a while — the overlay shows progress and ETA.
+                </div>
+              </div>
+            )}
+
             {/* Setup instructions + regenerate */}
             <div style={{
               background: 'var(--surface)',
@@ -436,7 +473,7 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
               </div>
             </div>
 
-            <button className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => { setBookmarkletUrl(null); setChapterSyncUrl(null); setHistoryUrl(null); }}>
+            <button className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => { setBookmarkletUrl(null); setChapterSyncUrl(null); setHistoryUrl(null); setDateScraperUrl(null); }}>
               Regenerate Bookmarklets
             </button>
           </div>

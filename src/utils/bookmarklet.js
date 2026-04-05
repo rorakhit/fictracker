@@ -206,6 +206,164 @@ export function generatePersistentHistoryBookmarklet(refreshToken) {
   return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
 }
 
+// ---- Date Scraper Bookmarklet ----
+// A maintenance bookmarklet that fills in missing date_updated values for
+// incomplete fics. AO3 bookmark list pages don't consistently expose
+// the "status" date (date_updated) for all works — only for fics that
+// have been updated since their original publication. The only reliable
+// way to get dates is to visit each fic's individual work page.
+//
+// This bookmarklet:
+// 1. Authenticates via refresh token
+// 2. Queries Supabase REST API for incomplete works with NULL date_updated
+// 3. Fetches each work's AO3 page (same-origin, so no CORS issues)
+// 4. Scrapes dd.status (date_updated) and dd.published (date_published)
+// 5. Updates the works table via Supabase REST API
+// 6. Reclassifies reading_status based on the 2-year abandonment threshold
+// 7. Waits 15 seconds between requests to respect AO3 rate limits
+//
+// MUST be run while on archiveofourown.org so that fetches to individual
+// work pages are same-origin.
+
+function buildDateScraperCode() {
+  return `
+var S='${SUPABASE_URL}';
+var K='${SUPABASE_KEY}';
+
+async function run(token){
+  var ov=document.createElement('div');
+  ov.id='ft-datescraper-overlay';
+  ov.style.cssText='position:fixed;top:0;left:0;right:0;padding:16px 20px;background:#1a1d27;border-bottom:2px solid #14b8a6;color:#e4e4e7;font:14px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;z-index:999999;text-align:center';
+  ov.innerHTML='<div style="font-weight:700;font-size:16px;margin-bottom:6px;color:#14b8a6">FicTracker Date Scraper</div><div id="ft-ds-status">Fetching your incomplete fics...</div><div id="ft-ds-progress" style="margin-top:8px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden"><div id="ft-ds-bar" style="height:100%;width:0%;background:#14b8a6;transition:width 0.3s"></div></div>';
+  document.body.prepend(ov);
+  var statusEl=document.getElementById('ft-ds-status');
+  var barEl=document.getElementById('ft-ds-bar');
+
+  if(!location.href.match(/archiveofourown\\.org/)){
+    statusEl.textContent='Navigate to archiveofourown.org first, then run this bookmarklet.';
+    return;
+  }
+
+  // Step 1: Get user ID from token
+  var userResp=await fetch(S+'/auth/v1/user',{headers:{'apikey':K,'Authorization':'Bearer '+token}});
+  var userData=await userResp.json();
+  if(!userData.id){statusEl.textContent='Auth error. Regenerate bookmarklet in Settings.';return}
+  var userId=userData.id;
+
+  // Step 2: Get incomplete fics with NULL date_updated
+  // Query reading_status joined with works to get ao3_ids
+  var rsResp=await fetch(S+'/rest/v1/reading_status?select=work_id,status,works(id,ao3_id,date_updated,date_published,is_complete)&user_id=eq.'+userId,{
+    headers:{'apikey':K,'Authorization':'Bearer '+token}
+  });
+  var allStatuses=await rsResp.json();
+
+  // Filter to incomplete fics with NULL date_updated
+  var toScrape=allStatuses.filter(function(rs){
+    return rs.works&&!rs.works.is_complete&&!rs.works.date_updated;
+  });
+
+  if(toScrape.length===0){
+    statusEl.innerHTML='All your incomplete fics already have dates! <span style="color:#14b8a6">Nothing to scrape.</span>';
+    return;
+  }
+
+  statusEl.textContent='Found '+toScrape.length+' fics needing dates. Starting scrape with 15s pauses...';
+
+  var updated=0;var abandoned=0;var errors=0;
+  var twoYearsAgo=new Date();twoYearsAgo.setFullYear(twoYearsAgo.getFullYear()-2);
+
+  for(var i=0;i<toScrape.length;i++){
+    var rs=toScrape[i];
+    var ao3Id=rs.works.ao3_id;
+    var workId=rs.works.id;
+    barEl.style.width=Math.round(((i+1)/toScrape.length)*100)+'%';
+    statusEl.textContent='Scraping '+ao3Id+' ('+(i+1)+'/'+toScrape.length+')...';
+
+    try{
+      var resp=await fetch('/works/'+ao3Id,{credentials:'include'});
+      if(resp.status===429){
+        statusEl.textContent='Rate limited by AO3 at fic '+(i+1)+'. Waiting 60s...';
+        await new Promise(function(r){setTimeout(r,60000)});
+        resp=await fetch('/works/'+ao3Id,{credentials:'include'});
+        if(!resp.ok){statusEl.textContent='Still rate limited. Updated '+updated+' so far. Re-run to continue.';return}
+      }
+      if(!resp.ok){errors++;continue}
+
+      var html=await resp.text();
+      var parser=new DOMParser();
+      var doc=parser.parseFromString(html,'text/html');
+
+      // Check for AO3 "Retry Later" page
+      var retryH=doc.querySelector('h2.landmark.heading');
+      if(retryH&&retryH.textContent.includes('Retry')){
+        statusEl.textContent='AO3 asking to retry at fic '+(i+1)+'. Waiting 60s...';
+        await new Promise(function(r){setTimeout(r,60000)});
+        resp=await fetch('/works/'+ao3Id,{credentials:'include'});
+        if(!resp.ok){errors++;continue}
+        html=await resp.text();
+        doc=parser.parseFromString(html,'text/html');
+      }
+
+      var statusDate=null;var pubDate=null;
+      var statusEl2=doc.querySelector('dd.status');
+      if(statusEl2)statusDate=statusEl2.textContent.trim();
+      var pubEl=doc.querySelector('dd.published');
+      if(pubEl)pubDate=pubEl.textContent.trim();
+
+      // If no dd.status, the fic was never updated after publication,
+      // so date_updated = date_published
+      if(!statusDate&&pubDate)statusDate=pubDate;
+
+      if(!statusDate){errors++;continue}
+
+      // Update works table with scraped dates
+      var updateBody={date_updated:statusDate};
+      if(pubDate&&!rs.works.date_published)updateBody.date_published=pubDate;
+
+      await fetch(S+'/rest/v1/works?id=eq.'+workId,{
+        method:'PATCH',
+        headers:{'apikey':K,'Authorization':'Bearer '+token,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify(updateBody)
+      });
+
+      // Check if this fic should be reclassified as author_abandoned
+      var lastUp=new Date(statusDate);
+      if(lastUp<twoYearsAgo&&rs.status!=='author_abandoned'&&rs.status!=='completed'&&rs.status!=='dropped'){
+        await fetch(S+'/rest/v1/reading_status?work_id=eq.'+workId+'&user_id=eq.'+userId,{
+          method:'PATCH',
+          headers:{'apikey':K,'Authorization':'Bearer '+token,'Content-Type':'application/json','Prefer':'return=minimal'},
+          body:JSON.stringify({status:'author_abandoned'})
+        });
+        abandoned++;
+      }
+
+      updated++;
+    }catch(e){
+      errors++;
+    }
+
+    // 15-second pause between requests (skip on last one)
+    if(i<toScrape.length-1){
+      var remaining=toScrape.length-i-1;
+      var eta=Math.round(remaining*15/60);
+      statusEl.textContent='Updated '+ao3Id+'. Waiting 15s... ('+remaining+' left, ~'+eta+' min remaining)';
+      await new Promise(function(r){setTimeout(r,15000)});
+    }
+  }
+
+  statusEl.innerHTML='<span style="color:#14b8a6">Done!</span> Scraped dates for '+updated+' fics. '+abandoned+' reclassified as abandoned.'+(errors>0?' ('+errors+' errors)':'');
+  barEl.style.width='100%';
+}
+`;
+}
+
+export function generateDateScraperBookmarklet(refreshToken) {
+  const scraperCode = buildDateScraperCode();
+  const inner = `(function(){${scraperCode}fetch('${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':'${SUPABASE_KEY}','Content-Type':'application/json'},body:JSON.stringify({refresh_token:'${refreshToken}'})}).then(function(r){return r.json()}).then(function(auth){if(auth.error){alert('Session expired — regenerate bookmarklet in FicTracker Settings');return}run(auth.access_token)}).catch(function(e){alert('Error: '+e.message)})})()`;
+
+  return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
+}
+
 // Generate a long-lived refresh token URL that auto-refreshes before adding
 export async function generatePersistentBookmarklet(refreshToken) {
   const inner = `(function(){var S='${SUPABASE_URL}',K='${SUPABASE_KEY}',R='${refreshToken}';${buildToastCode()}${buildPayloadCode()}toast('Adding to FicTracker...');fetch(S+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':K,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:R})}).then(function(r){return r.json()}).then(function(auth){if(auth.error){toast('Session expired — regenerate bookmarklet in Settings',true);return}return fetch(S+'/functions/v1/import-works',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth.access_token},body:JSON.stringify({works:[w],source:'bookmarklet',defaultStatus:'reading'})})${buildResultHandler()}})})()`;
