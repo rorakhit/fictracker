@@ -346,7 +346,7 @@ async function run(token){
     if(i<toScrape.length-1){
       var remaining=toScrape.length-i-1;
       var eta=Math.round(remaining*15/60);
-      statusEl.textContent='Updated '+ao3Id+'. Waiting 15s... ('+remaining+' left, ~'+eta+' min remaining)';
+      statusEl.textContent='Done '+(i+1)+'/'+toScrape.length+'. Waiting 15s... (~'+eta+' min remaining)';
       await new Promise(function(r){setTimeout(r,15000)});
     }
   }
