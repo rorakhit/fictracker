@@ -19,9 +19,10 @@ export default function WorkModal({ work, status, editStatus, setEditStatus, edi
         // Direct chapter link — best UX
         return { url: `${base}/chapters/${match.ao3_id}`, label: `Continue Ch. ${editChapter} on AO3` };
       }
-      // No chapter IDs stored yet — fall back to navigate page
-      // (the extension will populate chapter_ids next time they visit the work)
-      return { url: `${base}/navigate`, label: `Continue Ch. ${editChapter} on AO3` };
+      // No chapter IDs stored yet — link to the work page (loads Ch. 1).
+      // AO3 requires chapter-specific IDs for deep links, which get populated
+      // when the user runs the Chapter Sync bookmarklet on this fic.
+      return { url: base, label: `Continue Ch. ${editChapter} on AO3` };
     }
 
     return { url: base, label: 'Open on AO3' };
