@@ -290,7 +290,7 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 4 }}>AO3 Bookmarklets</h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
-          Two bookmarklets for tracking fics while browsing AO3.
+          Three bookmarklets for tracking fics while browsing AO3.
           Works on iPad, iPhone, and desktop — no extension needed.
         </p>
 
