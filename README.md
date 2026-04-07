@@ -157,6 +157,12 @@ FicTracker uses Supabase with Row Level Security for full multi-user data isolat
 - **subscriptions** — Stripe subscription lifecycle (customer ID, plan, period dates, cancel status)
 - **import_jobs** — Server-side AO3 scraping progress tracking
 
+## Coming soon
+
+### Bookshelves
+
+Slice your library into named shelves — both the ones you curate by hand ("Comfort reads", "Enemies to lovers", "For the long flight") and smart shelves that auto-populate from saved filters ("Complete Drarry over 50k I haven't read yet"). A work can live on multiple shelves, so you're not forced into a single taxonomy. Manual shelves are for mood and memory; smart shelves are for queries you want to keep warm.
+
 ## Contributing
 
 FicTracker is currently in active development. If you're an AO3 reader who wants to help shape the product, reach out or open an issue — especially if you have thoughts on features, UX, or fandom-specific needs.
