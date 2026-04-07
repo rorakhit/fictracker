@@ -224,11 +224,21 @@ export function useLibrary(userId) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentSession.access_token}`
         },
-        body: JSON.stringify({ works: [{ ao3_id: ao3Id, title: 'Loading...', source: 'manual' }], source: 'manual' })
+        body: JSON.stringify({ works: [{ ao3_id: ao3Id, source: 'manual' }], source: 'manual' })
       });
-      const data = await res.json();
-      setImportMsg(`Added! (${data.imported} imported)`);
-      loadData();
+      const data = await res.json().catch(() => ({}));
+      // The edge function now scrapes AO3 server-side, so a successful add
+      // means the work landed with real metadata. Treat any non-2xx, an
+      // `imported` count of 0, or a returned `errors` array as a failure so
+      // the user actually sees what went wrong instead of the old silent
+      // "Loading..." row sitting in their library forever.
+      if (!res.ok || !data.imported) {
+        const detail = (data.errors && data.errors[0]) || data.message || data.error || `HTTP ${res.status}`;
+        setImportMsg(`Could not add work: ${detail}`);
+      } else {
+        setImportMsg('Added!');
+        loadData();
+      }
     } catch (e) { setImportMsg('Error: ' + e.message); }
     setImporting(false);
   }
