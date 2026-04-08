@@ -1,11 +1,10 @@
 {
   "manifest_version": 3,
   "name": "FicTracker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Track your AO3 reading — add fics, update progress, and get WIP notifications.",
   "permissions": [
-    "storage",
-    "activeTab"
+    "storage"
   ],
   "host_permissions": [
     "https://archiveofourown.org/*"
