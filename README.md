@@ -18,6 +18,10 @@ Multiple ways to get your fics into FicTracker. **Server-side sync** pulls your 
 
 Set reading status (to read, reading, completed, on hold, dropped), rate fics 1–5 stars, track your current chapter in long multi-chapter works with a visual progress bar, and add personal notes. Your library shuffles on every visit so buried bookmarks surface naturally.
 
+### Bookshelves
+
+Slice your library into named shelves — both the ones you curate by hand ("Comfort reads", "Enemies to lovers", "For the long flight") and **smart shelves** that save a filter query so you can jump back to it with one click ("Complete Drarry over 50k, highest rated first"). A work can live on multiple shelves, so you're not forced into a single taxonomy. Manual shelves are for mood and memory; smart shelves are for queries you want to keep warm. Free accounts get 3 shelves total; Plus is unlimited.
+
 ### Smart recommendations
 
 FicTracker learns what you love. Rate a few fics and the For You tab lights up with three ways to find your next read: **AI Picks** uses Claude to craft AO3 searches tailored to your taste — including wildcard suggestions from fandoms you've never explored. **Discover** surfaces popular works from across the community that match your favorite fandoms and ships. **Your Queue** highlights the best unread fics already in your library, scored by how well they match your taste.
@@ -74,6 +78,7 @@ Whether you use the Chrome extension (auto-detects your chapter), the Chapter Sy
 | Search, filter, sort | ✓ | ✓ |
 | Status & chapter tracking | ✓ | ✓ |
 | WIP update badges | ✓ | ✓ |
+| Bookshelves (manual + smart) | Up to 3 | Unlimited |
 | Stats & analytics | — | ✓ |
 | Reading Wrapped | — | ✓ |
 | AI-powered recs (3/day) | — | ✓ |
@@ -156,12 +161,9 @@ FicTracker uses Supabase with Row Level Security for full multi-user data isolat
 - **user_preferences** — Per-user settings (AO3 username, subscription tier, AI rec rate limits)
 - **subscriptions** — Stripe subscription lifecycle (customer ID, plan, period dates, cancel status)
 - **import_jobs** — Server-side AO3 scraping progress tracking
-
-## Coming soon
-
-### Bookshelves
-
-Slice your library into named shelves — both the ones you curate by hand ("Comfort reads", "Enemies to lovers", "For the long flight") and smart shelves that auto-populate from saved filters ("Complete Drarry over 50k I haven't read yet"). A work can live on multiple shelves, so you're not forced into a single taxonomy. Manual shelves are for mood and memory; smart shelves are for queries you want to keep warm.
+- **shelves** — User-created manual bookshelves (name, color) with a combined 3-shelf free-tier cap enforced by a DB trigger
+- **shelf_works** — Many-to-many between shelves and works (a work can live on multiple shelves)
+- **smart_shelves** — Saved filter queries (status, search, sort) that restore Library state on click
 
 ## Contributing
 
