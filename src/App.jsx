@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 import { useLibrary } from './hooks/useLibrary';
+import { useShelves } from './hooks/useShelves';
 import { useAnalytics } from './hooks/useAnalytics';
 import LoginPage from './components/LoginPage';
 import SettingsView from './components/SettingsView';
@@ -21,8 +22,13 @@ function Dashboard({ session }) {
   const [editChapter, setEditChapter] = useState(0);
 
   const lib = useLibrary(userId);
+  // useShelves needs the current tier for its isAtShelfLimit check.
+  // It's fine that subscriptionTier starts as 'free' and then updates —
+  // React will re-run the memoized cap calcs when the tier prop changes.
+  const shelves = useShelves(userId, lib.subscriptionTier);
   const analytics = useAnalytics(lib.works, lib.statuses, lib.readingLog);
   const [upgradeMsg, setUpgradeMsg] = useState('');
+  const [activeShelfId, setActiveShelfId] = useState(null);
 
   // Handle return from Stripe Checkout — show a brief confirmation
   // and reload data so the new subscription tier is picked up.
@@ -126,6 +132,20 @@ function Dashboard({ session }) {
           ficsRemaining={lib.ficsRemaining}
           ficLimit={lib.FREE_FIC_LIMIT}
           onOpenWork={openWork}
+          shelves={shelves.shelves}
+          worksByShelf={shelves.worksByShelf}
+          activeShelfId={activeShelfId}
+          setActiveShelfId={setActiveShelfId}
+          createShelf={shelves.createShelf}
+          updateShelf={shelves.updateShelf}
+          deleteShelf={shelves.deleteShelf}
+          addWorksToShelf={shelves.addWorksToShelf}
+          isAtShelfLimit={shelves.isAtShelfLimit}
+          shelvesRemaining={shelves.shelvesRemaining}
+          totalShelfCount={shelves.totalShelfCount}
+          shelfLimit={shelves.FREE_SHELF_LIMIT}
+          isPremium={lib.isPremium}
+          onShelfUpgradeClick={() => setView('settings')}
         />
       )}
 
@@ -179,6 +199,10 @@ function Dashboard({ session }) {
           onSave={saveWorkDetails}
           onDelete={handleDelete}
           onClose={() => setSelected(null)}
+          shelves={shelves.shelves}
+          shelvesByWork={shelves.shelvesByWork}
+          addWorkToShelf={shelves.addWorkToShelf}
+          removeWorkFromShelf={shelves.removeWorkFromShelf}
         />
       )}
     </div>

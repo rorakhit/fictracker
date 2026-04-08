@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import Stars from './Stars';
+import ShelfStrip from './ShelfStrip';
 import { ratingClass, wordCountLabel } from '../utils/helpers';
 
 export default function Library({
@@ -9,7 +10,12 @@ export default function Library({
   importing, importMsg, addByUrl,
   checkingWips, wipCheckMsg, checkWipUpdates, dismissWipUpdate, dismissAllWipUpdates,
   isAtFicLimit, ficsRemaining, ficLimit,
-  onOpenWork
+  onOpenWork,
+  // Bookshelf props
+  shelves, worksByShelf, activeShelfId, setActiveShelfId,
+  createShelf, updateShelf, deleteShelf, addWorksToShelf,
+  isAtShelfLimit, shelvesRemaining, totalShelfCount, shelfLimit,
+  isPremium, onShelfUpgradeClick,
 }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -38,6 +44,12 @@ export default function Library({
 
   const filtered = useMemo(() => {
     let result = works.map(w => ({ ...w, _status: getStatusForWork(w.id) }));
+    // Shelf filter runs first so the status/search filters narrow within
+    // the active shelf. Null activeShelfId = no shelf filter (show all).
+    if (activeShelfId && worksByShelf) {
+      const shelfWorkIds = worksByShelf.get(activeShelfId) || new Set();
+      result = result.filter(w => shelfWorkIds.has(w.id));
+    }
     if (statusFilter !== 'all') {
       result = result.filter(w => (w._status?.status || 'to_read') === statusFilter);
     }
@@ -65,7 +77,7 @@ export default function Library({
       return 0;
     });
     return result;
-  }, [works, statuses, statusFilter, search, effectiveSort, shuffleSeed]);
+  }, [works, statuses, statusFilter, search, effectiveSort, shuffleSeed, activeShelfId, worksByShelf]);
 
   function selectAllVisible() {
     const allIds = new Set(filtered.map(w => w.id));
@@ -73,6 +85,24 @@ export default function Library({
   }
 
   function deselectAll() {
+    setBulkSelected(new Set());
+  }
+
+  // Bulk add-to-shelf handler. Fires addWorksToShelf (which dedupes
+  // and rolls back optimistic updates on error), then activates the
+  // destination shelf as the filter so the user sees where their
+  // selection landed, and exits bulk mode. This gives instant visual
+  // confirmation without needing a toast system.
+  async function handleBulkAddToShelf(shelfId) {
+    if (!shelfId || bulkSelected.size === 0) return;
+    const workIds = Array.from(bulkSelected);
+    const result = await addWorksToShelf(shelfId, workIds);
+    if (result?.error) {
+      alert('Could not add to shelf. Try again?');
+      return;
+    }
+    setActiveShelfId(shelfId);
+    setBulkMode(false);
     setBulkSelected(new Set());
   }
 
@@ -85,6 +115,25 @@ export default function Library({
         <div className="stat"><div className="stat-num" style={{ color: 'var(--success)' }}>{stats.statusCounts.completed}</div><div className="stat-label">Done</div></div>
         <div className="stat"><div className="stat-num" style={{ color: 'var(--teal)' }}>{wordCountLabel(stats.totalWords)}</div><div className="stat-label">Words</div></div>
       </div>
+
+      {/* Shelf strip — bookshelf feature (manual shelves only for now) */}
+      {shelves && (
+        <ShelfStrip
+          shelves={shelves}
+          worksByShelf={worksByShelf}
+          activeShelfId={activeShelfId}
+          setActiveShelfId={setActiveShelfId}
+          createShelf={createShelf}
+          updateShelf={updateShelf}
+          deleteShelf={deleteShelf}
+          isAtShelfLimit={isAtShelfLimit}
+          shelvesRemaining={shelvesRemaining}
+          totalShelfCount={totalShelfCount}
+          shelfLimit={shelfLimit}
+          isPremium={isPremium}
+          onUpgradeClick={onShelfUpgradeClick}
+        />
+      )}
 
       {/* WIP update section */}
       {(() => {
@@ -204,6 +253,16 @@ export default function Library({
               <option value="dropped">Dropped</option>
               <option value="author_abandoned">Author Abandoned</option>
             </select>
+            {shelves && shelves.length > 0 && (
+              <select style={{ width: 150, padding: '5px 8px', fontSize: 12, borderRadius: 8 }}
+                onChange={e => { const v = e.target.value; e.target.value = ''; if (v) handleBulkAddToShelf(v); }}
+                defaultValue="">
+                <option value="" disabled>Add to shelf...</option>
+                {shelves.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            )}
             <button className="btn btn-sm" style={{ color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.3)', background: 'transparent' }}
               onClick={() => { if (confirm(`Remove ${bulkSelected.size} fics?`)) bulkDelete(); }}>Remove</button>
           </>)}</div>

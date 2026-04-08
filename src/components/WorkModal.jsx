@@ -2,8 +2,35 @@ import { useMemo } from 'react';
 import Stars from './Stars';
 import { ratingClass } from '../utils/helpers';
 
-export default function WorkModal({ work, status, editStatus, setEditStatus, editRating, setEditRating, editNotes, setEditNotes, editChapter, setEditChapter, onSave, onDelete, onClose }) {
+export default function WorkModal({
+  work, status,
+  editStatus, setEditStatus,
+  editRating, setEditRating,
+  editNotes, setEditNotes,
+  editChapter, setEditChapter,
+  onSave, onDelete, onClose,
+  // Bookshelf props — optional so the modal still works if a caller
+  // forgets to pass them (defensive; not strictly needed today).
+  shelves = [],
+  shelvesByWork,
+  addWorkToShelf,
+  removeWorkFromShelf,
+}) {
   if (!work) return null;
+
+  // Build the set of shelf IDs this work is currently on.
+  // shelvesByWork is a Map from useShelves; we look up the work id and
+  // get back a Set. Defensive fallback to an empty set for the no-hook case.
+  const onShelfIds = shelvesByWork?.get(work.id) || new Set();
+
+  async function toggleShelf(shelfId) {
+    if (!addWorkToShelf || !removeWorkFromShelf) return;
+    if (onShelfIds.has(shelfId)) {
+      await removeWorkFromShelf(shelfId, work.id);
+    } else {
+      await addWorkToShelf(shelfId, work.id);
+    }
+  }
 
   // Build the best AO3 link we can for this work + reading progress.
   // Priority: direct chapter link > chapter index (navigate) > plain work URL.
@@ -80,6 +107,41 @@ export default function WorkModal({ work, status, editStatus, setEditStatus, edi
           <label>Notes</label>
           <textarea placeholder="Your thoughts, favorite moments, etc..." value={editNotes} onChange={e => setEditNotes(e.target.value)} />
         </div>
+
+        {/* Shelves section — only rendered if the shelf machinery is wired in.
+            Reuses .shelf-chip/.shelf-dot styles from the Library strip.
+            Note: .active here means "work is on this shelf", not "filter is
+            active" as it does in the strip. Same visual, different semantic,
+            never in the same context — so no collision. */}
+        {addWorkToShelf && (
+          <div className="modal-section">
+            <label>Shelves</label>
+            {shelves.length === 0 ? (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', paddingTop: 4 }}>
+                No shelves yet. Create one in the Library view to start organizing.
+              </div>
+            ) : (
+              <div className="shelf-chips" style={{ paddingTop: 4 }}>
+                {shelves.map(shelf => {
+                  const isOn = onShelfIds.has(shelf.id);
+                  return (
+                    <button
+                      key={shelf.id}
+                      type="button"
+                      className={`shelf-chip ${isOn ? 'active' : ''}`}
+                      onClick={() => toggleShelf(shelf.id)}
+                      title={isOn ? `Remove from ${shelf.name}` : `Add to ${shelf.name}`}
+                    >
+                      <span className="shelf-dot" style={{ background: shelf.color }} />
+                      <span className="shelf-chip-name">{shelf.name}</span>
+                      {isOn && <span style={{ fontSize: 10, color: 'var(--accent-hover)' }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="modal-actions">
           <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)', marginRight: 'auto' }}
