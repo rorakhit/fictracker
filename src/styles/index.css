@@ -274,6 +274,84 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
   margin-top: 6px; font-size: 11px; color: var(--danger);
 }
 
+/* Smart shelves — visually distinct from manual shelves via a subtle
+   tinted background and a 🔍 icon in place of the color dot. */
+.shelf-chip-smart {
+  background: linear-gradient(135deg, rgba(139,157,196,0.08), rgba(224,168,114,0.08));
+  border-color: rgba(139,157,196,0.35);
+}
+.shelf-chip-smart:hover {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(139,157,196,0.15), rgba(224,168,114,0.15));
+}
+.shelf-chip-smart.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent-hover);
+}
+.shelf-smart-icon {
+  font-size: 11px;
+  line-height: 1;
+  display: inline-block;
+  width: 12px;
+  text-align: center;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* "Save filter" button in the Library filter row — looks like a small
+   ghost pill. Only shown when the user has tweaked filters from default. */
+.save-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.save-filter-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+/* Inline panel that appears when saving a smart shelf — matches the
+   visual language of the create-shelf flow but sits in the filter row. */
+.smart-save-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+}
+.smart-save-icon { font-size: 14px; }
+.smart-save-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 4px 8px;
+  font-size: 13px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+.smart-save-input:focus { outline: none; border-color: var(--accent); }
+.smart-save-error {
+  width: 100%;
+  font-size: 11px;
+  color: var(--danger);
+}
+
 @media (max-width: 700px) {
   .stats { grid-template-columns: repeat(3, 1fr); }
   .charts-grid { grid-template-columns: 1fr; }

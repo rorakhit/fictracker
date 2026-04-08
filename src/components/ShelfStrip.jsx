@@ -15,12 +15,16 @@ const SHELF_COLORS = [
 
 export default function ShelfStrip({
   shelves,
+  smartShelves = [],
   worksByShelf,
   activeShelfId,
   setActiveShelfId,
+  activeSmartShelfId,
+  applySmartShelf,
   createShelf,
   updateShelf,
   deleteShelf,
+  deleteSmartShelf,
   isAtShelfLimit,
   shelvesRemaining,
   totalShelfCount,
@@ -148,6 +152,15 @@ export default function ShelfStrip({
   }
 
   const hasShelves = shelves.length > 0;
+  const hasAnyShelves = hasShelves || smartShelves.length > 0;
+  const hasActiveFilter = activeShelfId !== null || (activeSmartShelfId != null);
+
+  async function handleDeleteSmart(smart) {
+    setMenuOpenFor(null);
+    if (!confirm(`Delete smart shelf "${smart.name}"?`)) return;
+    // No cascade needed — smart shelves have no join table.
+    await deleteSmartShelf(smart.id);
+  }
 
   return (
     <div className="shelf-strip">
@@ -164,10 +177,11 @@ export default function ShelfStrip({
       </div>
 
       <div className="shelf-chips">
-        {/* "All" chip — clears the active shelf filter */}
-        {hasShelves && (
+        {/* "All" chip — clears ANY active shelf filter (manual or smart).
+            Visible as soon as there's any shelf to potentially filter by. */}
+        {hasAnyShelves && (
           <button
-            className={`shelf-chip shelf-chip-all ${activeShelfId === null ? 'active' : ''}`}
+            className={`shelf-chip shelf-chip-all ${!hasActiveFilter ? 'active' : ''}`}
             onClick={() => setActiveShelfId(null)}
           >
             All
@@ -230,6 +244,47 @@ export default function ShelfStrip({
                   <button
                     className="shelf-chip-menu-danger"
                     onClick={() => handleDelete(shelf)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Smart shelves — rendered after manual shelves with a 🔍 icon
+            instead of a color dot. Click applies the saved filter state;
+            only affordance in the hover menu is Delete (rename deferred). */}
+        {smartShelves.map(smart => {
+          const isActive = activeSmartShelfId === smart.id;
+          const isMenuOpen = menuOpenFor === `smart-${smart.id}`;
+          return (
+            <div key={`smart-${smart.id}`} className={`shelf-chip-wrap ${isActive ? 'active' : ''}`}>
+              <button
+                className={`shelf-chip shelf-chip-smart ${isActive ? 'active' : ''}`}
+                onClick={() => applySmartShelf && applySmartShelf(smart)}
+                title={`Apply saved filter: ${smart.name}`}
+              >
+                <span className="shelf-smart-icon">🔍</span>
+                <span className="shelf-chip-name">{smart.name}</span>
+              </button>
+              <button
+                className="shelf-chip-menu-btn"
+                onClick={e => {
+                  e.stopPropagation();
+                  setMenuOpenFor(isMenuOpen ? null : `smart-${smart.id}`);
+                }}
+                title="Shelf options"
+                aria-label="Shelf options"
+              >
+                ⋯
+              </button>
+              {isMenuOpen && (
+                <div className="shelf-chip-menu" ref={menuRef}>
+                  <button
+                    className="shelf-chip-menu-danger"
+                    onClick={() => handleDeleteSmart(smart)}
                   >
                     Delete
                   </button>

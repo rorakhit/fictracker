@@ -16,11 +16,60 @@ export default function Library({
   createShelf, updateShelf, deleteShelf, addWorksToShelf,
   isAtShelfLimit, shelvesRemaining, totalShelfCount, shelfLimit,
   isPremium, onShelfUpgradeClick,
+  // Smart shelf props
+  smartShelves, activeSmartShelfId, setActiveSmartShelfId,
+  createSmartShelf, deleteSmartShelf,
 }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('shuffle');
   const [addUrl, setAddUrl] = useState('');
+
+  // Smart shelf save UI state — local to Library because the save
+  // flow is a Library concern (it captures Library's filter state).
+  const [savingSmartShelf, setSavingSmartShelf] = useState(false);
+  const [smartShelfName, setSmartShelfName] = useState('');
+  const [smartShelfError, setSmartShelfError] = useState('');
+
+  // Is there anything meaningful to save? Saving a smart shelf with
+  // all-default filters would be a no-op query that matches every fic.
+  const hasNonDefaultFilter = statusFilter !== 'all' || search.trim() !== '' || sortBy !== 'shuffle';
+
+  async function handleSaveSmartShelf() {
+    const trimmed = smartShelfName.trim();
+    if (!trimmed) { setSmartShelfError('Name is required'); return; }
+    const filterJson = { statusFilter, search: search.trim(), sortBy };
+    const result = await createSmartShelf({ name: trimmed, filterJson });
+    if (result?.hitLimit) {
+      setSmartShelfError('Free tier is limited to 3 shelves');
+      return;
+    }
+    if (result?.error) {
+      if (result.error.code === '23505') {
+        setSmartShelfError('You already have a shelf with that name');
+      } else {
+        setSmartShelfError('Could not save');
+      }
+      return;
+    }
+    // Success: close the input, clear state, activate the new smart shelf
+    setSavingSmartShelf(false);
+    setSmartShelfName('');
+    setSmartShelfError('');
+    if (result?.shelf) setActiveSmartShelfId(result.shelf.id);
+  }
+
+  // Callback for ShelfStrip: apply a smart shelf's saved filter state
+  // back to Library's local state and mark it as the active smart shelf.
+  // Also clears any active manual shelf (mutually exclusive).
+  function applySmartShelf(shelf) {
+    const f = shelf.filterJson || {};
+    setStatusFilter(f.statusFilter || 'all');
+    setSearch(f.search || '');
+    setSortBy(f.sortBy || 'shuffle');
+    setActiveSmartShelfId(shelf.id);
+    setActiveShelfId(null);
+  }
 
   // Seeded shuffle rotates every 2 hours so the library feels fresh
   // without flickering on re-renders. Same approach as queue recs.
@@ -116,16 +165,20 @@ export default function Library({
         <div className="stat"><div className="stat-num" style={{ color: 'var(--teal)' }}>{wordCountLabel(stats.totalWords)}</div><div className="stat-label">Words</div></div>
       </div>
 
-      {/* Shelf strip — bookshelf feature (manual shelves only for now) */}
+      {/* Shelf strip — bookshelf feature */}
       {shelves && (
         <ShelfStrip
           shelves={shelves}
+          smartShelves={smartShelves || []}
           worksByShelf={worksByShelf}
           activeShelfId={activeShelfId}
-          setActiveShelfId={setActiveShelfId}
+          setActiveShelfId={(id) => { setActiveShelfId(id); if (id !== null) setActiveSmartShelfId(null); }}
+          activeSmartShelfId={activeSmartShelfId}
+          applySmartShelf={applySmartShelf}
           createShelf={createShelf}
           updateShelf={updateShelf}
           deleteShelf={deleteShelf}
+          deleteSmartShelf={deleteSmartShelf}
           isAtShelfLimit={isAtShelfLimit}
           shelvesRemaining={shelvesRemaining}
           totalShelfCount={totalShelfCount}
@@ -221,10 +274,12 @@ export default function Library({
 
       <div className="filters">
         {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dropped','Dropped'],['author_abandoned','Abandoned']].map(([k,l]) => (
-          <button key={k} className={`pill ${statusFilter === k ? 'active' : ''}`} onClick={() => setStatusFilter(k)}>{l}</button>
+          <button key={k} className={`pill ${statusFilter === k ? 'active' : ''}`}
+            onClick={() => { setStatusFilter(k); if (setActiveSmartShelfId) setActiveSmartShelfId(null); }}>{l}</button>
         ))}
         <span style={{ width: 1, background: 'var(--border)', margin: '0 2px', height: 20, display: 'inline-block' }}></span>
-        <select style={{ width: 130, padding: '5px 8px', fontSize: 12, borderRadius: 18 }} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+        <select style={{ width: 130, padding: '5px 8px', fontSize: 12, borderRadius: 18 }} value={sortBy}
+          onChange={e => { setSortBy(e.target.value); if (setActiveSmartShelfId) setActiveSmartShelfId(null); }}>
           <option value="shuffle">Shuffle</option>
           <option value="recent">Recent</option>
           <option value="title">Title</option>
@@ -232,9 +287,42 @@ export default function Library({
           <option value="kudos">Kudos</option>
           <option value="rating">My Rating</option>
         </select>
-        <input className="search-input" placeholder="Search fics, fandoms, ships..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="search-input" placeholder="Search fics, fandoms, ships..." value={search}
+          onChange={e => { setSearch(e.target.value); if (setActiveSmartShelfId) setActiveSmartShelfId(null); }} />
+        {/* "Save as smart shelf" — only appears when there's a non-default filter
+            to save and the shelf machinery is wired in. Keeps the control bar
+            clean in the default state. */}
+        {createSmartShelf && hasNonDefaultFilter && !savingSmartShelf && (
+          <button className="pill" onClick={() => { setSavingSmartShelf(true); setSmartShelfName(''); setSmartShelfError(''); }}
+            title="Save current filter as a smart shelf">
+            💾 Save filter
+          </button>
+        )}
         <button className={`pill ${bulkMode ? 'active' : ''}`} onClick={() => { setBulkMode(!bulkMode); setBulkSelected(new Set()); }}>{bulkMode ? 'Cancel' : 'Select'}</button>
       </div>
+
+      {/* Inline smart-shelf save panel. Lives outside the .filters row so
+          it can wrap cleanly on narrow viewports. */}
+      {savingSmartShelf && (
+        <div className="smart-save-panel">
+          <span className="smart-save-icon">🔍</span>
+          <input
+            autoFocus
+            className="smart-save-input"
+            placeholder="Name this smart shelf"
+            value={smartShelfName}
+            maxLength={50}
+            onChange={e => { setSmartShelfName(e.target.value); setSmartShelfError(''); }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleSaveSmartShelf();
+              if (e.key === 'Escape') { setSavingSmartShelf(false); setSmartShelfName(''); setSmartShelfError(''); }
+            }}
+          />
+          <button className="btn btn-sm btn-accent" onClick={handleSaveSmartShelf}>Save</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => { setSavingSmartShelf(false); setSmartShelfName(''); setSmartShelfError(''); }}>Cancel</button>
+          {smartShelfError && <span className="smart-save-error">{smartShelfError}</span>}
+        </div>
+      )}
 
       {bulkMode && (
         <div className="bulk-bar">

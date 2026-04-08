@@ -28,7 +28,11 @@ function Dashboard({ session }) {
   const shelves = useShelves(userId, lib.subscriptionTier);
   const analytics = useAnalytics(lib.works, lib.statuses, lib.readingLog);
   const [upgradeMsg, setUpgradeMsg] = useState('');
+  // Shelf filter state. The two active-* IDs are mutually exclusive —
+  // setting one clears the other in Library. Parent owns them so they
+  // survive if Library ever unmounts (e.g., tab switch).
   const [activeShelfId, setActiveShelfId] = useState(null);
+  const [activeSmartShelfId, setActiveSmartShelfId] = useState(null);
 
   // Handle return from Stripe Checkout — show a brief confirmation
   // and reload data so the new subscription tier is picked up.
@@ -146,6 +150,11 @@ function Dashboard({ session }) {
           shelfLimit={shelves.FREE_SHELF_LIMIT}
           isPremium={lib.isPremium}
           onShelfUpgradeClick={() => setView('settings')}
+          smartShelves={shelves.smartShelves}
+          activeSmartShelfId={activeSmartShelfId}
+          setActiveSmartShelfId={setActiveSmartShelfId}
+          createSmartShelf={shelves.createSmartShelf}
+          deleteSmartShelf={shelves.deleteSmartShelf}
         />
       )}
 
