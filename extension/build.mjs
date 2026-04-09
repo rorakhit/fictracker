@@ -67,6 +67,22 @@ function transformManifestForFirefox(manifest) {
     gecko: {
       id: GECKO_ID,
       strict_min_version: GECKO_MIN_VERSION,
+      // Mozilla requires this block to be present (AMO rejects uploads
+      // without it as of late 2024). Values must be drawn from Mozilla's
+      // fixed taxonomy. FicTracker collects two categories, both required:
+      //   - authenticationInfo: email + password sent to Supabase Auth
+      //     on sign-in; session tokens stored in chrome.storage.local.
+      //   - websiteContent: the extension scrapes AO3 work page DOM
+      //     (title, authors, tags, kudos, chapter count) and POSTs it to
+      //     the FicTracker Supabase backend. This is the core value prop
+      //     of the extension, so it can't be marked optional.
+      // Nothing else is collected — no location, no health/payment info,
+      // no browsing activity beyond AO3 work pages, no search terms, no
+      // personal communications, no telemetry.
+      data_collection_permissions: {
+        required: ['authenticationInfo', 'websiteContent'],
+        optional: [],
+      },
     },
   };
   return out;
