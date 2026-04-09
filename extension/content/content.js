@@ -142,9 +142,16 @@
     try {
       const result = await chrome.storage.local.get('fictracker_panel_mode');
       if (result.fictracker_panel_mode) {
+        // Honour any explicitly saved preference (user toggled mode before).
         panelMode = result.fictracker_panel_mode;
+      } else if (window.innerWidth < 540) {
+        // No saved preference + narrow viewport = phone.
+        // Default to mini so the panel doesn't cover the fic on first visit.
+        // Once the user explicitly switches mode their choice is saved and
+        // respected on every subsequent visit.
+        panelMode = 'mini';
       }
-    } catch (e) { /* default to 'full' */ }
+    } catch (e) { /* default to 'full' on any storage error */ }
     return panelMode;
   }
 
