@@ -10,12 +10,34 @@ Track your AO3 reading directly from Archive of Our Own. Add fics to your librar
 - **Auto-complete** detection when you reach the final chapter
 - **Status updates** without leaving AO3
 
-## Chrome / Edge / Firefox
+## Chrome / Edge (dev load)
 
 1. Open `chrome://extensions` (or `edge://extensions`)
 2. Enable "Developer mode"
 3. Click "Load unpacked" and select this `extension/` folder
 4. Navigate to any AO3 work page — the FicTracker panel appears in the bottom-right
+
+## Firefox (dev load)
+
+Firefox uses the same source tree but needs a transformed `manifest.json` (see **Building** below). For ad-hoc testing without building:
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click "Load Temporary Add-on..."
+3. Select `extension/dist/build-firefox/manifest.json` *after* running `npm run build:ext` (or point at any `manifest.json` produced by the build script)
+4. Temporary add-ons are removed on Firefox restart — for persistent testing, install the signed `.xpi` from AMO instead
+
+## Building distributable zips
+
+```bash
+npm run build:ext
+```
+
+Produces two zips in `extension/dist/`:
+
+- `fictracker-chrome-v{version}.zip` — upload to the Chrome Web Store Developer Dashboard
+- `fictracker-firefox-v{version}.zip` — upload to [addons.mozilla.org](https://addons.mozilla.org/developers/)
+
+The build script (`extension/build.mjs`) reads `manifest.json` as the source of truth and transforms it for Firefox: rewrites `background.service_worker` to `background.scripts` (Firefox MV3 prefers this form) and injects `browser_specific_settings.gecko.id` = `fictracker@fictracker.app` with a `strict_min_version` of `115.0` (Firefox ESR baseline). The `.js` files themselves are identical across both targets — Firefox aliases `chrome.*` to `browser.*` so `chrome.runtime.sendMessage`, `chrome.storage.local`, etc. work without modification.
 
 ## Safari on iPad / Mac (Safari Web Extension)
 
