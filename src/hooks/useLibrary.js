@@ -654,8 +654,20 @@ export function useLibrary(userId) {
   }, [userId]);
 
   // --- AI-powered recommendations (Plus feature) ---
-  const [aiRecs, setAiRecs] = useState([]);
-  const [aiSearchLinks, setAiSearchLinks] = useState([]);
+  const aiCacheKey = userId ? `fictracker_ai_picks_${userId}` : null;
+
+  function loadAiCache() {
+    if (!aiCacheKey) return { recs: [], links: [] };
+    try {
+      const raw = localStorage.getItem(aiCacheKey);
+      if (!raw) return { recs: [], links: [] };
+      return JSON.parse(raw);
+    } catch { return { recs: [], links: [] }; }
+  }
+
+  const cachedAi = loadAiCache();
+  const [aiRecs, setAiRecs] = useState(cachedAi.recs);
+  const [aiSearchLinks, setAiSearchLinks] = useState(cachedAi.links);
   const [aiRecsLoading, setAiRecsLoading] = useState(false);
   const [aiRecsError, setAiRecsError] = useState('');
   const [aiRecsRemaining, setAiRecsRemaining] = useState(3); // default to max
@@ -680,14 +692,20 @@ export function useLibrary(userId) {
         setAiRecsError(data.error);
         if (!data.rate_limit) { setAiRecs([]); setAiSearchLinks([]); }
       } else {
-        setAiRecs(data.recommendations || []);
-        setAiSearchLinks(data.ao3_search_links || []);
+        const recs = data.recommendations || [];
+        const links = data.ao3_search_links || [];
+        setAiRecs(recs);
+        setAiSearchLinks(links);
+        // Persist so picks survive navigation and page refreshes
+        if (aiCacheKey) {
+          try { localStorage.setItem(aiCacheKey, JSON.stringify({ recs, links })); } catch { /* quota */ }
+        }
       }
     } catch (e) {
       setAiRecsError('Failed to get AI recommendations: ' + e.message);
     }
     setAiRecsLoading(false);
-  }, [isPremium]);
+  }, [isPremium, aiCacheKey]);
 
   return {
     works, statuses, readingLog, wipTracking, loading, importing, importMsg, setImportMsg,
