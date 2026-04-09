@@ -38,11 +38,13 @@ Spotify Wrapped, but for fic. Monthly and yearly summaries of your reading: tota
 
 Never lose track of an update. FicTracker checks your incomplete works for new chapters and shows per-fic banners right in your library — no email noise, just a quiet badge when something you're reading has new content.
 
-### Chrome extension
+### Browser extension
 
 The FicTracker extension lives on every AO3 page. Add fics to your library, update your reading status, and advance chapters — all without leaving AO3. It auto-detects which chapter you're on and silently syncs your progress as you read.
 
-The panel has three modes: full (everything visible), mini (compact status badge + chapter controls), and hidden (floating button only). Your preference persists across page navigations.
+The panel has three modes: full (everything visible), mini (compact status badge + chapter controls), and hidden (floating button only). Your preference persists across page navigations. On mobile it defaults to mini so it stays out of the way while you read; expanding it opens a bottom sheet rather than a floating panel.
+
+Available on the [Chrome Web Store](https://chrome.google.com/webstore) and [Firefox Add-ons (AMO)](https://addons.mozilla.org) — including Firefox for Android.
 
 ### Chapter tracking everywhere
 
@@ -74,7 +76,7 @@ Whether you use the Chrome extension (auto-detects your chapter), the Chapter Sy
 | Import bookmarks | ✓ | ✓ |
 | Quick Add bookmarklet | ✓ | ✓ |
 | Chapter Sync bookmarklet | ✓ | ✓ |
-| Chrome extension | ✓ | ✓ |
+| Browser extension (Chrome + Firefox) | ✓ | ✓ |
 | Search, filter, sort | ✓ | ✓ |
 | Status & chapter tracking | ✓ | ✓ |
 | WIP update badges | ✓ | ✓ |
@@ -126,13 +128,14 @@ fictracker/
 │   └── utils/
 │       ├── helpers.js      # Shared utilities
 │       └── bookmarklet.js  # Bookmarklet generators (Quick Add + Chapter Sync)
-├── extension/              # Chrome Extension (manifest v3)
+├── extension/              # Browser Extension (Chrome + Firefox, manifest v3)
 │   ├── manifest.json       # Content scripts on AO3, service worker
 │   ├── background/
 │   │   └── service-worker.js  # Supabase API proxy, auth, message handler
 │   ├── content/
 │   │   ├── content.js      # AO3 panel (full/mini/hidden), chapter tracking
-│   │   └── content.css     # Scoped styles with !important overrides
+│   │   └── content.css     # Scoped styles with !important overrides, mobile media query
+├── build.mjs           # Build script: produces Chrome + Firefox zips via `npm run build:ext`
 │   ├── popup/              # Extension popup UI
 │   └── icons/              # Extension icons (16/48/128px)
 ├── api/                        # Vercel serverless functions
