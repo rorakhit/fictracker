@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FicTracker",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Track your AO3 reading — add fics, update progress, and get WIP notifications.",
   "permissions": [
     "storage"
