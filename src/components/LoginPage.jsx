@@ -41,8 +41,8 @@ export default function LoginPage() {
     <div className="app">
       <div className="login-page">
         <div className="login-card">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <img src="/logo.svg" alt="" style={{ height: 72, width: 72 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <img src="/logo.svg" alt="" style={{ height: 96, width: 96 }} />
             <h2 style={{ margin: 0 }}>FicTracker</h2>
           </div>
           <div className="subtitle">{isSignUp ? 'Create an account' : 'Sign in to your library'}</div>
