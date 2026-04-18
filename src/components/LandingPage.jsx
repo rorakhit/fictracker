@@ -114,7 +114,7 @@ export default function LandingPage({ onGetStarted }) {
       <nav style={S.nav}>
         <div style={{ ...S.container, ...S.navInner }}>
           <div style={S.navLogo}>
-            <img src="/logo.svg" alt="" style={{ height: 56, width: 56 }} />
+            <img src="/logo.svg" alt="" style={{ height: 80, width: 80 }} />
             <span style={{ color: '#d4a0b0' }}>Fic</span><span>Tracker</span>
           </div>
           <div style={S.navLinks}>
