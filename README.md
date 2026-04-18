@@ -44,7 +44,7 @@ The FicTracker extension lives on every AO3 page. Add fics to your library, upda
 
 The panel has three modes: full (everything visible), mini (compact status badge + chapter controls), and hidden (floating button only). Your preference persists across page navigations. On mobile it defaults to mini so it stays out of the way while you read; expanding it opens a bottom sheet rather than a floating panel.
 
-Available on the [Chrome Web Store](https://chrome.google.com/webstore) and [Firefox Add-ons (AMO)](https://addons.mozilla.org) — including Firefox for Android.
+Available on the [Chrome Web Store](https://chromewebstore.google.com/detail/fictracker/phfdhkgaagelchgejhhpelhcmebomdim) and [Firefox Add-ons (AMO)](https://addons.mozilla.org/en-US/firefox/addon/fictracker/) — including Firefox for Android.
 
 ### Chapter tracking everywhere
 

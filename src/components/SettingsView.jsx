@@ -287,6 +287,58 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
         )}
       </div>
 
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginBottom: 24 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 4 }}>Browser Extension</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+          The FicTracker extension lives on every AO3 page — add fics, update status, and sync chapters without leaving AO3.
+          Auto-detects your current chapter as you read.
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a
+            href="https://chromewebstore.google.com/detail/fictracker/phfdhkgaagelchgejhhpelhcmebomdim"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '9px 16px',
+              background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
+              color: 'white',
+              borderRadius: 8,
+              fontWeight: 700,
+              fontSize: 13,
+              textDecoration: 'none',
+            }}
+          >
+            🧩 Add to Chrome
+          </a>
+          <a
+            href="https://addons.mozilla.org/en-US/firefox/addon/fictracker/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '9px 16px',
+              background: 'var(--surface)',
+              color: 'var(--text)',
+              borderRadius: 8,
+              fontWeight: 700,
+              fontSize: 13,
+              textDecoration: 'none',
+              border: '1px solid var(--border)',
+            }}
+          >
+            🦊 Add to Firefox
+          </a>
+        </div>
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 10 }}>
+          Also works on Firefox for Android. On mobile without the extension, use the bookmarklets below instead.
+        </p>
+      </div>
+
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 4 }}>AO3 Bookmarklets</h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
