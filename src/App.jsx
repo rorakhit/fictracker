@@ -4,6 +4,7 @@ import { useLibrary } from './hooks/useLibrary';
 import { useShelves } from './hooks/useShelves';
 import { useAnalytics } from './hooks/useAnalytics';
 import LoginPage from './components/LoginPage';
+import LandingPage from './components/LandingPage';
 import SettingsView from './components/SettingsView';
 import Library from './components/Library';
 import StatsView from './components/StatsView';
@@ -221,6 +222,10 @@ function Dashboard({ session }) {
 export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  // showLogin: false = show landing page, true = show login form.
+  // Starts false so unauthenticated visitors see the landing page first.
+  // Auth state changes (e.g. OAuth callback) skip straight to the app.
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -236,6 +241,7 @@ export default function App() {
   }, []);
 
   if (loading) return <div className="app"><div className="loading">Loading...</div></div>;
+  if (!session && !showLogin) return <LandingPage onGetStarted={() => setShowLogin(true)} />;
   if (!session) return <LoginPage />;
   return <Dashboard session={session} />;
 }

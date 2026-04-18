@@ -1,12 +1,14 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --bg: #0f1117; --surface: #1a1d27; --surface-hover: #22252f;
-  --border: #2a2d3a; --text: #e4e4e7; --text-muted: #8b8d97;
-  --accent: #14b8a6; --accent-hover: #2dd4bf; --accent-dim: rgba(20,184,166,0.12);
+  --bg: #171520; --surface: #1e1b2a; --surface-hover: #251f38;
+  --border: #2e293d; --text: #e8e4df; --text-muted: #9590a0;
+  --accent: #e0a872; --accent-hover: #ebb988; --accent-dim: rgba(224,168,114,0.12);
   --success: #22c55e; --warning: #f59e0b; --danger: #ef4444;
   --blue: #3b82f6; --purple: #8b5cf6; --teal: #14b8a6; --rose: #e04666;
+  --twilight: #8b9dc4; --blush: #d4a0b0; --gold: #c4b470;
 }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; }
 .app { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
 .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
@@ -48,7 +50,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sa
 .tag.rating-e { background: rgba(239,68,68,0.12); color: var(--danger); }
 .tag.rating-m { background: rgba(245,158,11,0.12); color: var(--warning); }
 .tag.rating-t { background: rgba(34,197,94,0.12); color: var(--success); }
-.tag.rating-g { background: rgba(20,184,166,0.12); color: var(--teal); }
+.tag.rating-g { background: rgba(139,157,196,0.12); color: var(--twilight); }
 .tag.wip { background: rgba(245,158,11,0.15); color: var(--warning); }
 
 /* Status badge */
@@ -164,11 +166,11 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
 .form-group input { width: 100%; }
 
 /* WIP update badges */
-.wip-update-banner { display: flex; align-items: flex-start; gap: 10px; background: rgba(20,184,166,0.08); border: 1px solid rgba(20,184,166,0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+.wip-update-banner { display: flex; align-items: flex-start; gap: 10px; background: rgba(224,168,114,0.08); border: 1px solid rgba(224,168,114,0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
 .wip-update-banner-icon { font-size: 16px; }
-.wip-update-banner-text { flex: 1; font-size: 13px; color: var(--teal); font-weight: 500; }
-.tag.wip-updated { background: rgba(20,184,166,0.18); color: var(--teal); cursor: pointer; font-weight: 600; transition: all 0.15s; }
-.tag.wip-updated:hover { background: rgba(20,184,166,0.3); }
+.wip-update-banner-text { flex: 1; font-size: 13px; color: var(--accent); font-weight: 500; }
+.tag.wip-updated { background: rgba(224,168,114,0.18); color: var(--accent); cursor: pointer; font-weight: 600; transition: all 0.15s; }
+.tag.wip-updated:hover { background: rgba(224,168,114,0.3); }
 
 /* Analytics hero stats */
 .analytics-hero { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
@@ -221,7 +223,7 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
   font-size: 10px; color: var(--text-muted);
   background: var(--bg); padding: 1px 6px; border-radius: 8px; margin-left: 2px;
 }
-.shelf-chip.active .shelf-chip-count { background: rgba(20,184,166,0.2); color: var(--accent-hover); }
+.shelf-chip.active .shelf-chip-count { background: rgba(224,168,114,0.2); color: var(--accent-hover); }
 
 /* Menu button is hidden until hover to keep the strip clean */
 .shelf-chip-menu-btn {

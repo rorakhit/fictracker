@@ -17,7 +17,7 @@
       --bg-card-hover: #252236;
       --amber: #e0a872;
       --twilight: #8b9dc4;
-      --blush: #8b9dc4;
+      --blush: #d4a0b0;
       --gold: #c4b470;
       --text: #e8e4df;
       --text-muted: #9590a0;
@@ -315,7 +315,10 @@
 
   <nav>
     <div class="container">
-      <div class="nav-logo"><span class="fic">Fic</span><span class="tracker">Tracker</span></div>
+      <div class="nav-logo">
+        <img src="/logo.svg" alt="" style="height: 1.5em; vertical-align: middle; margin-right: 6px;">
+        <span class="fic">Fic</span><span class="tracker">Tracker</span>
+      </div>
       <div class="nav-links">
         <a href="#features">Features</a>
         <a href="#extension">Extension</a>
@@ -377,14 +380,20 @@
           <p>Monthly and yearly summaries — words, chapters, top fandom, longest fic. Rendered as shareable image cards you can export and post.</p>
         </div>
 
+        <div class="feature-card">
+          <span class="feature-icon">📚</span>
+          <h3>Bookshelves</h3>
+          <p>Curate named shelves by hand ("Comfort reads", "For the long flight") or save a filter as a smart shelf that restores your exact view with one click.</p>
+        </div>
+
       </div>
     </div>
   </section>
 
   <section class="extension" id="extension">
     <div class="container">
-      <h2>The Chrome extension</h2>
-      <p class="section-sub">Track your reading without ever leaving AO3. The FicTracker panel lives on every work page.</p>
+      <h2>Browser extension</h2>
+      <p class="section-sub">Track your reading without ever leaving AO3. The FicTracker panel lives on every work page — Chrome, Firefox, and Firefox for Android.</p>
 
       <div class="ext-features">
         <div class="ext-feature">
@@ -413,8 +422,9 @@
         </div>
       </div>
 
-      <div style="text-align: center;">
-        <a href="https://fictracker.app" class="btn-primary">Sign up to get started</a>
+      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        <a href="https://chromewebstore.google.com/detail/fictracker/phfdhkgaagelchgejhhpelhcmebomdim" class="btn-primary">🧩 Add to Chrome</a>
+        <a href="https://addons.mozilla.org/en-US/firefox/addon/fictracker/" class="btn-secondary">🦊 Add to Firefox</a>
       </div>
     </div>
   </section>
@@ -431,10 +441,11 @@
           <ul class="price-features">
             <li>Import bookmarks &amp; reading history</li>
             <li>Quick Add &amp; Chapter Sync bookmarklets</li>
-            <li>Chrome extension</li>
+            <li>Chrome &amp; Firefox extension</li>
             <li>Search, filter, sort</li>
             <li>Status &amp; chapter tracking</li>
             <li>WIP update alerts</li>
+            <li>3 bookshelves (manual + smart)</li>
           </ul>
         </div>
 
@@ -445,6 +456,7 @@
           <div class="price-note">or $36/year (save 25%)</div>
           <ul class="price-features">
             <li>Unlimited fics</li>
+            <li>Unlimited bookshelves</li>
             <li>Stats &amp; analytics dashboard</li>
             <li>Reading Wrapped</li>
             <li>AI-powered recommendations</li>
