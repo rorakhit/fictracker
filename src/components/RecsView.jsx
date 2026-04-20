@@ -224,11 +224,11 @@ export default function RecsView({
         </div>
       )}
 
-      {/* ---- AI Recommendations (Plus feature) ---- */}
+      {/* ---- Smart Picks (Plus feature) ---- */}
       {hasRatings && (
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <h3 style={{ fontSize: 15, margin: 0 }}>AI Picks</h3>
+            <h3 style={{ fontSize: 15, margin: 0 }}>Smart Picks</h3>
             <span style={{
               fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700, letterSpacing: 0.5,
               background: isPremium ? 'linear-gradient(135deg, #a78bfa, #6d28d9)' : 'var(--surface)',
@@ -242,7 +242,7 @@ export default function RecsView({
           {isPremium ? (
             <>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
-                Claude analyzes your taste and finds fics you'd love, plus curated AO3 searches to explore.
+                Analyses your ratings and generates targeted AO3 searches to surface fics you'll love — including fandoms you've never tried.
               </p>
 
               {!hasAiRecs && !aiRecsLoading && !aiRecsError && (
@@ -262,7 +262,7 @@ export default function RecsView({
                       cursor: aiRecsRemaining <= 0 ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    ✨ Get AI Picks
+                    ✨ Get Smart Picks
                   </button>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 10 }}>
                     {aiRecsRemaining} of 3 remaining today
@@ -272,7 +272,7 @@ export default function RecsView({
 
               {aiRecsLoading && (
                 <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '16px 0' }}>
-                  ✨ Claude is reading your taste profile and finding recommendations...
+                  ✨ Analysing your taste and finding recommendations...
                 </div>
               )}
 
@@ -383,12 +383,11 @@ export default function RecsView({
               marginBottom: 12,
             }}>
               <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6, margin: '0 0 10px 0' }}>
-                Upgrade to Plus for AI-powered recommendations. Claude reads your taste profile and suggests
-                fics from across AO3 — going beyond what's in the FicTracker community to find hidden gems
-                you'd love.
+                Upgrade to Plus for Smart Picks — FicTracker analyses your ratings and generates targeted
+                AO3 searches to surface fics you'd love from across the archive, including fandoms you've never explored.
               </p>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-                Personalized picks based on your fandoms, ships, and the tropes you actually like.
+                Based on your fandoms, ships, and the tropes you actually like. Every result is a real fic from a real author.
               </p>
             </div>
           )}

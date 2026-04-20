@@ -240,7 +240,7 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
                 }}>Active</span>
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                Unlimited fics, analytics, reading wrapped, and AI recommendations.
+                Unlimited fics, analytics, reading wrapped, and Smart Picks.
               </div>
             </div>
             <button
@@ -262,7 +262,7 @@ export default function SettingsView({ userId, session, subscriptionTier, isPrem
             }}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Free Plan</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 12 }}>
-                Up to 50 fics in your library. Upgrade to Plus for unlimited fics, analytics, reading wrapped, and AI-powered recommendations.
+                Up to 50 fics in your library. Upgrade to Plus for unlimited fics, analytics, reading wrapped, and Smart Picks.
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button

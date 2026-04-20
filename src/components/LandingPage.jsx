@@ -74,7 +74,7 @@ const features = [
   { icon: '📖', title: 'Track everything', desc: 'Status, chapter progress, personal ratings, notes. Your library shuffles on every visit so buried bookmarks surface naturally.' },
   { icon: '📚', title: 'Bookshelves', desc: 'Curate named shelves by hand ("Comfort reads", "For the long flight") or save a filter as a smart shelf that restores your exact view with one click.' },
   { icon: '🔔', title: 'WIP alerts', desc: 'FicTracker checks your incomplete works for new chapters and shows per-fic banners right in your library. No email noise.' },
-  { icon: '🤖', title: 'AI recommendations', desc: 'Rate a few fics and AI Picks crafts AO3 searches tailored to your taste — including wildcard fandoms you\'ve never explored. Real fics, not hallucinations.' },
+  { icon: '✨', title: 'Smart Picks', desc: 'Rate a few fics and Smart Picks generates targeted AO3 searches based on your taste — including fandoms you\'ve never explored. Every result is a real fic from a real author.' },
   { icon: '🎁', title: 'Reading Wrapped', desc: 'Monthly and yearly summaries — words, chapters, top fandom, longest fic. Rendered as shareable image cards you can export and post.' },
 ];
 
@@ -102,7 +102,7 @@ const plusFeatures = [
   'Unlimited bookshelves',
   'Stats & analytics dashboard',
   'Reading Wrapped',
-  'AI-powered recommendations',
+  'Smart Picks (taste-based rec searches)',
   'EPUB import',
   'Everything in Free',
 ];
