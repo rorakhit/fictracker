@@ -50,16 +50,13 @@ const S = {
   btnChromeExt: { background: '#e0a872', color: '#171520', padding: '12px 24px', borderRadius: 10, fontWeight: 600, fontSize: 15, border: 'none', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' },
   btnFirefoxExt: { background: 'transparent', color: '#8b9dc4', padding: '12px 24px', borderRadius: 10, fontWeight: 600, fontSize: 15, border: '1px solid #8b9dc4', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' },
 
-  // Pricing
-  pricingGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, maxWidth: 640, margin: '0 auto' },
-  priceCard: { background: '#1e1b2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 28, textAlign: 'center', position: 'relative' },
-  priceCardFeatured: { borderColor: '#e0a872' },
-  priceBadge: { position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#e0a872', color: '#171520', fontSize: 11, fontWeight: 700, padding: '4px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' },
-  priceTier: { fontFamily: "'Fraunces', Georgia, serif", fontSize: 22, fontWeight: 700, marginBottom: 4 },
-  priceAmount: { fontSize: 32, fontWeight: 700, color: '#e0a872', marginBottom: 4 },
-  priceNote: { fontSize: 13, color: '#9590a0', marginBottom: 20 },
-  priceList: { listStyle: 'none', textAlign: 'left', fontSize: 14, padding: 0 },
-  priceItem: { padding: '6px 0', color: '#9590a0', display: 'flex', gap: 8, alignItems: 'flex-start' },
+  // Pricing (free forever)
+  freeCard: { background: '#1e1b2a', border: '1px solid rgba(224,168,114,0.3)', borderRadius: 16, padding: '32px 36px', maxWidth: 560, margin: '0 auto', textAlign: 'center' },
+  freeAmount: { fontFamily: "'Fraunces', Georgia, serif", fontSize: 56, fontWeight: 700, color: '#e0a872', lineHeight: 1, marginBottom: 4 },
+  freeSub: { fontSize: 16, color: '#9590a0', marginBottom: 28 },
+  freeGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '4px 16px', textAlign: 'left', marginBottom: 28 },
+  priceList: { listStyle: 'none', textAlign: 'left', fontSize: 14, padding: 0, margin: 0 },
+  priceItem: { padding: '5px 0', color: '#9590a0', display: 'flex', gap: 8, alignItems: 'flex-start' },
   checkmark: { color: '#c4b470', fontWeight: 700, flexShrink: 0 },
 
   // Footer
@@ -87,24 +84,19 @@ const extFeatures = [
   'Deep-links back to your current chapter',
 ];
 
-const freeFeatures = [
+const allFeatures = [
+  'Unlimited fics in your library',
   'Import bookmarks & reading history',
   'Quick Add & Chapter Sync bookmarklets',
   'Chrome & Firefox extension',
   'Search, filter, sort',
   'Status & chapter tracking',
   'WIP update alerts',
-  '3 bookshelves (manual + smart)',
-];
-
-const plusFeatures = [
-  'Unlimited fics',
-  'Unlimited bookshelves',
+  'Unlimited bookshelves (manual + smart)',
   'Stats & analytics dashboard',
   'Reading Wrapped',
   'Smart Picks (taste-based rec searches)',
   'EPUB import',
-  'Everything in Free',
 ];
 
 export default function LandingPage({ onGetStarted }) {
@@ -120,7 +112,7 @@ export default function LandingPage({ onGetStarted }) {
           <div style={S.navLinks}>
             <a href="#features" style={S.navLink}>Features</a>
             <a href="#extension" style={S.navLink}>Extension</a>
-            <a href="#pricing" style={S.navLink}>Pricing</a>
+            <a href="#pricing" style={S.navLink}>Free forever</a>
             <button style={S.btnNav} onClick={onGetStarted}>Sign in</button>
           </div>
         </div>
@@ -200,33 +192,32 @@ export default function LandingPage({ onGetStarted }) {
       {/* Pricing */}
       <section style={S.section} id="pricing">
         <div style={S.container}>
-          <h2 style={S.sectionH2}>Simple pricing</h2>
-          <div style={S.pricingGrid}>
-            <div style={S.priceCard}>
-              <div style={S.priceTier}>Free</div>
-              <div style={S.priceAmount}>$0</div>
-              <div style={S.priceNote}>Up to 50 fics</div>
+          <h2 style={S.sectionH2}>Free, forever</h2>
+          <p style={S.sectionSub}>
+            No tiers, no limits, no credit card. Every feature is available to every reader.
+          </p>
+          <div style={S.freeCard}>
+            <div style={S.freeAmount}>$0</div>
+            <div style={S.freeSub}>Everything included, always</div>
+            <div style={S.freeGrid}>
               <ul style={S.priceList}>
-                {freeFeatures.map(f => (
+                {allFeatures.slice(0, Math.ceil(allFeatures.length / 2)).map(f => (
+                  <li key={f} style={S.priceItem}>
+                    <span style={S.checkmark}>✓</span> {f}
+                  </li>
+                ))}
+              </ul>
+              <ul style={S.priceList}>
+                {allFeatures.slice(Math.ceil(allFeatures.length / 2)).map(f => (
                   <li key={f} style={S.priceItem}>
                     <span style={S.checkmark}>✓</span> {f}
                   </li>
                 ))}
               </ul>
             </div>
-            <div style={{ ...S.priceCard, ...S.priceCardFeatured }}>
-              <div style={S.priceBadge}>Best value</div>
-              <div style={S.priceTier}>Plus</div>
-              <div style={S.priceAmount}>$4<span style={{ fontSize: 16, fontWeight: 400, color: '#9590a0' }}>/month</span></div>
-              <div style={S.priceNote}>or $36/year (save 25%)</div>
-              <ul style={S.priceList}>
-                {plusFeatures.map(f => (
-                  <li key={f} style={S.priceItem}>
-                    <span style={S.checkmark}>✓</span> {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <button style={S.btnPrimary} onClick={onGetStarted}>
+              Start tracking — it's free
+            </button>
           </div>
         </div>
       </section>

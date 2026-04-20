@@ -229,18 +229,9 @@ export default function RecsView({
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
             <h3 style={{ fontSize: 15, margin: 0 }}>Smart Picks</h3>
-            <span style={{
-              fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700, letterSpacing: 0.5,
-              background: isPremium ? 'linear-gradient(135deg, #a78bfa, #6d28d9)' : 'var(--surface)',
-              color: isPremium ? '#fff' : 'var(--text-muted)',
-              border: isPremium ? 'none' : '1px solid var(--border)',
-            }}>
-              PLUS
-            </span>
           </div>
 
-          {isPremium ? (
-            <>
+          <>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
                 Analyses your ratings and generates targeted AO3 searches to surface fics you'll love — including fandoms you've never tried.
               </p>
@@ -373,24 +364,6 @@ export default function RecsView({
                 </>
               )}
             </>
-          ) : (
-            /* Free user teaser */
-            <div style={{
-              padding: '20px',
-              background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.08), rgba(109, 40, 217, 0.08))',
-              borderRadius: 12,
-              border: '1px solid rgba(167, 139, 250, 0.2)',
-              marginBottom: 12,
-            }}>
-              <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6, margin: '0 0 10px 0' }}>
-                Upgrade to Plus for Smart Picks — FicTracker analyses your ratings and generates targeted
-                AO3 searches to surface fics you'd love from across the archive, including fandoms you've never explored.
-              </p>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-                Based on your fandoms, ships, and the tropes you actually like. Every result is a real fic from a real author.
-              </p>
-            </div>
-          )}
         </div>
       )}
 

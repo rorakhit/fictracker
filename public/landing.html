@@ -204,7 +204,7 @@
       color: var(--text-muted);
     }
 
-    /* ── Pricing ──────────────────────────── */
+    /* ── Pricing (free forever) ───────────── */
     .pricing {
       padding: 60px 0;
       border-top: 1px solid var(--border);
@@ -212,71 +212,55 @@
     .pricing h2 {
       text-align: center;
       font-size: 28px;
-      margin-bottom: 36px;
+      margin-bottom: 12px;
     }
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-      max-width: 640px;
-      margin: 0 auto;
+    .pricing-sub {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 480px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
     }
-    .price-card {
+    .free-card {
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 28px;
+      border: 1px solid rgba(224,168,114,0.3);
+      border-radius: 16px;
+      padding: 32px 36px;
+      max-width: 560px;
+      margin: 0 auto;
       text-align: center;
     }
-    .price-card.featured {
-      border-color: var(--amber);
-      position: relative;
-    }
-    .price-badge {
-      position: absolute;
-      top: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--amber);
-      color: var(--bg);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 14px;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .price-tier {
+    .free-amount {
       font-family: 'Fraunces', serif;
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .price-amount {
-      font-size: 32px;
+      font-size: 56px;
       font-weight: 700;
       color: var(--amber);
+      line-height: 1;
       margin-bottom: 4px;
     }
-    .price-amount span { font-size: 16px; font-weight: 400; color: var(--text-muted); }
-    .price-note {
-      font-size: 13px;
+    .free-sub {
+      font-size: 16px;
       color: var(--text-muted);
-      margin-bottom: 20px;
+      margin-bottom: 28px;
     }
-    .price-features {
-      list-style: none;
+    .free-features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 4px 16px;
       text-align: left;
-      font-size: 14px;
+      margin-bottom: 28px;
     }
-    .price-features li {
-      padding: 6px 0;
+    .free-features-grid li {
+      list-style: none;
+      padding: 5px 0;
       color: var(--text-muted);
+      font-size: 14px;
       display: flex;
       gap: 8px;
       align-items: flex-start;
     }
-    .price-features li::before {
+    .free-features-grid li::before {
       content: '✓';
       color: var(--gold);
       font-weight: 700;
@@ -322,7 +306,7 @@
       <div class="nav-links">
         <a href="#features">Features</a>
         <a href="#extension">Extension</a>
-        <a href="#pricing">Pricing</a>
+        <a href="#pricing">Free forever</a>
         <a href="https://fictracker.app" class="btn-nav">Open App</a>
       </div>
     </div>
@@ -431,40 +415,26 @@
 
   <section class="pricing" id="pricing">
     <div class="container">
-      <h2>Simple pricing</h2>
-      <div class="pricing-grid">
-
-        <div class="price-card">
-          <div class="price-tier">Free</div>
-          <div class="price-amount">$0</div>
-          <div class="price-note">Up to 50 fics</div>
-          <ul class="price-features">
-            <li>Import bookmarks &amp; reading history</li>
-            <li>Quick Add &amp; Chapter Sync bookmarklets</li>
-            <li>Chrome &amp; Firefox extension</li>
-            <li>Search, filter, sort</li>
-            <li>Status &amp; chapter tracking</li>
-            <li>WIP update alerts</li>
-            <li>3 bookshelves (manual + smart)</li>
-          </ul>
-        </div>
-
-        <div class="price-card featured">
-          <div class="price-badge">Best value</div>
-          <div class="price-tier">Plus</div>
-          <div class="price-amount">$4<span>/month</span></div>
-          <div class="price-note">or $36/year (save 25%)</div>
-          <ul class="price-features">
-            <li>Unlimited fics</li>
-            <li>Unlimited bookshelves</li>
-            <li>Stats &amp; analytics dashboard</li>
-            <li>Reading Wrapped</li>
-            <li>Smart Picks</li>
-            <li>EPUB import</li>
-            <li>Everything in Free</li>
-          </ul>
-        </div>
-
+      <h2>Free, forever</h2>
+      <p class="pricing-sub">No tiers, no limits, no credit card. Every feature is available to every reader.</p>
+      <div class="free-card">
+        <div class="free-amount">$0</div>
+        <div class="free-sub">Everything included, always</div>
+        <ul class="free-features-grid">
+          <li>Unlimited fics in your library</li>
+          <li>Import bookmarks &amp; reading history</li>
+          <li>Quick Add &amp; Chapter Sync bookmarklets</li>
+          <li>Chrome &amp; Firefox extension</li>
+          <li>Search, filter, sort</li>
+          <li>Status &amp; chapter tracking</li>
+          <li>WIP update alerts</li>
+          <li>Unlimited bookshelves (manual + smart)</li>
+          <li>Stats &amp; analytics dashboard</li>
+          <li>Reading Wrapped</li>
+          <li>Smart Picks</li>
+          <li>EPUB import</li>
+        </ul>
+        <a href="https://fictracker.app" class="btn-nav" style="display:inline-block;padding:14px 32px;border-radius:10px;font-size:16px;text-decoration:none;">Start tracking — it's free</a>
       </div>
     </div>
   </section>

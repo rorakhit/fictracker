@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../supabase';
 
-// Free-tier shelf cap. Must match the DB trigger in migration 009.
-// Keep these in sync: if you change one, change the other.
-export const FREE_SHELF_LIMIT = 3;
+// Shelf limit — kept as a constant so import sites don't break, but
+// effectively unused since isPremium is always true (FicTracker is free).
+export const FREE_SHELF_LIMIT = Infinity;
 
 // The DB trigger raises an exception with this prefix. We detect it on
-// insert errors so the UI can show an upgrade CTA instead of a generic
+// insert errors so the UI can show a friendly error instead of a generic
 // "something went wrong". See 009_create_bookshelves.sql.
 const BOOKSHELF_LIMIT_MARKER = 'BOOKSHELF_LIMIT_REACHED';
 
@@ -29,12 +29,11 @@ export function useShelves(userId, subscriptionTier = 'free') {
   const [shelfWorkRows, setShelfWorkRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const isPremium = subscriptionTier === 'plus' || subscriptionTier === 'beta';
+  // FicTracker is free — all users get unlimited shelves.
+  const isPremium = true; // eslint-disable-line no-unused-vars
   const totalShelfCount = shelves.length + smartShelves.length;
-  const shelvesRemaining = isPremium
-    ? Infinity
-    : Math.max(0, FREE_SHELF_LIMIT - totalShelfCount);
-  const isAtShelfLimit = !isPremium && totalShelfCount >= FREE_SHELF_LIMIT;
+  const shelvesRemaining = Infinity;
+  const isAtShelfLimit = false;
 
   // Derived indices — recomputed whenever the flat row list changes.
   // shelvesByWork: work_id -> Set of shelf_ids (for work modal chips)

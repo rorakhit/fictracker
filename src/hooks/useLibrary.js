@@ -198,17 +198,17 @@ export function useLibrary(userId) {
     setBulkMode(false);
   }
 
-  // Check if user has hit the free tier fic limit.
-  // 'plus' and 'beta' users get unlimited fics — beta is the same as
-  // plus but without payment, for testers.
-  const isPremium = subscriptionTier === 'plus' || subscriptionTier === 'beta';
-  const isAtFicLimit = !isPremium && works.length >= FREE_FIC_LIMIT;
-  const ficsRemaining = isPremium ? Infinity : Math.max(0, FREE_FIC_LIMIT - works.length);
+  // FicTracker is free — no tier gating. isPremium is always true so all
+  // features and limits are unlocked for every user. Stripe infrastructure
+  // is kept dormant but not removed, in case monetisation returns later.
+  const isPremium = true; // eslint-disable-line no-unused-vars
+  const isAtFicLimit = false;
+  const ficsRemaining = Infinity;
 
   async function addByUrl(url) {
     if (!url.trim()) return;
     if (isAtFicLimit) {
-      setImportMsg(`You've reached the free tier limit of ${FREE_FIC_LIMIT} fics. Upgrade to Plus for unlimited fics!`);
+      setImportMsg(`You've reached the fic limit.`);
       return;
     }
     const match = url.match(/works\/(\d+)/);
@@ -673,7 +673,6 @@ export function useLibrary(userId) {
   const [aiRecsRemaining, setAiRecsRemaining] = useState(3); // default to max
 
   const fetchAiRecs = useCallback(async () => {
-    if (!isPremium) return;
     setAiRecsLoading(true);
     setAiRecsError('');
     try {

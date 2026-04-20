@@ -166,14 +166,6 @@ export default function ShelfStrip({
     <div className="shelf-strip">
       <div className="shelf-strip-header">
         <span className="shelf-strip-label">Shelves</span>
-        {!isPremium && (
-          <span
-            className={`shelf-strip-count ${hitLimitFlash ? 'flash' : ''}`}
-            title={`Free tier: ${totalShelfCount} of ${shelfLimit} shelves used`}
-          >
-            {totalShelfCount}/{shelfLimit}
-          </span>
-        )}
       </div>
 
       <div className="shelf-chips">
@@ -326,18 +318,11 @@ export default function ShelfStrip({
           </div>
         ) : (
           <button
-            className={`shelf-chip shelf-chip-add ${isAtShelfLimit ? 'disabled' : ''}`}
+            className="shelf-chip shelf-chip-add"
             onClick={startCreate}
-            title={isAtShelfLimit ? 'Upgrade to Plus for unlimited shelves' : 'Create a new shelf'}
+            title="Create a new shelf"
           >
             + New shelf
-          </button>
-        )}
-
-        {/* Upgrade CTA appears when the cap is hit */}
-        {isAtShelfLimit && onUpgradeClick && (
-          <button className="shelf-chip shelf-chip-upgrade" onClick={onUpgradeClick}>
-            ✨ Upgrade for unlimited
           </button>
         )}
       </div>
