@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './supabase';
-import { useLibrary } from './hooks/useLibrary';
-import { useShelves } from './hooks/useShelves';
+import { useLocalLibrary } from './hooks/useLocalLibrary';
+import { useLocalShelves } from './hooks/useLocalShelves';
 import { useAnalytics } from './hooks/useAnalytics';
-import LoginPage from './components/LoginPage';
-import LandingPage from './components/LandingPage';
-import SettingsView from './components/SettingsView';
 import Library from './components/Library';
 import StatsView from './components/StatsView';
 import AnalyticsView from './components/AnalyticsView';
-import RecsView from './components/RecsView';
+import FicFinderView from './components/FicFinderView';
 import ImportView from './components/ImportView';
 import WorkModal from './components/WorkModal';
+import SettingsView from './components/SettingsView';
 
-function Dashboard({ session }) {
-  const userId = session.user.id;
+// FicTracker is now local-first: no account, no server, your data stays
+// in your browser. We removed Supabase auth entirely — the app opens
+// straight to your library on first load.
+
+function Dashboard() {
   const [view, setView] = useState('library');
   const [selected, setSelected] = useState(null);
   const [editStatus, setEditStatus] = useState('');
@@ -22,34 +22,37 @@ function Dashboard({ session }) {
   const [editNotes, setEditNotes] = useState('');
   const [editChapter, setEditChapter] = useState(0);
 
-  const lib = useLibrary(userId);
-  // useShelves needs the current tier for its isAtShelfLimit check.
-  // It's fine that subscriptionTier starts as 'free' and then updates —
-  // React will re-run the memoized cap calcs when the tier prop changes.
-  const shelves = useShelves(userId, lib.subscriptionTier);
+  const lib     = useLocalLibrary();
+  const shelves = useLocalShelves();
   const analytics = useAnalytics(lib.works, lib.statuses, lib.readingLog);
-  const [upgradeMsg, setUpgradeMsg] = useState('');
-  // Shelf filter state. The two active-* IDs are mutually exclusive —
-  // setting one clears the other in Library. Parent owns them so they
-  // survive if Library ever unmounts (e.g., tab switch).
-  const [activeShelfId, setActiveShelfId] = useState(null);
-  const [activeSmartShelfId, setActiveSmartShelfId] = useState(null);
 
-  // Handle return from Stripe Checkout — show a brief confirmation
-  // and reload data so the new subscription tier is picked up.
+  const [activeShelfId, setActiveShelfId]           = useState(null);
+  const [activeSmartShelfId, setActiveSmartShelfId] = useState(null);
+  const [importBanner, setImportBanner]             = useState('');
+
+  // Handle ?import=<encoded-work> from the Quick Add bookmarklet.
+  // The bookmarklet parses AO3 metadata client-side and opens FicTracker
+  // with the data encoded in the URL — no server involved.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('upgraded') === 'true') {
-      setUpgradeMsg('Welcome to FicTracker Plus! Your upgrade is being activated...');
-      setView('settings');
-      // Clean the URL so refreshing doesn't re-trigger
-      window.history.replaceState({}, '', window.location.pathname);
-      // Reload data after a short delay to let the webhook process
-      setTimeout(() => { lib.loadData(); setUpgradeMsg(''); }, 3000);
-    } else if (params.get('upgraded') === 'false') {
-      window.history.replaceState({}, '', window.location.pathname);
+    const raw = params.get('import');
+    if (!raw) return;
+
+    // Strip the param immediately so refreshing doesn't re-import
+    window.history.replaceState({}, '', window.location.pathname);
+
+    try {
+      const work = JSON.parse(decodeURIComponent(raw));
+      if (!work.ao3_id) throw new Error('Missing ao3_id');
+      lib.importWork(work);
+      setImportBanner(`Added: ${work.title}`);
+      setTimeout(() => setImportBanner(''), 4000);
+    } catch (e) {
+      setImportBanner(`Could not import fic: ${e.message}`);
+      setTimeout(() => setImportBanner(''), 5000);
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
 
   function openWork(w) {
     const st = lib.statuses[w.id];
@@ -63,13 +66,17 @@ function Dashboard({ session }) {
   async function saveWorkDetails() {
     if (!selected) return;
     const updates = {
-      status: editStatus,
-      rating_personal: editRating || null,
-      notes: editNotes || null,
-      current_chapter: editChapter || 0,
+      status:           editStatus,
+      rating_personal:  editRating || null,
+      notes:            editNotes || null,
+      current_chapter:  editChapter || 0,
     };
-    if (editStatus === 'reading' && !lib.statuses[selected.id]?.started_at) updates.started_at = new Date().toISOString();
-    if (editStatus === 'completed') updates.completed_at = new Date().toISOString();
+    if (editStatus === 'reading' && !lib.statuses[selected.id]?.started_at) {
+      updates.started_at = new Date().toISOString();
+    }
+    if (editStatus === 'completed') {
+      updates.completed_at = new Date().toISOString();
+    }
     await lib.updateStatus(selected.id, updates);
     setSelected(null);
   }
@@ -79,36 +86,50 @@ function Dashboard({ session }) {
     setSelected(null);
   }
 
-  if (lib.loading) return <div className="app"><div className="loading">Loading FicTracker...</div></div>;
+  const TABS = [
+    ['library',  'Library'],
+    ['stats',    'Stats'],
+    ['analytics','Analytics'],
+    ['finder',   'Fic Finder'],
+    ['import',   'Import'],
+    ['settings', 'Settings'],
+  ];
 
   return (
     <div className="app">
       <div className="header">
-        <h1><img src="/logo.svg" alt="" style={{ height: '2.2em', verticalAlign: 'middle', marginRight: 8 }} />Fic<span>Tracker</span></h1>
+        <h1>
+          <img src="/logo.svg" alt="" style={{ height: '2.2em', verticalAlign: 'middle', marginRight: 8 }} />
+          Fic<span>Tracker</span>
+        </h1>
         <div className="header-right">
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{session.user.email}</span>
-          <button className="btn btn-ghost btn-sm" onClick={async () => { await supabase.auth.signOut(); }}>Sign Out</button>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            {lib.works.length} fic{lib.works.length !== 1 ? 's' : ''} · local
+          </span>
         </div>
       </div>
 
-      {upgradeMsg && (
+      {importBanner && (
         <div style={{
           padding: '10px 16px',
-          background: 'linear-gradient(135deg, rgba(224,168,114,0.15), rgba(139,157,196,0.15))',
+          background: importBanner.startsWith('Could not')
+            ? 'rgba(239,68,68,0.1)' : 'rgba(20,184,166,0.1)',
+          border: `1px solid ${importBanner.startsWith('Could not') ? 'rgba(239,68,68,0.2)' : 'rgba(20,184,166,0.2)'}`,
           borderRadius: 8,
-          border: '1px solid rgba(224,168,114,0.3)',
           marginBottom: 12,
           fontSize: 13,
           fontWeight: 600,
-          textAlign: 'center',
+          color: importBanner.startsWith('Could not') ? '#ef4444' : 'var(--accent-teal)',
         }}>
-          {upgradeMsg}
+          {importBanner}
         </div>
       )}
 
       <div className="tabs">
-        {[['library', 'Library'], ['stats', 'Stats'], ['analytics', 'Analytics'], ['recs', 'For You'], ['import', 'Import'], ['settings', 'Settings']].map(([k, l]) => (
-          <button key={k} className={`tab ${view === k ? 'active' : ''}`} onClick={() => setView(k)}>{l}</button>
+        {TABS.map(([k, l]) => (
+          <button key={k} className={`tab ${view === k ? 'active' : ''}`} onClick={() => setView(k)}>
+            {l}
+          </button>
         ))}
       </div>
 
@@ -159,40 +180,29 @@ function Dashboard({ session }) {
         />
       )}
 
-      {view === 'stats' && <StatsView stats={lib.stats} works={lib.works} />}
+      {view === 'stats'     && <StatsView stats={lib.stats} works={lib.works} />}
       {view === 'analytics' && <AnalyticsView analytics={analytics} works={lib.works} />}
-      {view === 'recs' && (
-        <RecsView
+
+      {view === 'finder' && (
+        <FicFinderView
           recommendations={lib.recommendations}
-          discoveryRecs={lib.discoveryRecs}
-          discoveryLoading={lib.discoveryLoading}
           tasteProfile={lib.tasteProfile}
           onOpenWork={openWork}
-          onAddToLibrary={lib.addByUrl}
-          isPremium={lib.isPremium}
-          aiRecs={lib.aiRecs}
-          aiSearchLinks={lib.aiSearchLinks}
-          aiRecsLoading={lib.aiRecsLoading}
-          aiRecsError={lib.aiRecsError}
-          aiRecsRemaining={lib.aiRecsRemaining}
-          onFetchAiRecs={lib.fetchAiRecs}
+          works={lib.works}
+          statuses={lib.statuses}
         />
       )}
+
       {view === 'import' && (
         <ImportView
-          session={session}
           importing={lib.importing}
           importMsg={lib.importMsg}
           addByUrl={lib.addByUrl}
           handleEpubFiles={lib.handleEpubFiles}
-          syncingBookmarks={lib.syncingBookmarks}
-          syncMsg={lib.syncMsg}
-          syncJob={lib.syncJob}
-          onSyncBookmarks={lib.syncBookmarks}
-          ao3Username={lib.ao3Username}
         />
       )}
-      {view === 'settings' && <SettingsView userId={userId} session={session} subscriptionTier={lib.subscriptionTier} isPremium={lib.isPremium} />}
+
+      {view === 'settings' && <SettingsView />}
 
       {selected && (
         <WorkModal
@@ -220,28 +230,6 @@ function Dashboard({ session }) {
 }
 
 export default function App() {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-  // showLogin: false = show landing page, true = show login form.
-  // Starts false so unauthenticated visitors see the landing page first.
-  // Auth state changes (e.g. OAuth callback) skip straight to the app.
-  const [showLogin, setShowLogin] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription?.unsubscribe();
-  }, []);
-
-  if (loading) return <div className="app"><div className="loading">Loading...</div></div>;
-  if (!session && !showLogin) return <LandingPage onGetStarted={() => setShowLogin(true)} />;
-  if (!session) return <LoginPage />;
-  return <Dashboard session={session} />;
+  // No auth, no loading screen — open straight to the library.
+  return <Dashboard />;
 }

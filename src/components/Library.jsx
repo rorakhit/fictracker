@@ -323,7 +323,52 @@ export default function Library({
 
       <div className="work-list">
         {filtered.length === 0 ? (
-          <div className="empty"><div className="emoji">📚</div><p>{works.length === 0 ? 'No fics yet! Import your bookmarks or add a fic by URL.' : 'No fics match your filters.'}</p></div>
+          works.length === 0 ? (
+            <div className="empty" style={{ padding: '32px 0' }}>
+              <div className="emoji">📚</div>
+              <p style={{ marginBottom: 20 }}>Your library is empty — here's how to fill it.</p>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 12,
+                textAlign: 'left',
+                maxWidth: 580,
+                margin: '0 auto',
+              }}>
+                <div style={{ padding: '14px 16px', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>🧩 Browser extension</div>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 10 }}>
+                    The fastest way — adds a panel to every AO3 page so you can track fics without leaving AO3.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <a href="https://chromewebstore.google.com/detail/fictracker/phfdhkgaagelchgejhhpelhcmebomdim"
+                      target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-teal)', textDecoration: 'none' }}>
+                      Add to Chrome →
+                    </a>
+                    <a href="https://addons.mozilla.org/en-US/firefox/addon/fictracker/"
+                      target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-teal)', textDecoration: 'none' }}>
+                      Add to Firefox →
+                    </a>
+                  </div>
+                </div>
+                <div style={{ padding: '14px 16px', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>📱 Other options</div>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 6 }}>
+                    On mobile or prefer not to install an extension?
+                  </p>
+                  <ul style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.8, margin: 0, paddingLeft: 16 }}>
+                    <li>Paste an AO3 URL in the bar above</li>
+                    <li>Drop AO3 EPUB files in <strong style={{ color: 'var(--text)' }}>Import</strong></li>
+                    <li>Get the Quick Add bookmarklet in <strong style={{ color: 'var(--text)' }}>Settings</strong></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="empty"><div className="emoji">🔍</div><p>No fics match your filters.</p></div>
+          )
         ) : filtered.map(w => {
           const st = w._status?.status || 'to_read';
           const isChecked = bulkSelected.has(w.id);

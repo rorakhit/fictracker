@@ -370,3 +370,47 @@ export async function generatePersistentBookmarklet(refreshToken) {
 
   return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
 }
+
+// ---- Local-first Quick Add Bookmarklet ----
+// No server, no auth. Parses the AO3 work page in the browser, encodes
+// the metadata as JSON, and opens FicTracker in a new tab with the data
+// in the URL (?import=...). FicTracker reads the param on load and saves
+// to localStorage. The server is never involved.
+//
+// appUrl should be window.location.origin so it works across localhost,
+// staging, and production without hardcoding.
+
+export function generateLocalFirstQuickAddBookmarklet(appUrl) {
+  const inner = `(function(){
+var m=location.href.match(/archiveofourown\\.org\\/works\\/(\\d+)/);
+if(!m){alert('Open an AO3 work page first!');return;}
+var q=function(s){var e=document.querySelector(s);return e?e.textContent.trim():null;};
+var qa=function(s){return Array.from(document.querySelectorAll(s)).map(function(e){return e.textContent.trim();});};
+var w={
+  id:m[1],ao3_id:parseInt(m[1]),
+  title:q('h2.title')||'Untitled',
+  authors:qa('[rel=author]'),
+  fandoms:qa('dd.fandom a.tag'),
+  relationships:qa('dd.relationship a.tag'),
+  characters:qa('dd.character a.tag'),
+  freeform_tags:qa('dd.freeform a.tag'),
+  rating:q('dd.rating a.tag'),
+  language:q('dd.language')||'English',
+  summary:(q('.summary blockquote')||'').substring(0,500),
+  added_at:new Date().toISOString()
+};
+var wc=q('dd.words');if(wc)w.word_count=parseInt(wc.replace(/,/g,''))||null;
+var ch=q('dd.chapters');if(ch){var cm=ch.match(/(\\d+)\\s*\\/\\s*(\\d+|\\?)/);if(cm){w.chapter_count=parseInt(cm[1]);w.chapter_total=cm[2]==='?'?null:parseInt(cm[2]);w.is_complete=w.chapter_total!==null&&w.chapter_count>=w.chapter_total;}}
+var k=q('dd.kudos');if(k)w.kudos=parseInt(k.replace(/,/g,''))||null;
+var h=q('dd.hits');if(h)w.hits=parseInt(h.replace(/,/g,''))||null;
+var t=document.createElement('div');
+t.textContent='Opening FicTracker\u2026';
+t.style.cssText='position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:10px;background:#0f1318;border:1px solid rgba(20,184,166,0.3);color:#14b8a6;font:600 14px -apple-system,sans-serif;z-index:999999;box-shadow:0 8px 32px rgba(0,0,0,0.4)';
+document.body.appendChild(t);
+setTimeout(function(){t.remove();},3000);
+window.open('${appUrl}/?import='+encodeURIComponent(JSON.stringify(w)),'_blank');
+})()`;
+
+  // Wrap in script-tag injection for Firefox CSP compatibility
+  return `javascript:void(function(){var s=document.createElement('script');s.textContent=${JSON.stringify(inner)};document.body.appendChild(s);s.remove()})()`;
+}
