@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import Stars from './Stars';
 import ShelfStrip from './ShelfStrip';
-import { ratingClass, wordCountLabel } from '../utils/helpers';
+import { ratingClass, wordCountLabel, readingTime } from '../utils/helpers';
+import { getSettings } from '../storage/local';
 
 export default function Library({
   works, statuses, stats, wipTracking,
@@ -30,6 +31,10 @@ export default function Library({
   const [savingSmartShelf, setSavingSmartShelf] = useState(false);
   const [smartShelfName, setSmartShelfName] = useState('');
   const [smartShelfError, setSmartShelfError] = useState('');
+
+  // Reading speed — read once from settings (no need to re-render on change;
+  // the library view refreshes naturally when the user navigates back from Settings)
+  const readingWpm = useMemo(() => getSettings().readingWpm || 250, []);
 
   // Is there anything meaningful to save? Saving a smart shelf with
   // all-default filters would be a no-op query that matches every fic.
@@ -238,7 +243,7 @@ export default function Library({
       {wipCheckMsg && <div style={{ fontSize: 12, color: 'var(--teal)', marginBottom: 12, whiteSpace: 'pre-line' }}>{wipCheckMsg}</div>}
 
       <div className="filters">
-        {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dropped','Dropped'],['author_abandoned','Abandoned']].map(([k,l]) => (
+        {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dnf','DNF'],['dropped','Dropped'],['author_abandoned','Abandoned']].map(([k,l]) => (
           <button key={k} className={`pill ${statusFilter === k ? 'active' : ''}`}
             onClick={() => { setStatusFilter(k); if (setActiveSmartShelfId) setActiveSmartShelfId(null); }}>{l}</button>
         ))}
@@ -303,6 +308,7 @@ export default function Library({
               <option value="reading">Reading</option>
               <option value="completed">Completed</option>
               <option value="on_hold">On Hold</option>
+              <option value="dnf">DNF</option>
               <option value="dropped">Dropped</option>
               <option value="author_abandoned">Author Abandoned</option>
             </select>
@@ -390,6 +396,9 @@ export default function Library({
               </div>
               <div className="work-meta">
                 {w.word_count && <span>{wordCountLabel(w.word_count)} words</span>}
+                {readingTime(w.word_count, readingWpm) && (
+                  <span title={`At ${readingWpm} wpm`}>{readingTime(w.word_count, readingWpm)}</span>
+                )}
                 {w.chapter_count && <span>{w.chapter_count}{w.chapter_total ? '/' + w.chapter_total : '/?'} ch</span>}
                 {!w.is_complete && <span className="tag wip">WIP</span>}
                 {wipTracking[w.id]?.has_update && (

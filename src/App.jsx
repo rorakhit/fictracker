@@ -6,6 +6,7 @@ import Library from './components/Library';
 import StatsView from './components/StatsView';
 import AnalyticsView from './components/AnalyticsView';
 import FicFinderView from './components/FicFinderView';
+import SeriesView from './components/SeriesView';
 import ImportView from './components/ImportView';
 import WorkModal from './components/WorkModal';
 import SettingsView from './components/SettingsView';
@@ -91,6 +92,7 @@ function Dashboard() {
     ['stats',    'Stats'],
     ['analytics','Analytics'],
     ['finder',   'Fic Finder'],
+    ['series',   'Series'],
     ['import',   'Import'],
     ['settings', 'Settings'],
   ];
@@ -182,6 +184,14 @@ function Dashboard() {
 
       {view === 'stats'     && <StatsView stats={lib.stats} works={lib.works} />}
       {view === 'analytics' && <AnalyticsView analytics={analytics} works={lib.works} />}
+
+      {view === 'series' && (
+        <SeriesView
+          seriesMap={lib.seriesMap}
+          statuses={lib.statuses}
+          onOpenWork={openWork}
+        />
+      )}
 
       {view === 'finder' && (
         <FicFinderView

@@ -61,6 +61,7 @@ h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; }
 .status-dropped { background: rgba(139,141,151,0.15); color: var(--text-muted); }
 .status-on_hold { background: rgba(139,92,246,0.15); color: var(--purple); }
 .status-author_abandoned { background: rgba(224,70,102,0.15); color: var(--rose); }
+.status-dnf { background: rgba(249,115,22,0.15); color: #f97316; }
 
 /* Stars */
 .stars { display: inline-flex; gap: 2px; cursor: pointer; }

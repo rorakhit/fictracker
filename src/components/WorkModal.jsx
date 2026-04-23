@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import Stars from './Stars';
-import { ratingClass } from '../utils/helpers';
+import { ratingClass, readingTime } from '../utils/helpers';
+import { getSettings } from '../storage/local';
 
 export default function WorkModal({
   work, status,
@@ -63,6 +64,11 @@ export default function WorkModal({
         {work.summary && <div className="modal-summary">{work.summary}</div>}
         <div className="modal-meta">
           {work.word_count && <span>{work.word_count.toLocaleString()} words</span>}
+          {(() => {
+            const wpm = getSettings().readingWpm || 250;
+            const rt = readingTime(work.word_count, wpm);
+            return rt ? <span title={`Estimated at ${wpm} wpm`}>⏱ {rt}</span> : null;
+          })()}
           {work.chapter_count && <span>{work.chapter_count}{work.chapter_total ? '/' + work.chapter_total : '/?'} chapters</span>}
           {!work.is_complete && <span style={{ color: 'var(--warning)' }}>WIP</span>}
           {work.kudos && <span>♥ {work.kudos.toLocaleString()} kudos</span>}
@@ -83,6 +89,7 @@ export default function WorkModal({
               <option value="reading">Reading</option>
               <option value="completed">Completed</option>
               <option value="on_hold">On Hold</option>
+              <option value="dnf">DNF</option>
               <option value="dropped">Dropped</option>
               <option value="author_abandoned">Author Abandoned</option>
             </select>

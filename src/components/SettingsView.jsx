@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { clearAllData } from '../storage/local';
+import { clearAllData, getSettings, saveSettings } from '../storage/local';
 import { generateLocalFirstQuickAddBookmarklet } from '../utils/bookmarklet';
+import { READING_SPEEDS } from '../utils/helpers';
 
 // React blocks javascript: URLs in href as a security measure.
 // We set the href directly on the DOM node to work around this safely —
@@ -32,6 +33,13 @@ export default function SettingsView() {
 
   const [bookmarkletUrl, setBookmarkletUrl] = useState(null);
   const [bmCopied, setBmCopied]             = useState(false);
+
+  // Reading speed
+  const [readingWpm, setReadingWpmState] = useState(() => getSettings().readingWpm || 250);
+  function setReadingWpm(wpm) {
+    setReadingWpmState(wpm);
+    saveSettings({ ...getSettings(), readingWpm: wpm });
+  }
 
   function handleClearData() {
     if (!confirmClear) { setConfirmClear(true); return; }
@@ -66,6 +74,32 @@ export default function SettingsView() {
       <h2>Settings</h2>
 
       {/* ---------------------------------------------------------------- */}
+      {/* Support                                                          */}
+      {/* ---------------------------------------------------------------- */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginBottom: 24 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 4 }}>☕ Support FicTracker</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+          FicTracker is free, ad-free, and always will be. If it saves you time and you want
+          to say thanks, a small tip genuinely helps keep it going.
+        </p>
+        <a
+          href="https://ko-fi.com/fictracker"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '9px 18px',
+            background: 'var(--surface)',
+            color: 'var(--text)', borderRadius: 8, fontWeight: 700,
+            fontSize: 13, textDecoration: 'none',
+            border: '1px solid var(--border)',
+          }}
+        >
+          ☕ Buy me a Ko-fi
+        </a>
+      </div>
+
+      {/* ---------------------------------------------------------------- */}
       {/* Privacy notice                                                   */}
       {/* ---------------------------------------------------------------- */}
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginBottom: 24 }}>
@@ -85,6 +119,44 @@ export default function SettingsView() {
             Your library, shelves, ratings, and notes are stored in your browser's local storage.
             The only external request FicTracker makes is fetching public AO3 metadata when you
             add a fic by URL — nothing personal is ever sent to a server.
+          </div>
+        </div>
+      </div>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Reading speed                                                    */}
+      {/* ---------------------------------------------------------------- */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginBottom: 24 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 4 }}>Reading speed</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+          Used to estimate how long a fic will take you. Shown on library cards and the fic detail view.
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {[['Slow', READING_SPEEDS.slow], ['Average', READING_SPEEDS.average], ['Fast', READING_SPEEDS.fast]].map(([label, wpm]) => (
+            <button
+              key={wpm}
+              onClick={() => setReadingWpm(wpm)}
+              style={{
+                padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: `1px solid ${readingWpm === wpm ? 'var(--accent-teal)' : 'var(--border)'}`,
+                background: readingWpm === wpm ? 'rgba(20,184,166,0.1)' : 'var(--surface)',
+                color: readingWpm === wpm ? 'var(--accent-teal)' : 'var(--text)',
+                cursor: 'pointer',
+              }}
+            >
+              {label} <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 11 }}>{wpm} wpm</span>
+            </button>
+          ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="number"
+              min="50" max="2000"
+              value={readingWpm}
+              onChange={e => { const v = parseInt(e.target.value); if (v >= 50 && v <= 2000) setReadingWpm(v); }}
+              style={{ width: 70, padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border)',
+                background: 'var(--surface)', color: 'var(--text)', fontSize: 13 }}
+            />
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>wpm</span>
           </div>
         </div>
       </div>

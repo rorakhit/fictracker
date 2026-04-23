@@ -77,6 +77,23 @@ async function fetchAO3Metadata(ao3Id) {
   const summaryEl = doc.querySelector('.summary blockquote');
   const summary = summaryEl?.textContent.trim() || null;
 
+  // Series membership — a work can belong to multiple series.
+  // Each dd.series > span.series contains: "Part <n> of <a href='/series/id'>Name</a>"
+  const series_memberships = [];
+  doc.querySelectorAll('dd.series .series').forEach(el => {
+    const link = el.querySelector('a');
+    if (!link) return;
+    const href = link.getAttribute('href') || '';
+    const idMatch = href.match(/\/series\/(\d+)/);
+    if (!idMatch) return;
+    const posEl = el.querySelector('.position');
+    series_memberships.push({
+      ao3_series_id: parseInt(idMatch[1]),
+      series_name: link.textContent.trim(),
+      position_in_series: posEl ? parseInt(posEl.textContent) || null : null,
+    });
+  });
+
   return {
     id: ao3Id.toString(),
     ao3_id: ao3Id,
@@ -97,6 +114,7 @@ async function fetchAO3Metadata(ao3Id) {
     kudos,
     hits,
     summary,
+    series_memberships,
     added_at: new Date().toISOString(),
   };
 }
@@ -428,7 +446,7 @@ export function useLocalLibrary() {
   const stats = useMemo(() => {
     const total = works.length;
     const totalWords = works.reduce((s, w) => s + (w.word_count || 0), 0);
-    const statusCounts = { to_read: 0, reading: 0, completed: 0, dropped: 0, on_hold: 0, author_abandoned: 0 };
+    const statusCounts = { to_read: 0, reading: 0, completed: 0, dnf: 0, dropped: 0, on_hold: 0, author_abandoned: 0 };
     works.forEach(w => {
       const st = statuses[w.id]?.status || 'to_read';
       if (statusCounts[st] !== undefined) statusCounts[st]++;
@@ -520,6 +538,29 @@ export function useLocalLibrary() {
   }, [works, statuses, tasteProfile, queueRotationSeed]);
 
   // ---------------------------------------------------------------------------
+  // Series map — group library works by series
+  // ---------------------------------------------------------------------------
+  // seriesMap: Map<ao3_series_id, { ao3_series_id, series_name, works: [work] }>
+  // Only includes series where at least one work is in the library AND has
+  // series_memberships populated (i.e. added via URL after this feature shipped).
+  const seriesMap = useMemo(() => {
+    const map = new Map();
+    works.forEach(w => {
+      (w.series_memberships || []).forEach(({ ao3_series_id, series_name, position_in_series }) => {
+        if (!map.has(ao3_series_id)) {
+          map.set(ao3_series_id, { ao3_series_id, series_name, works: [] });
+        }
+        map.get(ao3_series_id).works.push({ ...w, position_in_series });
+      });
+    });
+    // Sort works within each series by position
+    map.forEach(series => {
+      series.works.sort((a, b) => (a.position_in_series || 999) - (b.position_in_series || 999));
+    });
+    return map;
+  }, [works]);
+
+  // ---------------------------------------------------------------------------
   // Discovery recs (fics not in library — sourced from all works in localStorage
   // across any shared pool; in local-first mode this is just the user's own
   // collection filtered to unread works scored against taste)
@@ -548,7 +589,7 @@ export function useLocalLibrary() {
   const ao3Username      = '';
 
   return {
-    works, statuses, readingLog, wipTracking, loading,
+    works, statuses, readingLog, wipTracking, loading, seriesMap,
     importWork: upsertWork,
     importing, importMsg, setImportMsg,
     checkingWips, wipCheckMsg, setWipCheckMsg: () => {},
