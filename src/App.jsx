@@ -160,6 +160,7 @@ function Dashboard() {
           ficsRemaining={lib.ficsRemaining}
           ficLimit={lib.FREE_FIC_LIMIT}
           onOpenWork={openWork}
+          readingLog={lib.readingLog}
           shelves={shelves.shelves}
           worksByShelf={shelves.worksByShelf}
           activeShelfId={activeShelfId}

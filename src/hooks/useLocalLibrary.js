@@ -77,6 +77,17 @@ async function fetchAO3Metadata(ao3Id) {
   const summaryEl = doc.querySelector('.summary blockquote');
   const summary = summaryEl?.textContent.trim() || null;
 
+  // Chapter IDs — scraped from the chapter navigation dropdown.
+  // AO3 renders all chapter options (value = AO3 chapter ID) in the
+  // select#selected_id element even when viewing chapter 1, so a single
+  // page fetch gives us everything we need for deep-linking.
+  // Format: [{ num: 1, ao3_id: 12345678 }, ...]
+  const chapterIdEls = doc.querySelectorAll('select#selected_id option');
+  const chapter_ids = Array.from(chapterIdEls).map((opt, idx) => ({
+    num: idx + 1,
+    ao3_id: parseInt(opt.value) || null,
+  })).filter(ch => ch.ao3_id);
+
   // Series membership — a work can belong to multiple series.
   // Each dd.series > span.series contains: "Part <n> of <a href='/series/id'>Name</a>"
   const series_memberships = [];
@@ -114,6 +125,7 @@ async function fetchAO3Metadata(ao3Id) {
     kudos,
     hits,
     summary,
+    chapter_ids,
     series_memberships,
     added_at: new Date().toISOString(),
   };

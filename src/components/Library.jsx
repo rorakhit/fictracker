@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import Stars from './Stars';
 import ShelfStrip from './ShelfStrip';
-import { ratingClass, wordCountLabel, readingTime } from '../utils/helpers';
+import { ratingClass, wordCountLabel, readingTime, timeAgo } from '../utils/helpers';
 import { getSettings } from '../storage/local';
 
 export default function Library({
@@ -9,6 +9,7 @@ export default function Library({
   bulkMode, setBulkMode, bulkSelected, setBulkSelected,
   toggleBulkSelect, bulkSetStatus, bulkDelete,
   importing, importMsg, addByUrl,
+  readingLog = [],
   checkingWips, wipCheckMsg, checkWipUpdates, dismissWipUpdate, dismissAllWipUpdates,
   isAtFicLimit, ficsRemaining, ficLimit,
   onOpenWork,
@@ -35,6 +36,19 @@ export default function Library({
   // Reading speed — read once from settings (no need to re-render on change;
   // the library view refreshes naturally when the user navigates back from Settings)
   const readingWpm = useMemo(() => getSettings().readingWpm || 250, []);
+
+  // Last-read timestamps — for each work, find the most recent reading_log entry.
+  // We build a Map so card rendering is O(1) per lookup rather than O(n) per card.
+  const lastReadMap = useMemo(() => {
+    const map = new Map();
+    readingLog.forEach(entry => {
+      const existing = map.get(entry.work_id);
+      if (!existing || entry.read_at > existing) {
+        map.set(entry.work_id, entry.read_at);
+      }
+    });
+    return map;
+  }, [readingLog]);
 
   // Is there anything meaningful to save? Saving a smart shelf with
   // all-default filters would be a no-op query that matches every fic.
@@ -416,6 +430,49 @@ export default function Library({
               {st === 'reading' && w._status?.current_chapter > 0 && w.chapter_count && (
                 <div className="progress-bar" style={{ marginTop: 8 }}><div className="progress-fill" style={{ width: `${Math.min(100, (w._status.current_chapter / (w.chapter_total || w.chapter_count)) * 100)}%` }}></div></div>
               )}
+              {st === 'reading' && w.ao3_id && (() => {
+                // Build an AO3 deep link for the current chapter.
+                // chapter_ids (array of {num, ao3_id}) are scraped when the work
+                // is added by URL; they let us link to the exact chapter rather
+                // than always opening chapter 1.
+                const ch = w._status?.current_chapter || 0;
+                const chapterIds = w.chapter_ids || [];
+                const match = chapterIds.find(c => c.num === ch);
+                const url = match?.ao3_id
+                  ? `https://archiveofourown.org/works/${w.ao3_id}/chapters/${match.ao3_id}`
+                  : `https://archiveofourown.org/works/${w.ao3_id}`;
+                const label = ch > 0
+                  ? `Continue → Ch. ${ch}${w.chapter_total || w.chapter_count ? '/' + (w.chapter_total || w.chapter_count) : ''}`
+                  : 'Open on AO3';
+                const lastRead = lastReadMap.get(w.id);
+                return (
+                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        fontSize: 11, fontWeight: 700,
+                        color: 'var(--accent-teal)',
+                        textDecoration: 'none',
+                        padding: '3px 10px',
+                        border: '1px solid rgba(20,184,166,0.3)',
+                        borderRadius: 5,
+                        background: 'rgba(20,184,166,0.06)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {label}
+                    </a>
+                    {lastRead && (
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        {timeAgo(lastRead)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
