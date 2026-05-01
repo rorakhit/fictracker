@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FicTracker — Portfolio Case Study</title>
+  <meta name="description" content="A local-first AO3 fanfiction tracker and analytics dashboard. React 19 + Vite, browser extension (MV3), zero backend.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #171520;
+      --surface: #1e1b2a;
+      --surface-2: #252236;
+      --border: rgba(255,255,255,0.08);
+      --border-amber: rgba(224,168,114,0.25);
+      --text: #e8e4df;
+      --text-muted: #9590a0;
+      --amber: #e0a872;
+      --twilight: #8b9dc4;
+      --blush: #d4a0b0;
+      --gold: #c4b470;
+      --success: #22c55e;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; line-height: 1.2; }
+    a { color: var(--amber); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      background: rgba(23,21,32,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+    .nav-wordmark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Fraunces', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-wordmark:hover { text-decoration: none; }
+    .nav-wordmark .fic { color: var(--blush); }
+    .nav-wordmark .tracker { color: var(--text); }
+    .nav-badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+    }
+    .nav-links { display: flex; gap: 20px; align-items: center; }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .btn-live {
+      background: var(--amber);
+      color: var(--bg);
+      padding: 7px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .btn-live:hover { opacity: 0.88; text-decoration: none; }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 80px 0 56px;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero-eyebrow span { color: var(--amber); }
+    .hero h1 {
+      font-size: clamp(36px, 5.5vw, 58px);
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--amber);
+    }
+    .hero-sub {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 540px;
+      margin: 0 auto 36px;
+    }
+    .hero-ctas {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-block;
+      background: var(--amber);
+      color: var(--bg);
+      padding: 13px 28px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.9; text-decoration: none; }
+    .btn-ghost {
+      display: inline-block;
+      background: transparent;
+      color: var(--twilight);
+      padding: 13px 28px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 600;
+      border: 1px solid rgba(139,157,196,0.35);
+      transition: background 0.15s;
+    }
+    .btn-ghost:hover { background: rgba(139,157,196,0.08); text-decoration: none; }
+
+    /* ── Meta bar ── */
+    .meta-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 0;
+      margin-bottom: 72px;
+    }
+    .meta-bar .container {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .meta-item { text-align: center; }
+    .meta-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .meta-value {
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ── Section ── */
+    .section { margin-bottom: 72px; }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--amber);
+      margin-bottom: 12px;
+    }
+    .section h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .section p {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 14px;
+      max-width: 680px;
+    }
+    .section p:last-child { margin-bottom: 0; }
+    .section p strong { color: var(--text); font-weight: 600; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin-bottom: 72px;
+    }
+
+    /* ── Feature grid ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .feature-card:hover {
+      background: var(--surface-2);
+      border-color: rgba(255,255,255,0.12);
+    }
+    .feature-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+    .feature-card h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--amber);
+      margin-bottom: 6px;
+      letter-spacing: 0;
+    }
+    .feature-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin: 0;
+      max-width: none;
+    }
+
+    /* ── Stack pills ── */
+    .stack-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .stack-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .stack-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-amber { background: var(--amber); }
+    .dot-twilight { background: var(--twilight); }
+    .dot-blush { background: var(--blush); }
+    .dot-gold { background: var(--gold); }
+    .dot-success { background: var(--success); }
+
+    /* ── Architecture card ── */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .arch-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .arch-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .arch-card ul { list-style: none; }
+    .arch-card ul li {
+      font-size: 13px;
+      color: var(--text);
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .arch-card ul li:last-child { border-bottom: none; }
+    .arch-card ul li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--border);
+      border: 1px solid var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* ── Challenge/solution pairs ── */
+    .challenge-list { margin-top: 28px; display: flex; flex-direction: column; gap: 16px; }
+    .challenge-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .challenge-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .challenge-col {
+      padding: 18px 22px;
+    }
+    .challenge-col:first-child {
+      border-right: 1px solid var(--border);
+    }
+    .challenge-col-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+    .label-challenge { color: var(--blush); }
+    .label-solution { color: var(--twilight); }
+    .challenge-col p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin: 0;
+      max-width: none;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border-amber);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Fraunces', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--amber);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* ── Evolution timeline ── */
+    .timeline { margin-top: 28px; display: flex; flex-direction: column; gap: 0; }
+    .timeline-item {
+      display: flex;
+      gap: 20px;
+      padding-bottom: 28px;
+      position: relative;
+    }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+      width: 32px;
+    }
+    .timeline-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--amber);
+      border: 2px solid var(--bg);
+      flex-shrink: 0;
+    }
+    .timeline-line {
+      width: 1px;
+      flex: 1;
+      background: var(--border);
+      margin-top: 4px;
+    }
+    .timeline-item:last-child .timeline-line { display: none; }
+    .timeline-content { padding-top: 0; }
+    .timeline-period {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--amber);
+      margin-bottom: 4px;
+    }
+    .timeline-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .timeline-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 0;
+    }
+    footer .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-left p {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: none;
+      margin: 0;
+    }
+    .footer-left p + p { margin-top: 4px; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 13px; color: var(--twilight); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .nav-links a:not(.btn-live) { display: none; }
+      .challenge-row { grid-template-columns: 1fr; }
+      .challenge-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+      .meta-bar .container { justify-content: flex-start; gap: 32px; }
+      footer .container { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="container">
+      <a class="nav-wordmark" href="https://fictracker.app">
+        <img src="/logo.svg" alt="FicTracker logo" style="height:28px;width:28px;">
+        <span class="fic">Fic</span><span class="tracker">Tracker</span>
+        <span class="nav-badge">Portfolio</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#stack">Stack</a>
+        <a href="#architecture">Architecture</a>
+        <a href="https://fictracker.app" class="btn-live">Live App →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-eyebrow">Case Study &nbsp;·&nbsp; <span>Solo Project</span></div>
+      <h1>A reading tracker<br>built for <em>fanfic readers</em></h1>
+      <p class="hero-sub">FicTracker is a fully local-first web app that lets AO3 readers track their reading, discover new fics, and visualise their reading life — no account, no server, no cost.</p>
+      <div class="hero-ctas">
+        <a href="https://fictracker.app" class="btn-primary">Open live app</a>
+        <a href="https://github.com/rorakhit/fictracker" class="btn-ghost">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Meta bar ── -->
+  <div class="meta-bar">
+    <div class="container">
+      <div class="meta-item">
+        <div class="meta-label">Type</div>
+        <div class="meta-value">Solo project</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Frontend</div>
+        <div class="meta-value">React 19 + Vite</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Backend</div>
+        <div class="meta-value">None (local-first)</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Extension</div>
+        <div class="meta-value">Chrome + Firefox (MV3)</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Deployed on</div>
+        <div class="meta-value">Vercel</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Server cost</div>
+        <div class="meta-value">$0 / month</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ── The problem ── -->
+    <div class="section">
+      <p class="section-label">Background</p>
+      <h2>AO3 bookmarks are a graveyard</h2>
+      <p>AO3 (Archive of Our Own) is one of the largest fanfiction platforms in the world, with millions of active readers. Its bookmarking system is essentially a flat list — no reading status, no chapter progress, no notes, no analytics, no way to surface what you actually want to read next.</p>
+      <p>Readers were tracking progress in spreadsheets, Notion databases, and handwritten notes. Smart community members built browser extensions with limited scope. There was no cohesive, purpose-built tool.</p>
+      <p>I built FicTracker to solve that — a full reading tracker tailored to how fanfic readers actually read: long multi-chapter works, frequent WIPs, a deep culture around curation and community.</p>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── Features ── -->
+    <div class="section" id="features">
+      <p class="section-label">What it does</p>
+      <h2>A full reading workflow in the browser</h2>
+      <p>Everything lives in localStorage — no login, no server roundtrips, instant interactions. The app is usable in under 10 seconds with zero friction.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">📚</span>
+          <h3>Library</h3>
+          <p>Import AO3 bookmarks in one click, or add any fic by URL. Track status, chapter progress, star ratings, and personal notes. Shuffled on every visit so nothing stays buried.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔖</span>
+          <h3>Continue Reading</h3>
+          <p>Deep links to the exact last-read chapter on AO3. Never hunt for your place again.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📐</span>
+          <h3>Bookshelves</h3>
+          <p>Manual shelves for curation, smart shelves that restore a saved filter set with one click. Unlimited for all users.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🔔</span>
+          <h3>WIP tracking</h3>
+          <p>Checks incomplete fics for new chapters and shows per-work update banners in the library. No emails, no noise.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h3>Stats &amp; Analytics</h3>
+          <p>Top fandoms, word count, reading pace over time, interactive Recharts area timelines and bar charts. Shareable Reading Wrapped cards.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🎯</span>
+          <h3>Fic Finder &amp; Queue</h3>
+          <p>Taste-based queue scores your to-read list by overlap with highly-rated fandoms and ships. Fic Finder generates targeted AO3 search URLs from filter presets.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📥</span>
+          <h3>Import options</h3>
+          <p>AO3 bookmark sync, EPUB drop, Quick Add bookmarklet for mobile Safari, JSON backup restore.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🧩</span>
+          <h3>Browser Extension</h3>
+          <p>MV3 extension for Chrome and Firefox. Floating panel on every AO3 work page — auto-detects chapter, +/– controls, silent sync. Also ships for Firefox for Android.</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── Stack ── -->
+    <div class="section" id="stack">
+      <p class="section-label">Tech stack</p>
+      <h2>Deliberately lean</h2>
+      <p>The stack was chosen to eliminate operational overhead entirely. No database to provision, no auth to maintain, no API costs, no billing infrastructure. Just a static build deployed to Vercel's CDN.</p>
+
+      <div class="stack-grid">
+        <div class="stack-pill"><div class="dot dot-amber"></div>React 19</div>
+        <div class="stack-pill"><div class="dot dot-amber"></div>Vite</div>
+        <div class="stack-pill"><div class="dot dot-amber"></div>React Router</div>
+        <div class="stack-pill"><div class="dot dot-twilight"></div>Recharts</div>
+        <div class="stack-pill"><div class="dot dot-twilight"></div>localStorage</div>
+        <div class="stack-pill"><div class="dot dot-twilight"></div>corsproxy.io</div>
+        <div class="stack-pill"><div class="dot dot-blush"></div>Chrome MV3</div>
+        <div class="stack-pill"><div class="dot dot-blush"></div>Firefox MV3</div>
+        <div class="stack-pill"><div class="dot dot-gold"></div>Vercel</div>
+        <div class="stack-pill"><div class="dot dot-success"></div>No backend</div>
+        <div class="stack-pill"><div class="dot dot-success"></div>No auth</div>
+        <div class="stack-pill"><div class="dot dot-success"></div>No database</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── Architecture ── -->
+    <div class="section" id="architecture">
+      <p class="section-label">Architecture</p>
+      <h2>Local-first, zero infrastructure</h2>
+      <p>All state lives in localStorage, managed through custom hooks that provide a typed API to the rest of the app. The browser itself is the database — reads are synchronous and instant, writes are atomic, and there's nothing to go down.</p>
+      <p>AO3 scraping runs through a public CORS proxy at import time only. The extension communicates with the web app via a shared localStorage key — no messaging API, no background server.</p>
+
+      <div class="arch-grid">
+        <div class="arch-card">
+          <div class="arch-card-title">Data layer</div>
+          <ul>
+            <li>useLocalLibrary hook (core engine)</li>
+            <li>useLocalShelves hook</li>
+            <li>storage/local.js — I/O abstraction</li>
+            <li>JSON export / import</li>
+          </ul>
+        </div>
+        <div class="arch-card">
+          <div class="arch-card-title">Import pipeline</div>
+          <ul>
+            <li>AO3 bookmark page scraper</li>
+            <li>EPUB metadata parser</li>
+            <li>Quick Add bookmarklet (mobile)</li>
+            <li>JSON backup restore</li>
+          </ul>
+        </div>
+        <div class="arch-card">
+          <div class="arch-card-title">Extension</div>
+          <ul>
+            <li>MV3 service worker</li>
+            <li>Content script on AO3 work pages</li>
+            <li>Floating panel UI (full / mini / hidden)</li>
+            <li>Shared localStorage bridge</li>
+          </ul>
+        </div>
+        <div class="arch-card">
+          <div class="arch-card-title">Deployment</div>
+          <ul>
+            <li>Vercel — auto-deploy from GitHub</li>
+            <li>Custom domain: fictracker.app</li>
+            <li>Chrome Web Store</li>
+            <li>Firefox Add-ons (AMO)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── Challenges ── -->
+    <div class="section">
+      <p class="section-label">Engineering challenges</p>
+      <h2>Problems worth solving</h2>
+
+      <div class="challenge-list">
+        <div class="challenge-item">
+          <div class="challenge-row">
+            <div class="challenge-col">
+              <div class="challenge-col-label label-challenge">Challenge</div>
+              <p>AO3 doesn't provide a public API. Importing a reader's bookmark library requires scraping paginated HTML across potentially dozens of pages.</p>
+            </div>
+            <div class="challenge-col">
+              <div class="challenge-col-label label-solution">Solution</div>
+              <p>Built a CORS-proxied scraper that parses AO3 bookmark HTML client-side, extracting work ID, title, author, fandom, tags, and chapter count. Runs entirely in the browser with progress tracking.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="challenge-item">
+          <div class="challenge-row">
+            <div class="challenge-col">
+              <div class="challenge-col-label label-challenge">Challenge</div>
+              <p>Readers want to resume exactly where they left off — AO3 chapter URLs follow a specific pattern but chapter numbers aren't always sequential or predictable.</p>
+            </div>
+            <div class="challenge-col">
+              <div class="challenge-col-label label-solution">Solution</div>
+              <p>Designed a chapter tracking model that stores the AO3 chapter ID (not just the number), enabling deep links that navigate to the exact chapter even after story restructuring.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="challenge-item">
+          <div class="challenge-row">
+            <div class="challenge-col">
+              <div class="challenge-col-label label-challenge">Challenge</div>
+              <p>The app started as a Supabase + Stripe SaaS. After Reddit community feedback made clear that paywalling features is culturally incompatible with the fanfic ecosystem, the entire backend had to be rearchitected away.</p>
+            </div>
+            <div class="challenge-col">
+              <div class="challenge-col-label label-solution">Solution</div>
+              <p>Migrated to a fully local-first model. Replaced all Supabase calls with localStorage hooks behind a clean abstraction layer — meaning the switch was a data-layer swap, not a UI rewrite.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="challenge-item">
+          <div class="challenge-row">
+            <div class="challenge-col">
+              <div class="challenge-col-label label-challenge">Challenge</div>
+              <p>The browser extension needs to sync chapter progress with the web app in real time, without a shared server or persistent connection.</p>
+            </div>
+            <div class="challenge-col">
+              <div class="challenge-col-label label-solution">Solution</div>
+              <p>Both the extension and web app read and write the same localStorage keys. The extension content script writes directly; the web app picks up changes on next render. Simple, reliable, offline-capable.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="challenge-item">
+          <div class="challenge-row">
+            <div class="challenge-col">
+              <div class="challenge-col-label label-challenge">Challenge</div>
+              <p>Mobile Safari doesn't support browser extensions — a significant fraction of the target audience reads on iPad.</p>
+            </div>
+            <div class="challenge-col">
+              <div class="challenge-col-label label-solution">Solution</div>
+              <p>Built a Quick Add bookmarklet that works on mobile Safari — grabs the current AO3 work URL and fires a deep link into the web app to add it to the library without any extension required.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── Product evolution ── -->
+    <div class="section">
+      <p class="section-label">Product evolution</p>
+      <h2>Built iteratively, shaped by users</h2>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot"></div>
+            <div class="timeline-line"></div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-period">Phase 1</div>
+            <div class="timeline-title">Supabase + Stripe SaaS</div>
+            <p class="timeline-desc">Launched with full backend: Supabase Postgres, Row Level Security, Stripe subscription tiers, server-side scraping via Edge Functions, multi-user auth. Fully functional but operationally complex.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot"></div>
+            <div class="timeline-line"></div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-period">Phase 2</div>
+            <div class="timeline-title">Community feedback changes the model</div>
+            <p class="timeline-desc">Posted to r/FanFiction and r/AO3. Strong signal: fanfic readers are culturally opposed to paywalled tools in a community built on free, gift-economy content. Decision made to go fully free and remove the backend.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot"></div>
+            <div class="timeline-line"></div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-period">Phase 3</div>
+            <div class="timeline-title">Local-first rearchitecture</div>
+            <p class="timeline-desc">Replaced all Supabase calls with localStorage hooks behind a clean abstraction. Removed auth, Stripe, and server-side scraping. Moved AO3 scraping client-side. Dropped backend cost to zero.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot"></div>
+            <div class="timeline-line"></div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-period">Phase 4</div>
+            <div class="timeline-title">Feature depth</div>
+            <p class="timeline-desc">Added Reading Wrapped, Analytics, Fic Finder, taste-based queue, EPUB import, series dashboard, WIP tracking, and the full browser extension with chapter auto-detection and deep linking.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── Numbers ── -->
+    <div class="section">
+      <p class="section-label">By the numbers</p>
+      <h2>Scale and scope</h2>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num">0</div>
+          <div class="stat-desc">Server cost per month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">2</div>
+          <div class="stat-desc">Browser extension platforms (Chrome + Firefox)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">5</div>
+          <div class="stat-desc">Import methods (AO3 sync, EPUB, bookmarklet, URL, JSON)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">14+</div>
+          <div class="stat-desc">React components across 8 distinct views</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">∞</div>
+          <div class="stat-desc">Fics, shelves, and data — no limits, no tiers</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <footer>
+    <div class="container">
+      <div class="footer-left">
+        <p>Built by <strong>Ro Rakhit</strong></p>
+        <p><a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a></p>
+      </div>
+      <div class="footer-links">
+        <a href="https://fictracker.app">Live App</a>
+        <a href="https://github.com/rorakhit/fictracker">GitHub</a>
+        <a href="landing.html">Product Page</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
