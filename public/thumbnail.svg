@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f0e1a"/>
+      <stop offset="100%" stop-color="#1e1b2a"/>
+    </linearGradient>
+
+    <!-- Radial glow behind icon -->
+    <radialGradient id="icon-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e0a872" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#e0a872" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Subtle top vignette -->
+    <radialGradient id="top-glow" cx="50%" cy="0%" r="60%">
+      <stop offset="0%" stop-color="#8b9dc4" stop-opacity="0.07"/>
+      <stop offset="100%" stop-color="#8b9dc4" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Icon nook glow -->
+    <radialGradient id="nook-glow" cx="50%" cy="28%" r="55%">
+      <stop offset="0%" stop-color="#e0a872" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#e0a872" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Clip circle for icon -->
+    <clipPath id="icon-clip">
+      <circle cx="600" cy="270" r="130"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-grad)"/>
+  <rect width="1200" height="630" fill="url(#top-glow)"/>
+
+  <!-- Decorative grid lines (subtle) -->
+  <line x1="0" y1="315" x2="1200" y2="315" stroke="#2e293d" stroke-width="0.5" opacity="0.4"/>
+  <line x1="600" y1="0" x2="600" y2="630" stroke="#2e293d" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- Corner decorative dots -->
+  <circle cx="80" cy="80" r="3" fill="#e0a872" opacity="0.3"/>
+  <circle cx="1120" cy="80" r="3" fill="#d4a0b0" opacity="0.3"/>
+  <circle cx="80" cy="550" r="3" fill="#8b9dc4" opacity="0.3"/>
+  <circle cx="1120" cy="550" r="3" fill="#e0a872" opacity="0.3"/>
+
+  <!-- Scattered sparkle accents -->
+  <circle cx="160" cy="200" r="2" fill="#e0a872" opacity="0.5"/>
+  <circle cx="220" cy="420" r="1.5" fill="#8b9dc4" opacity="0.4"/>
+  <circle cx="140" cy="370" r="1" fill="#d4a0b0" opacity="0.5"/>
+  <circle cx="1040" cy="190" r="2" fill="#d4a0b0" opacity="0.5"/>
+  <circle cx="980" cy="430" r="1.5" fill="#e0a872" opacity="0.4"/>
+  <circle cx="1060" cy="400" r="1" fill="#8b9dc4" opacity="0.5"/>
+  <circle cx="300" cy="130" r="1.5" fill="#8b9dc4" opacity="0.35"/>
+  <circle cx="900" cy="130" r="1.5" fill="#e0a872" opacity="0.35"/>
+  <circle cx="350" cy="530" r="2" fill="#d4a0b0" opacity="0.3"/>
+  <circle cx="850" cy="520" r="2" fill="#8b9dc4" opacity="0.3"/>
+
+  <!-- Ambient glow behind the icon -->
+  <circle cx="600" cy="270" r="220" fill="url(#icon-glow)"/>
+
+  <!-- ===== ICON (centered, large) ===== -->
+  <!-- Dark circle background -->
+  <circle cx="600" cy="270" r="130" fill="#171520"/>
+
+  <!-- Arch interior -->
+  <path d="M534 350 L534 308 Q534 248 600 248 Q666 248 666 308 L666 350 Z" fill="#1e1b2a"/>
+  <!-- Warm glow -->
+  <path d="M534 350 L534 308 Q534 248 600 248 Q666 248 666 308 L666 350 Z" fill="url(#nook-glow)"/>
+  <!-- Arch outline in amber -->
+  <path d="M534 350 L534 308 Q534 248 600 248 Q666 248 666 308 L666 350 Z" stroke="#e0a872" stroke-width="5" fill="none"/>
+
+  <!-- Open book — left page (twilight blue) -->
+  <path d="M600 344 L600 318 Q590 316 578 318 L575 344 Z" fill="#8b9dc4" opacity="0.9"/>
+  <!-- Right page (blush) -->
+  <path d="M600 344 L600 318 Q610 316 622 318 L625 344 Z" fill="#d4a0b0" opacity="0.9"/>
+  <!-- Book spine gold -->
+  <line x1="600" y1="316" x2="600" y2="344" stroke="#c4b470" stroke-width="3"/>
+  <!-- Page lines left -->
+  <line x1="582" y1="324" x2="597" y2="323" stroke="#e8e4df" stroke-width="1" opacity="0.55"/>
+  <line x1="582" y1="330" x2="597" y2="329" stroke="#e8e4df" stroke-width="1" opacity="0.45"/>
+  <line x1="582" y1="336" x2="597" y2="335" stroke="#e8e4df" stroke-width="1" opacity="0.35"/>
+  <!-- Page lines right -->
+  <line x1="618" y1="324" x2="603" y2="323" stroke="#e8e4df" stroke-width="1" opacity="0.5"/>
+  <line x1="618" y1="330" x2="603" y2="329" stroke="#e8e4df" stroke-width="1" opacity="0.4"/>
+  <line x1="618" y1="336" x2="603" y2="335" stroke="#e8e4df" stroke-width="1" opacity="0.3"/>
+
+  <!-- Sparkle dots rising above book -->
+  <circle cx="583" cy="304" r="5.5" fill="#e0a872" opacity="0.95"/>
+  <circle cx="600" cy="292" r="4.5" fill="#8b9dc4" opacity="0.9"/>
+  <circle cx="617" cy="304" r="5.5" fill="#d4a0b0" opacity="0.95"/>
+
+  <!-- ===== WORDMARK ===== -->
+  <!-- "fic" in warm parchment -->
+  <text x="600" y="456" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" fill="#e8e4df" text-anchor="middle" letter-spacing="-2">fic</text>
+  <!-- "tracker" in amber accent -->
+  <text x="600" y="530" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" fill="#e0a872" text-anchor="middle" letter-spacing="-2">tracker</text>
+
+  <!-- Tagline -->
+  <text x="600" y="578" font-family="'Inter', Arial, sans-serif" font-size="20" fill="#9590a0" text-anchor="middle" letter-spacing="3">YOUR AO3 READING TRACKER</text>
+
+  <!-- Thin amber rule under icon -->
+  <line x1="460" y1="412" x2="740" y2="412" stroke="#e0a872" stroke-width="1" opacity="0.25"/>
+</svg>
