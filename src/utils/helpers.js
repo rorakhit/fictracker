@@ -1,6 +1,11 @@
+// @ts-check
+/** @typedef {string | Date | null | undefined} DateStr */
+
 export const COLORS = ['#14b8a6','#3b82f6','#8b5cf6','#e04666','#f59e0b','#22c55e','#f97316','#ec4899','#6366f1','#84cc16'];
 
 // Returns a human-friendly relative time string: "just now", "3 days ago", etc.
+/** @param {DateStr} dateStr
+ * @returns {string | null} */
 export function timeAgo(dateStr) {
   if (!dateStr) return null;
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -30,6 +35,9 @@ export const READING_SPEEDS = {
 
 // Returns a human-readable estimate like "~2h 30m" or "~45 min".
 // wpm defaults to 250 (average adult silent reading speed).
+/** @param {number | null | undefined} wordCount
+ * @param {number} [wpm]
+ * @returns {string | null} */
 export function readingTime(wordCount, wpm = 250) {
   if (!wordCount || wordCount <= 0) return null;
   const minutes = Math.round(wordCount / wpm);
@@ -40,6 +48,8 @@ export function readingTime(wordCount, wpm = 250) {
   return m === 0 ? `~${h}h` : `~${h}h ${m}m`;
 }
 
+/** @param {string | null | undefined} r
+ * @returns {string} */
 export function ratingClass(r) {
   if (!r) return '';
   if (r.startsWith('Explicit')) return 'rating-e';
@@ -48,9 +58,11 @@ export function ratingClass(r) {
   return 'rating-g';
 }
 
+/** @param {number | null | undefined} wc
+ * @returns {string} */
 export function wordCountLabel(wc) {
   if (!wc) return '?';
   if (wc < 1000) return wc.toLocaleString();
-  if (wc < 1000000) return (wc / 1000).toFixed(wc < 10000 ? 1 : 0) + 'k';
+  if (wc < 999500) return (wc / 1000).toFixed(wc < 10000 ? 1 : 0) + 'k';
   return (wc / 1000000).toFixed(1) + 'M';
 }
