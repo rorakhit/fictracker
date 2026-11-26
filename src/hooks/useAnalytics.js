@@ -5,7 +5,7 @@ import { useMemo } from 'react';
  * and reading_log data. Designed to work even when reading_log is empty by
  * falling back to reading_status timestamps (completed_at, started_at).
  *
- * Returns everything the AnalyticsView and ReadingWrapped components need.
+ * Returns everything the AnalyticsView component needs.
  */
 export function useAnalytics(works, statuses, readingLog) {
 
@@ -233,81 +233,6 @@ export function useAnalytics(works, statuses, readingLog) {
       : null;
     const fastestComplete = completionTimes.length > 0 ? Math.min(...completionTimes) : null;
 
-    // --- Wrapped data (current month + current year) ---
-    // IMPORTANT: Wrapped only uses real reading_log events, not bootstrapped
-    // events from import timestamps. The bootstrap is useful for lifetime
-    // aggregate stats, but time-bounded summaries need to reflect actual
-    // reading activity — not "I organized my library on this date."
-    const realEvents = activityEvents.filter(e => e._source === 'log');
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    function wrappedForPeriod(startDate, endDate, label) {
-      const periodEvents = realEvents.filter(e => {
-        const d = new Date(e.read_at);
-        return d >= startDate && d <= endDate;
-      });
-      const periodWords = periodEvents.reduce((s, e) => s + (e.word_count_read || 0), 0);
-      const periodChapters = periodEvents.reduce((s, e) => s + (e.chapters_read || 0), 0);
-
-      // Completed in period — only count fics with real log entries in this period
-      const periodWorkIds = new Set(periodEvents.map(e => e.work_id));
-      const periodCompleted = completedWorks.filter(w => {
-        const ca = statuses[w.id]?.completed_at;
-        if (!ca) return false;
-        const d = new Date(ca);
-        return d >= startDate && d <= endDate && periodWorkIds.has(w.id);
-      });
-
-      // Top fandom in period
-      const pFandomCount = {};
-      periodEvents.forEach(e => {
-        const work = works.find(w => w.id === e.work_id);
-        if (!work) return;
-        (work.fandoms || []).forEach(f => {
-          pFandomCount[f] = (pFandomCount[f] || 0) + (e.word_count_read || 0);
-        });
-      });
-      const topFandom = Object.entries(pFandomCount).sort((a, b) => b[1] - a[1])[0];
-
-      // Top ship in period
-      const pShipCount = {};
-      periodEvents.forEach(e => {
-        const work = works.find(w => w.id === e.work_id);
-        if (!work) return;
-        (work.relationships || []).forEach(r => {
-          pShipCount[r] = (pShipCount[r] || 0) + 1;
-        });
-      });
-      const topShip = Object.entries(pShipCount).sort((a, b) => b[1] - a[1])[0];
-
-      // Longest fic completed in period
-      const longestFic = periodCompleted.length > 0
-        ? periodCompleted.reduce((best, w) => (w.word_count || 0) > (best.word_count || 0) ? w : best)
-        : null;
-
-      return {
-        label,
-        words: periodWords,
-        chapters: periodChapters,
-        ficsCompleted: periodCompleted.length,
-        topFandom: topFandom ? topFandom[0] : null,
-        topFandomWords: topFandom ? topFandom[1] : 0,
-        topShip: topShip ? topShip[0] : null,
-        longestFic,
-        uniqueFandoms: Object.keys(pFandomCount).length,
-      };
-    }
-
-    const monthStart = new Date(currentYear, currentMonth, 1);
-    const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
-    const yearStart = new Date(currentYear, 0, 1);
-    const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59);
-
-    const monthlyWrapped = wrappedForPeriod(monthStart, monthEnd,
-      monthStart.toLocaleString('default', { month: 'long', year: 'numeric' }));
-    const yearlyWrapped = wrappedForPeriod(yearStart, yearEnd, `${currentYear}`);
-
     return {
       // Timeline data
       weeklyActivity,
@@ -328,10 +253,6 @@ export function useAnalytics(works, statuses, readingLog) {
       fastestComplete,
       avgRating,
       ratingDistribution,
-
-      // Wrapped
-      monthlyWrapped,
-      yearlyWrapped,
 
       // Meta
       hasLogData: readingLog.length > 0,

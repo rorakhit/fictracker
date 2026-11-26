@@ -1,5 +1,6 @@
+import logoUrl from './assets/logo.svg';
 import { useState, useEffect } from 'react';
-import { useLocalLibrary } from './hooks/useLocalLibrary';
+import { useLibrary } from './hooks/useLibrary';
 import { useLocalShelves } from './hooks/useLocalShelves';
 import { useAnalytics } from './hooks/useAnalytics';
 import Library from './components/Library';
@@ -10,10 +11,10 @@ import SeriesView from './components/SeriesView';
 import ImportView from './components/ImportView';
 import WorkModal from './components/WorkModal';
 import SettingsView from './components/SettingsView';
+import Welcome from './components/Welcome';
 
-// FicTracker is now local-first: no account, no server, your data stays
-// in your browser. We removed Supabase auth entirely — the app opens
-// straight to your library on first load.
+// The FicTracker library page. It runs inside the extension: no account,
+// no server, your data stays in this browser's extension storage.
 
 function Dashboard() {
   const [view, setView] = useState('library');
@@ -23,37 +24,30 @@ function Dashboard() {
   const [editNotes, setEditNotes] = useState('');
   const [editChapter, setEditChapter] = useState(0);
 
-  const lib     = useLocalLibrary();
+  const lib     = useLibrary();
   const shelves = useLocalShelves();
   const analytics = useAnalytics(lib.works, lib.statuses, lib.readingLog);
 
   const [activeShelfId, setActiveShelfId]           = useState(null);
   const [activeSmartShelfId, setActiveSmartShelfId] = useState(null);
-  const [importBanner, setImportBanner]             = useState('');
 
-  // Handle ?import=<encoded-work> from the Quick Add bookmarklet.
-  // The bookmarklet parses AO3 metadata client-side and opens FicTracker
-  // with the data encoded in the URL — no server involved.
+  // The panel on AO3 links here as #work=<id> to open that fic, and a
+  // fresh install lands on #welcome.
+  const [welcome, setWelcome] = useState(() => window.location.hash === '#welcome');
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get('import');
-    if (!raw) return;
-
-    // Strip the param immediately so refreshing doesn't re-import
-    window.history.replaceState({}, '', window.location.pathname);
-
-    try {
-      const work = JSON.parse(decodeURIComponent(raw));
-      if (!work.ao3_id) throw new Error('Missing ao3_id');
-      lib.importWork(work);
-      setImportBanner(`Added: ${work.title}`);
-      setTimeout(() => setImportBanner(''), 4000);
-    } catch (e) {
-      setImportBanner(`Could not import fic: ${e.message}`);
-      setTimeout(() => setImportBanner(''), 5000);
+    function fromHash() {
+      const id = window.location.hash.match(/^#work=(\d+)$/)?.[1];
+      const w = id && lib.works.find(x => x.id === id);
+      if (w) {
+        openWork(w);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     }
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+    return () => window.removeEventListener('hashchange', fromHash);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount only
+  }, [lib.works.length]);
 
   function openWork(w) {
     const st = lib.statuses[w.id];
@@ -101,31 +95,17 @@ function Dashboard() {
     <div className="app">
       <div className="header">
         <h1>
-          <img src="/logo.svg" alt="" style={{ height: '2.2em', verticalAlign: 'middle', marginRight: 8 }} />
+          <img src={logoUrl} alt="" style={{ height: '2.2em', verticalAlign: 'middle', marginRight: 8 }} />
           Fic<span>Tracker</span>
         </h1>
         <div className="header-right">
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-            {lib.works.length} fic{lib.works.length !== 1 ? 's' : ''} · local
+            {lib.works.length} fic{lib.works.length !== 1 ? 's' : ''} · stored in this browser
           </span>
         </div>
       </div>
 
-      {importBanner && (
-        <div style={{
-          padding: '10px 16px',
-          background: importBanner.startsWith('Could not')
-            ? 'rgba(239,68,68,0.1)' : 'rgba(20,184,166,0.1)',
-          border: `1px solid ${importBanner.startsWith('Could not') ? 'rgba(239,68,68,0.2)' : 'rgba(20,184,166,0.2)'}`,
-          borderRadius: 8,
-          marginBottom: 12,
-          fontSize: 13,
-          fontWeight: 600,
-          color: importBanner.startsWith('Could not') ? '#ef4444' : 'var(--accent-teal)',
-        }}>
-          {importBanner}
-        </div>
-      )}
+      {welcome && <Welcome onClose={() => { setWelcome(false); window.history.replaceState({}, '', window.location.pathname); }} onImport={() => { setWelcome(false); setView('import'); }} />}
 
       <div className="tabs">
         {TABS.map(([k, l]) => (
@@ -156,9 +136,6 @@ function Dashboard() {
           checkWipUpdates={lib.checkWipUpdates}
           dismissWipUpdate={lib.dismissWipUpdate}
           dismissAllWipUpdates={lib.dismissAllWipUpdates}
-          isAtFicLimit={lib.isAtFicLimit}
-          ficsRemaining={lib.ficsRemaining}
-          ficLimit={lib.FREE_FIC_LIMIT}
           onOpenWork={openWork}
           readingLog={lib.readingLog}
           shelves={shelves.shelves}
@@ -169,12 +146,6 @@ function Dashboard() {
           updateShelf={shelves.updateShelf}
           deleteShelf={shelves.deleteShelf}
           addWorksToShelf={shelves.addWorksToShelf}
-          isAtShelfLimit={shelves.isAtShelfLimit}
-          shelvesRemaining={shelves.shelvesRemaining}
-          totalShelfCount={shelves.totalShelfCount}
-          shelfLimit={shelves.FREE_SHELF_LIMIT}
-          isPremium={lib.isPremium}
-          onShelfUpgradeClick={() => setView('settings')}
           smartShelves={shelves.smartShelves}
           activeSmartShelfId={activeSmartShelfId}
           setActiveSmartShelfId={setActiveSmartShelfId}
@@ -241,6 +212,5 @@ function Dashboard() {
 }
 
 export default function App() {
-  // No auth, no loading screen — open straight to the library.
   return <Dashboard />;
 }

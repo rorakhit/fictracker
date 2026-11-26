@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FicTracker — Your reading nook, organized.</title>
-  <meta name="description" content="A personal reading tracker for AO3 fans. Import your bookmarks, track chapter progress, get Smart Picks, and never lose your place again.">
+  <meta name="description" content="A free browser add-on for AO3 readers. Remembers your place in every fic and tells you when WIPs update. No account, no AI, nothing leaves your browser.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -293,10 +293,15 @@
       .btn-primary, .btn-secondary { width: 100%; max-width: 280px; text-align: center; }
       .nav-links a:not(.btn-nav) { display: none; }
     }
-  </style>
+    .notice { max-width: 720px; margin: 0 auto 24px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(20,184,166,0.3); background: rgba(20,184,166,0.08); line-height: 1.6; display: none; }
+  .notice strong { display: block; margin-bottom: 4px; }
+  .notice .notice-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .notice button { font: inherit; cursor: pointer; }
+  .honest { max-width: 720px; margin: 0 auto; line-height: 1.7; }
+  .honest li { margin-bottom: 6px; }
+</style>
 </head>
 <body>
-
   <nav>
     <div class="container">
       <div class="nav-logo">
@@ -305,150 +310,143 @@
       </div>
       <div class="nav-links">
         <a href="#features">Features</a>
-        <a href="#extension">Extension</a>
-        <a href="#pricing">Free forever</a>
-        <a href="https://fictracker.app" class="btn-nav">Open App</a>
+        <a href="#how">How it works</a>
+        <a href="#install" class="btn-nav">Install</a>
       </div>
     </div>
   </nav>
 
   <section class="hero">
     <div class="container">
-      <h1>Your reading nook, <span class="accent">organized.</span></h1>
-      <p class="subtitle">A personal reading tracker for AO3 fans. Import your bookmarks, track your progress, and discover your next favorite fic.</p>
-      <div class="hero-ctas">
-        <a href="https://fictracker.app" class="btn-primary">Start tracking — it's free</a>
-        <a href="#extension" class="btn-secondary">Get the extension</a>
+      <div class="notice" id="legacy-notice"></div>
+      <h1>Never lose your place <span class="accent">in a fic again.</span></h1>
+      <p class="subtitle">FicTracker is a free browser add-on for AO3. It remembers the chapter you're on in every fic, tells you when your WIPs update, and keeps your reading list in order. No account, no AI, and nothing leaves your browser.</p>
+      <div class="hero-ctas" id="install">
+        <a href="https://chromewebstore.google.com/detail/fictracker/phfdhkgaagelchgejhhpelhcmebomdim" class="btn-primary">🧩 Add to Chrome</a>
+        <a href="https://addons.mozilla.org/en-US/firefox/addon/fictracker/" class="btn-secondary">🦊 Add to Firefox</a>
       </div>
+      <p class="subtitle" style="font-size: 14px; margin-top: 16px;">Works in Chrome, Edge, Brave, Firefox and Firefox for Android. Not available for Safari or iPhone/iPad yet.</p>
     </div>
   </section>
 
   <section class="features" id="features">
     <div class="container">
-      <h2>Everything your AO3 bookmarks can't do</h2>
+      <h2>What it does</h2>
       <div class="feature-grid">
-
         <div class="feature-card">
-          <span class="feature-icon">📥</span>
-          <h3>Import your library</h3>
-          <p>Sync your public AO3 bookmarks with one click, or use a bookmarklet to import reading history. EPUB import too. All your fics, all your metadata.</p>
+          <span class="feature-icon">🔖</span>
+          <h3>Remembers where you are</h3>
+          <p>Open a chapter on AO3 and FicTracker notes it. "Continue reading" takes you straight back to that chapter, even months later.</p>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">📖</span>
-          <h3>Track everything</h3>
-          <p>Status, chapter progress, personal ratings, notes. Your library shuffles on every visit so buried bookmarks surface naturally.</p>
+          <h3>Tracks your reading</h3>
+          <p>To read, reading, finished, on hold, dropped, abandoned by the author. Add your own star ratings and notes.</p>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">🔔</span>
-          <h3>WIP alerts</h3>
-          <p>FicTracker checks your incomplete works for new chapters and shows per-fic banners right in your library. No email noise.</p>
+          <h3>WIP updates</h3>
+          <p>Check all your unfinished fics for new chapters with one button. It reads AO3 slowly and politely, one fic every few seconds.</p>
         </div>
-
-        <div class="feature-card">
-          <span class="feature-icon">🤖</span>
-          <h3>Smart Picks</h3>
-          <p>Rate a few fics and Smart Picks generates targeted AO3 searches based on your taste — including fandoms you've never explored. Every result is a real fic from a real author.</p>
-        </div>
-
-        <div class="feature-card">
-          <span class="feature-icon">📊</span>
-          <h3>Stats &amp; analytics</h3>
-          <p>Top fandoms, reading pace, streak tracking, fandom timelines. See your reading life unfold over time with interactive charts.</p>
-        </div>
-
-        <div class="feature-card">
-          <span class="feature-icon">🎁</span>
-          <h3>Reading Wrapped</h3>
-          <p>Monthly and yearly summaries — words, chapters, top fandom, longest fic. Rendered as shareable image cards you can export and post.</p>
-        </div>
-
         <div class="feature-card">
           <span class="feature-icon">📚</span>
           <h3>Bookshelves</h3>
-          <p>Curate named shelves by hand ("Comfort reads", "For the long flight") or save a filter as a smart shelf that restores your exact view with one click.</p>
+          <p>Make shelves by hand ("Comfort reads", "For the long flight"), or save a filter as a smart shelf.</p>
         </div>
-
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h3>Stats</h3>
+          <p>Your top fandoms and ships, how much you've read, and your reading streaks.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📥</span>
+          <h3>Bring your fics</h3>
+          <p>Add fics from the AO3 panel or by URL, or drop in EPUBs you downloaded from AO3.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="extension" id="extension">
+  <section class="extension" id="how">
     <div class="container">
-      <h2>Browser extension</h2>
-      <p class="section-sub">Track your reading without ever leaving AO3. The FicTracker panel lives on every work page — Chrome, Firefox, and Firefox for Android.</p>
-
-      <div class="ext-features">
-        <div class="ext-feature">
-          <div class="ext-dot"></div>
-          <p>Add any fic to your library with one click</p>
-        </div>
-        <div class="ext-feature">
-          <div class="ext-dot"></div>
-          <p>Auto-detects which chapter you're reading</p>
-        </div>
-        <div class="ext-feature">
-          <div class="ext-dot"></div>
-          <p>Chapter +/– controls with auto-complete</p>
-        </div>
-        <div class="ext-feature">
-          <div class="ext-dot"></div>
-          <p>Three panel modes: full, mini, or hidden</p>
-        </div>
-        <div class="ext-feature">
-          <div class="ext-dot"></div>
-          <p>Silently syncs progress as you read</p>
-        </div>
-        <div class="ext-feature">
-          <div class="ext-dot"></div>
-          <p>Deep-links back to your current chapter</p>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-        <a href="https://chromewebstore.google.com/detail/fictracker/phfdhkgaagelchgejhhpelhcmebomdim" class="btn-primary">🧩 Add to Chrome</a>
-        <a href="https://addons.mozilla.org/en-US/firefox/addon/fictracker/" class="btn-secondary">🦊 Add to Firefox</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="pricing" id="pricing">
-    <div class="container">
-      <h2>Free, forever</h2>
-      <p class="pricing-sub">No tiers, no limits, no credit card. Every feature is available to every reader.</p>
-      <div class="free-card">
-        <div class="free-amount">$0</div>
-        <div class="free-sub">Everything included, always</div>
-        <ul class="free-features-grid">
-          <li>Unlimited fics in your library</li>
-          <li>Import bookmarks &amp; reading history</li>
-          <li>Quick Add &amp; Chapter Sync bookmarklets</li>
-          <li>Chrome &amp; Firefox extension</li>
-          <li>Search, filter, sort</li>
-          <li>Status &amp; chapter tracking</li>
-          <li>WIP update alerts</li>
-          <li>Unlimited bookshelves (manual + smart)</li>
-          <li>Stats &amp; analytics dashboard</li>
-          <li>Reading Wrapped</li>
-          <li>Smart Picks</li>
-          <li>EPUB import</li>
-        </ul>
-        <a href="https://fictracker.app" class="btn-nav" style="display:inline-block;padding:14px 32px;border-radius:10px;font-size:16px;text-decoration:none;">Start tracking — it's free</a>
-      </div>
+      <h2>How it works</h2>
+      <ul class="honest">
+        <li><strong>No account.</strong> Your library is stored in your browser, inside the add-on. There's no FicTracker server to sign in to.</li>
+        <li><strong>No AI.</strong> Nothing in FicTracker is generated or recommended by AI, and your reading is never sent to an AI service.</li>
+        <li><strong>Only talks to AO3.</strong> The add-on reads fic details from AO3 pages. It doesn't track you anywhere else and has no analytics.</li>
+        <li><strong>Free.</strong> No tiers, no ads, no paid features. Fandom runs on gift culture and so does this.</li>
+        <li><strong>Back it up.</strong> Because your data lives in one browser, removing the add-on removes your library. Export a backup file from the Import tab now and then.</li>
+      </ul>
     </div>
   </section>
 
   <footer>
     <div class="container">
       <div class="footer-links">
-        <a href="https://fictracker.app">Open App</a>
-        <a href="privacy.html">Privacy Policy</a>
+        <a href="privacy">Privacy</a>
+        <a href="https://github.com/rorakhit/fictracker">Source code</a>
+        <a href="https://ko-fi.com/fictracker">Ko-fi</a>
         <a href="mailto:ro.rakhit@gmail.com">Contact</a>
       </div>
       <p>Built by a fanfic reader, for fanfic readers.</p>
     </div>
   </footer>
 
+  <script>
+    // The old fictracker.app web app kept libraries in this site's browser
+    // storage. With the add-on installed, it copies that library in by itself
+    // and tells this page. Without it, offer a backup download so nobody's
+    // library is stranded.
+    (function () {
+      var notice = document.getElementById('legacy-notice');
+      var raw = null;
+      try { raw = localStorage.getItem('ft_library'); } catch (e) {}
+      var count = 0;
+      try { count = (JSON.parse(raw || '{}').works || []).length; } catch (e) {}
+
+      function show(html) { notice.innerHTML = html; notice.style.display = 'block'; }
+
+      function backup() {
+        var keys = ['ft_library', 'ft_shelves', 'ft_smart_shelves', 'ft_settings', 'ft_finder_presets'];
+        var d = {};
+        keys.forEach(function (k) { try { d[k] = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) {} });
+        var data = {
+          version: 1,
+          exported_at: new Date().toISOString(),
+          library: d.ft_library,
+          shelves: d.ft_shelves || undefined,
+          smart_shelves: d.ft_smart_shelves || undefined,
+          settings: d.ft_settings || undefined,
+          finder_presets: d.ft_finder_presets || undefined
+        };
+        var url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'fictracker-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function extensionReady(detail) {
+        var msg = detail && detail.imported
+          ? '<strong>Your library moved into the add-on.</strong>' + detail.imported + (detail.imported === 1 ? ' fic' : ' fics') + ' from the old fictracker.app ' + (detail.imported === 1 ? 'was' : 'were') + ' copied into FicTracker.'
+          : '<strong>FicTracker is installed.</strong>Your library lives in the add-on now.';
+        show(msg + '<div class="notice-actions"><button class="btn-primary" id="open-lib">Open your library</button></div>');
+        document.getElementById('open-lib').onclick = function () {
+          window.dispatchEvent(new Event('fictracker-open-library'));
+        };
+      }
+
+      if (document.documentElement.dataset.fictrackerExtension === 'installed') {
+        extensionReady(null);
+      } else if (count > 0) {
+        show('<strong>Your old library is still here: ' + count + ' fics.</strong>' +
+          'FicTracker is now a browser add-on. Install it, then come back to this page in this same browser and your library is copied in automatically. On a device without the add-on (like an iPad), download a backup to keep it safe.' +
+          '<div class="notice-actions"><button class="btn-secondary" id="dl-backup">Download a backup</button></div>');
+        document.getElementById('dl-backup').onclick = backup;
+      }
+      window.addEventListener('fictracker-extension', function (e) { extensionReady(e.detail); });
+    })();
+  </script>
 </body>
 </html>

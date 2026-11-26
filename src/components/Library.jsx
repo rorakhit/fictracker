@@ -11,13 +11,10 @@ export default function Library({
   importing, importMsg, addByUrl,
   readingLog = [],
   checkingWips, wipCheckMsg, checkWipUpdates, dismissWipUpdate, dismissAllWipUpdates,
-  isAtFicLimit, ficsRemaining, ficLimit,
   onOpenWork,
   // Bookshelf props
   shelves, worksByShelf, activeShelfId, setActiveShelfId,
   createShelf, updateShelf, deleteShelf, addWorksToShelf,
-  isAtShelfLimit, shelvesRemaining, totalShelfCount, shelfLimit,
-  isPremium, onShelfUpgradeClick,
   // Smart shelf props
   smartShelves, activeSmartShelfId, setActiveSmartShelfId,
   createSmartShelf, deleteSmartShelf,
@@ -198,12 +195,6 @@ export default function Library({
           updateShelf={updateShelf}
           deleteShelf={deleteShelf}
           deleteSmartShelf={deleteSmartShelf}
-          isAtShelfLimit={isAtShelfLimit}
-          shelvesRemaining={shelvesRemaining}
-          totalShelfCount={totalShelfCount}
-          shelfLimit={shelfLimit}
-          isPremium={isPremium}
-          onUpgradeClick={onShelfUpgradeClick}
         />
       )}
 
@@ -221,11 +212,10 @@ export default function Library({
                   <div style={{ fontSize: 12, marginTop: 4, opacity: 0.9 }}>
                     {updatedWips.map(w => {
                       const wip = wipTracking[w.id];
-                      const newCh = wip?.updated_chapter_count;
-                      const oldCh = wip?.last_known_chapters || w.chapter_count;
+                      const n = wip?.new_chapters || 0;
                       return (
                         <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                          <span>📖 {w.title}{newCh ? ` — Ch. ${newCh} is out!` : ''}</span>
+                          <span>📖 {w.title}{n ? ` — ${n} new chapter${n > 1 ? 's' : ''}` : ''}</span>
                           <button className="btn btn-ghost" style={{ fontSize: 11, padding: '1px 6px', minHeight: 0 }}
                             onClick={e => { e.stopPropagation(); dismissWipUpdate(w.id); }}>dismiss</button>
                         </div>
@@ -244,10 +234,9 @@ export default function Library({
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={checkWipUpdates}
-                disabled={checkingWips}
-                title="Check AO3 for new chapters on your WIPs"
+                title={checkingWips ? 'Stop checking' : 'Check AO3 for new chapters on your unfinished fics'}
               >
-                {checkingWips ? 'Checking...' : 'Check WIPs'}
+                {checkingWips ? 'Stop' : 'Check WIPs'}
               </button>
             </div>
           </>

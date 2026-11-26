@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <radialGradient id="nook-glow" cx="50%" cy="28%" r="55%">
+      <stop offset="0%" stop-color="#e0a872" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#e0a872" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Plum-dark background circle -->
+  <circle cx="64" cy="64" r="64" fill="#171520"/>
+
+  <!-- Arch interior (cozy nook surface) -->
+  <path d="M34 94 L34 56 Q34 28 64 28 Q94 28 94 56 L94 94 Z" fill="#1e1b2a"/>
+
+  <!-- Warm amber glow inside arch (reading lamp atmosphere) -->
+  <path d="M34 94 L34 56 Q34 28 64 28 Q94 28 94 56 L94 94 Z" fill="url(#nook-glow)"/>
+
+  <!-- Arch outline in amber -->
+  <path d="M34 94 L34 56 Q34 28 64 28 Q94 28 94 56 L94 94 Z" stroke="#e0a872" stroke-width="2.5" fill="none"/>
+
+  <!-- Open book — twilight left page, blush right page -->
+  <!-- Left page -->
+  <path d="M64 88 L64 66 Q57 64 49 66 L47 88 Z" fill="#8b9dc4" opacity="0.9"/>
+  <!-- Right page -->
+  <path d="M64 88 L64 66 Q71 64 79 66 L81 88 Z" fill="#d4a0b0" opacity="0.9"/>
+  <!-- Book spine in gold -->
+  <line x1="64" y1="64" x2="64" y2="88" stroke="#c4b470" stroke-width="2"/>
+  <!-- Page lines — left -->
+  <line x1="53" y1="71" x2="62" y2="70" stroke="#e8e4df" stroke-width="0.8" opacity="0.55"/>
+  <line x1="53" y1="75" x2="62" y2="74" stroke="#e8e4df" stroke-width="0.8" opacity="0.45"/>
+  <line x1="53" y1="79" x2="62" y2="78" stroke="#e8e4df" stroke-width="0.8" opacity="0.35"/>
+  <!-- Page lines — right -->
+  <line x1="75" y1="71" x2="66" y2="70" stroke="#e8e4df" stroke-width="0.8" opacity="0.5"/>
+  <line x1="75" y1="75" x2="66" y2="74" stroke="#e8e4df" stroke-width="0.8" opacity="0.4"/>
+  <line x1="75" y1="79" x2="66" y2="78" stroke="#e8e4df" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- Three sparkle dots rising above the book -->
+  <circle cx="55" cy="54" r="3.2" fill="#e0a872" opacity="0.95"/>
+  <circle cx="64" cy="46" r="2.5" fill="#8b9dc4" opacity="0.9"/>
+  <circle cx="73" cy="54" r="3.2" fill="#d4a0b0" opacity="0.95"/>
+</svg>

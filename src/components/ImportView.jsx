@@ -36,8 +36,8 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      importAllData(data);
-      setImportFileMsg('Backup restored! Reload the page to see your library.');
+      await importAllData(data);
+      setImportFileMsg('Backup restored. Reload this page to see restored shelves.');
     } catch (e) {
       setImportFileMsg('Import failed: ' + e.message);
     }
@@ -51,9 +51,8 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
       <div className="import-section">
         <h3>🔗 Add by URL</h3>
         <p style={{ lineHeight: 1.6 }}>
-          Paste any AO3 work URL. FicTracker fetches the fic's metadata from AO3 —
-          that's the <em>only</em> external request we make. Your reading data stays
-          in your browser.
+          Paste any AO3 work URL and FicTracker reads the fic's details from AO3.
+          Easier still: open the fic on AO3 and use the FicTracker panel in the corner.
         </p>
         <div className="add-url-bar">
           <input
@@ -83,9 +82,8 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
           </div>
         )}
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.6 }}>
-          <strong style={{ color: 'var(--text)' }}>Note on explicit fics:</strong> AO3 shows an adult
-          content gate for some works. If a URL fails to add, try using the browser extension instead —
-          it can fetch while you're logged in to AO3.
+          <strong style={{ color: 'var(--text)' }}>Locked or adult fics:</strong> log in to AO3 in
+          this browser first and FicTracker can read them too.
         </div>
       </div>
 
@@ -121,84 +119,15 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Bookmarklet / extension                                              */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="import-section">
-        <h3>🧩 Browser Extension & Bookmarklets</h3>
-        <p style={{ lineHeight: 1.6 }}>
-          The FicTracker extension adds a panel to every AO3 page — add fics, update
-          status, and sync chapters without leaving AO3. Bookmarklets work on iPad
-          and Firefox mobile where extensions aren't available.
-        </p>
-        <p style={{ lineHeight: 1.6 }}>
-          Set up your extension and bookmarklets in <strong>Settings</strong>.
-        </p>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <a
-            href="https://chromewebstore.google.com/detail/fictracker/phfdhkgaagelchgejhhpelhcmebomdim"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '9px 16px',
-              background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
-              color: 'white', borderRadius: 8, fontWeight: 700,
-              fontSize: 13, textDecoration: 'none',
-            }}
-          >
-            🧩 Add to Chrome
-          </a>
-          <a
-            href="https://addons.mozilla.org/en-US/firefox/addon/fictracker/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '9px 16px', background: 'var(--surface)',
-              color: 'var(--text)', borderRadius: 8, fontWeight: 700,
-              fontSize: 13, textDecoration: 'none', border: '1px solid var(--border)',
-            }}
-          >
-            🦊 Add to Firefox
-          </a>
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Bulk bookmark import (bookmarklet)                                  */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="import-section">
-        <h3>📥 Bulk Import — Bookmarklet</h3>
-        <p style={{ lineHeight: 1.6 }}>
-          To import your entire AO3 bookmarks library, use the Bulk Import bookmarklet
-          from the <strong>Settings</strong> tab. It runs in your browser on your AO3
-          bookmarks page — no login required by FicTracker.
-        </p>
-        <div style={{
-          padding: '12px 14px',
-          background: 'rgba(20,184,166,0.06)',
-          borderRadius: 8,
-          border: '1px solid rgba(20,184,166,0.15)',
-          fontSize: 12,
-          color: 'var(--text-muted)',
-          lineHeight: 1.6,
-        }}>
-          <strong style={{ color: 'var(--text)' }}>How it works:</strong> The bookmarklet
-          runs in your browser while you're on your AO3 bookmarks page. It reads and sends
-          fic metadata to FicTracker — nothing else is collected. Paginates automatically
-          with a 10-second delay to be respectful to AO3's servers.
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
       {/* Data export / import (backup)                                       */}
       {/* ------------------------------------------------------------------ */}
       <div className="import-section">
         <h3>💾 Backup & Restore</h3>
         <p style={{ lineHeight: 1.6 }}>
-          Since your library lives in your browser, it won't survive a cache clear or a
-          new device unless you back it up. Export your data as a JSON file and import
-          it on any browser to restore.
+          Your library lives in this browser. Removing the extension deletes it, and it
+          doesn't follow you to other devices. Export a backup file now and then, and
+          restore it on any browser with FicTracker installed. Restoring merges the backup
+          into what's already here.
         </p>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>

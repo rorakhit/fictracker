@@ -25,12 +25,6 @@ export default function ShelfStrip({
   updateShelf,
   deleteShelf,
   deleteSmartShelf,
-  isAtShelfLimit,
-  shelvesRemaining,
-  totalShelfCount,
-  shelfLimit,
-  isPremium,
-  onUpgradeClick,
 }) {
   // Local UI state — the hook owns the data, the strip owns the affordances.
   const [creating, setCreating] = useState(false);
@@ -40,7 +34,6 @@ export default function ShelfStrip({
   const [menuOpenFor, setMenuOpenFor] = useState(null); // shelf id
   const [editingShelfId, setEditingShelfId] = useState(null);
   const [editName, setEditName] = useState('');
-  const [hitLimitFlash, setHitLimitFlash] = useState(false);
 
   const createInputRef = useRef(null);
   const editInputRef = useRef(null);
@@ -72,12 +65,6 @@ export default function ShelfStrip({
   }, [menuOpenFor]);
 
   function startCreate() {
-    if (isAtShelfLimit) {
-      // Flash the limit indicator instead of silently failing.
-      setHitLimitFlash(true);
-      setTimeout(() => setHitLimitFlash(false), 2000);
-      return;
-    }
     setCreating(true);
     setNewName('');
     setNewColor(SHELF_COLORS[0]);

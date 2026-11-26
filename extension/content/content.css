@@ -535,3 +535,12 @@
     padding: 10px 8px !important;
   }
 }
+
+#fictracker-panel .ft-error {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}

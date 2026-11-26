@@ -1,12 +1,8 @@
 // src/hooks/useLocalShelves.js
-// Local-first replacement for useShelves.js.
-// Shelf data lives in localStorage. Same return API shape as useShelves
-// so Library.jsx and WorkModal.jsx need no changes.
+// Bookshelves (manual and smart). Stored in extension storage via storage/local.js.
 
 import { useState, useMemo } from 'react';
 import { getShelves, saveShelves, getSmartShelves, saveSmartShelves } from '../storage/local';
-
-export const FREE_SHELF_LIMIT = Infinity;
 
 function uid() {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
@@ -149,10 +145,6 @@ export function useLocalShelves() {
     shelves,
     smartShelves,
     loading: false,
-    isAtShelfLimit: false,
-    shelvesRemaining: Infinity,
-    totalShelfCount: shelves.length + smartShelves.length,
-    FREE_SHELF_LIMIT,
     shelvesByWork,
     worksByShelf,
     getShelvesForWork,

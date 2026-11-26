@@ -3,7 +3,6 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
-import ReadingWrapped from './ReadingWrapped';
 
 // Color palette for fandom stacked areas — pulled from the brand board's
 // warm/cool tension. These need to be visually distinct when stacked.
@@ -267,12 +266,6 @@ export default function AnalyticsView({ analytics, works }) {
           </div>
         </div>
       </div>
-
-      {/* Reading Wrapped */}
-      <ReadingWrapped
-        monthlyWrapped={analytics.monthlyWrapped}
-        yearlyWrapped={analytics.yearlyWrapped}
-      />
 
       {/* Bootstrap notice */}
       {!analytics.hasLogData && (
