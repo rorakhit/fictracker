@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyPreset, buildAO3SearchUrl, presetSearchCaveat } from './finder.js';
+import { applyPreset, buildAO3SearchUrl, ao3SearchQuery, tagMatches } from './finder.js';
 
 const works = [
   { id: '1', fandoms: ['A'], relationships: ['X/Y'], freeform_tags: ['Fluff'], word_count: 5000, is_complete: true },
@@ -17,9 +17,9 @@ test('applyPreset: any-of includes, none-of excludes, ranges, completion', () =>
   assert.deepEqual(ids({}), ['1', '2', '3']);
 });
 
-test('buildAO3SearchUrl uses the parameters AO3 accepts', () => {
+test('buildAO3SearchUrl: any-of tag phrases in the search box, AO3 filters for the rest', () => {
   const url = new URL(buildAO3SearchUrl({
-    fandoms_include: ['Star Wars', 'Original Work'],
+    fandoms_include: ['Game of Thrones', 'A Song of Ice and Fire'],
     ships_include: ['A/B'],
     tags_include: ['Slow Burn'],
     tags_exclude: ['Major Character Death'],
@@ -30,17 +30,42 @@ test('buildAO3SearchUrl uses the parameters AO3 accepts', () => {
   }));
   const p = Object.fromEntries(url.searchParams);
   assert.equal(url.pathname, '/works/search');
-  assert.equal(p['work_search[fandom_names]'], 'Star Wars,Original Work');
-  assert.equal(p['work_search[relationship_names]'], 'A/B');
-  assert.equal(p['work_search[freeform_names]'], 'Slow Burn');
-  assert.equal(p['work_search[excluded_tag_names]'], 'C/D,Major Character Death');
+  assert.equal(p['work_search[query]'],
+    '(tag:"Game of Thrones" OR tag:"A Song of Ice and Fire") tag:"A/B" tag:"Slow Burn" -tag:"C/D" -tag:"Major Character Death"');
+  assert.equal(p['work_search[fandom_names]'], undefined, 'exact-name boxes not used');
   assert.equal(p['work_search[words_from]'], '10000');
   assert.equal(p['work_search[words_to]'], undefined);
   assert.equal(p['work_search[complete]'], 'T');
+  assert.equal(p['work_search[sort_column]'], 'revised_at');
   assert.ok(![...url.searchParams.keys()].some(k => k.endsWith('[]')), 'no array params');
 });
 
-test('presetSearchCaveat only when a list has several tags', () => {
-  assert.equal(presetSearchCaveat({ fandoms_include: ['A'] }), '');
-  assert.match(presetSearchCaveat({ tags_include: ['A', 'B'] }), /all the tags/);
+test('ao3SearchQuery skips blanks and keeps quotes from breaking the phrase', () => {
+  assert.equal(ao3SearchQuery({}), '');
+  assert.equal(ao3SearchQuery({ fandoms_include: ['  ', 'Say "Hi"'] }), 'tag:"Say Hi"');
+  assert.equal(new URL(buildAO3SearchUrl({})).searchParams.has('work_search[query]'), false);
+});
+
+test('tags match AO3 tag names loosely: case and whole words', () => {
+  assert.equal(tagMatches('Game of Thrones', 'Game of Thrones (TV)'), true);
+  assert.equal(tagMatches('A Song of Ice and Fire', 'A Song of Ice and Fire - George R. R. Martin'), true);
+  assert.equal(tagMatches('A Song of Ice and Fire', 'A Song of Ice and Fire & Related Fandoms'), true);
+  assert.equal(tagMatches('slow burn', 'Slow Burn'), true);
+  assert.equal(tagMatches('hurt/comfort', 'Hurt/Comfort'), true);
+  assert.equal(tagMatches('character death', 'Major Character Death'), true);
+  assert.equal(tagMatches('Fire', 'Firefly'), false);
+  assert.equal(tagMatches('Thrones', 'Throne of Glass'), false);
+  assert.equal(tagMatches('  ', 'Anything'), false);
+});
+
+test('applyPreset finds GoT/ASOIAF fics under their full AO3 tags', () => {
+  const lib = [
+    { id: 'a', fandoms: ['Game of Thrones (TV)'] },
+    { id: 'b', fandoms: ['A Song of Ice and Fire - George R. R. Martin'] },
+    { id: 'c', fandoms: ['A Song of Ice and Fire & Related Fandoms', 'Game of Thrones (TV)'] },
+    { id: 'd', fandoms: ['Throne of Glass Series - Sarah J. Maas'] },
+  ];
+  const ids = applyPreset(lib, { fandoms_include: ['Game of Thrones', 'A Song of Ice and Fire'] }).map(w => w.id);
+  assert.deepEqual(ids, ['a', 'b', 'c']);
+  assert.deepEqual(applyPreset(lib, { fandoms_exclude: ['game of thrones'] }).map(w => w.id), ['b', 'd']);
 });

@@ -2,11 +2,32 @@
 // Fic Finder presets: your own saved filters, run against your library or
 // opened as a search on AO3. No ranking, no suggestions: your rules only.
 
+// Does a fic's tag match what you typed? Ignores case, and matches whole
+// words inside longer tags, because AO3's tags carry extras you don't type:
+// "game of thrones" matches "Game of Thrones (TV)", and "a song of ice and
+// fire" matches "A Song of Ice and Fire - George R. R. Martin".
+// "Fire" alone doesn't match "Firefly": only whole words count.
+const norm = s => String(s || '').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const patterns = new Map();
+function tagPattern(wanted) {
+  const w = norm(wanted);
+  if (!patterns.has(w)) {
+    patterns.set(w, new RegExp(`(?:^|[^\\p{L}\\p{N}])${escape(w)}(?:$|[^\\p{L}\\p{N}])`, 'u'));
+  }
+  return patterns.get(w);
+}
+export function tagMatches(wanted, tag) {
+  if (!norm(wanted)) return false;
+  return tagPattern(wanted).test(norm(tag));
+}
+
 // Run a preset against your library. Within each list, a fic matches if it
-// has any of the tags you listed.
+// has any of the tags you listed (see tagMatches).
 export function applyPreset(works, preset) {
-  const anyOf = (wanted, have) => !wanted?.length || wanted.some(t => have.includes(t));
-  const noneOf = (unwanted, have) => !unwanted?.length || !unwanted.some(t => have.includes(t));
+  const has = (have, t) => have.some(tag => tagMatches(t, tag));
+  const anyOf = (wanted, have) => !wanted?.length || wanted.some(t => has(have, t));
+  const noneOf = (unwanted, have) => !unwanted?.length || !unwanted.some(t => has(have, t));
   return works.filter(w => {
     const fandoms = w.fandoms || [];
     const ships = w.relationships || [];
@@ -25,36 +46,41 @@ export function applyPreset(works, preset) {
   });
 }
 
-// The same preset as an AO3 work search. AO3 takes each tag list as one
-// comma-separated value (it ignores `name[]` arrays) and the word range as
-// words_from / words_to. On AO3 a fic must have *all* the tags in a list,
-// which is stricter than the library filter above; see presetSearchCaveat.
+// The same preset as an AO3 work search, matching tags the way the library
+// search does. AO3 can't take regex (its search escapes "/"), and its tag
+// boxes need exact tag names and require *all* of them. So the tag lists go
+// in AO3's search box as phrases on its `tag` field instead, e.g.
+//   (tag:"Game of Thrones" OR tag:"A Song of Ice and Fire") -tag:"Major Character Death"
+// AO3 matches a phrase on whole words, ignoring case, so this finds
+// "Game of Thrones (TV)" too. That field holds every kind of tag, so a
+// fandom name can also match a character or additional tag that contains it.
+// Words and completion use AO3's own filters (words_from / words_to,
+// complete=T/F); see otwarchive app/models/search/work_query.rb.
+const phrase = t => `tag:"${t.replace(/["\\]/g, ' ').replace(/\s+/g, ' ').trim()}"`;
+const clean = arr => (arr || []).map(t => String(t).trim()).filter(t => t.replace(/["\\]/g, '').trim());
+
+export function ao3SearchQuery(preset) {
+  const parts = [];
+  for (const key of ['fandoms_include', 'ships_include', 'tags_include']) {
+    const list = clean(preset[key]).map(phrase);
+    if (list.length === 1) parts.push(list[0]);
+    else if (list.length > 1) parts.push(`(${list.join(' OR ')})`);
+  }
+  for (const key of ['fandoms_exclude', 'ships_exclude', 'tags_exclude']) {
+    for (const t of clean(preset[key])) parts.push(`-${phrase(t)}`);
+  }
+  return parts.join(' ');
+}
+
 export function buildAO3SearchUrl(preset) {
   const params = new URLSearchParams();
-  const list = arr => (arr || []).map(s => s.trim()).filter(Boolean).join(',');
   const set = (key, value) => { if (value) params.set(`work_search[${key}]`, value); };
-
-  set('fandom_names', list(preset.fandoms_include));
-  set('relationship_names', list(preset.ships_include));
-  set('freeform_names', list(preset.tags_include));
-  set('excluded_tag_names', list([
-    ...(preset.fandoms_exclude || []),
-    ...(preset.ships_exclude || []),
-    ...(preset.tags_exclude || []),
-  ]));
+  set('query', ao3SearchQuery(preset));
   set('words_from', preset.word_count_min ? String(Number(preset.word_count_min)) : '');
   set('words_to', preset.word_count_max ? String(Number(preset.word_count_max)) : '');
   if (preset.completion === 'complete') set('complete', 'T');
   if (preset.completion === 'wip') set('complete', 'F');
+  set('sort_column', 'revised_at'); // a text search is otherwise sorted by "best match"
   params.set('commit', 'Search');
   return `https://archiveofourown.org/works/search?${params.toString()}`;
-}
-
-// A note to show by the AO3 button when the two searches differ.
-export function presetSearchCaveat(preset) {
-  const multi = ['fandoms_include', 'ships_include', 'tags_include']
-    .some(k => (preset[k] || []).length > 1);
-  return multi
-    ? 'On AO3, fics must have all the tags in a list, not just one, so you may see fewer results.'
-    : '';
 }

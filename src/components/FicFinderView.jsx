@@ -12,7 +12,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { getFinderPresets, saveFinderPresets, subscribe } from '../storage/local';
-import { applyPreset, buildAO3SearchUrl, presetSearchCaveat } from '../core/finder';
+import { applyPreset, buildAO3SearchUrl } from '../core/finder';
 import { wordCountLabel } from '../utils/helpers';
 
 // ---------------------------------------------------------------------------
@@ -381,9 +381,6 @@ function PresetCard({ preset, works, statuses, onOpenWork, onEdit, onDelete }) {
           Find on AO3 →
         </a>
       </div>
-      {presetSearchCaveat(preset) && (
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{presetSearchCaveat(preset)}</div>
-      )}
 
       {resultsOpen && (
         <div style={{ marginTop: 14 }}>
