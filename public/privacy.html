@@ -54,78 +54,46 @@
   <div class="container">
     <p class="logo"><span>Fic</span><span>Tracker</span></p>
     <h1>Privacy Policy</h1>
-    <p class="subtitle">Last updated: April 13, 2026</p>
+    <p class="subtitle">Last updated: November 26, 2026</p>
+
+    <h2>The short version</h2>
+    <p>FicTracker has no account, no server that stores your reading, no analytics and no AI. Your library lives in your browser, inside the FicTracker add-on, and only you can see it.</p>
 
     <h2>What FicTracker is</h2>
-    <p>FicTracker is a personal reading tracker for Archive of Our Own (AO3) users. It helps you organize your fanfiction library, track reading progress, and discover new works. FicTracker is built and operated by an independent developer (contact: <a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a>).</p>
+    <p>FicTracker is a free browser add-on for Archive of Our Own (AO3) readers. It keeps track of the fics you're reading, the chapter you're on, and which unfinished fics have new chapters. It is built by an independent developer (contact: <a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a>).</p>
 
-    <h2>Data we collect</h2>
-    <p>When you create an account, we collect:</p>
+    <h2>What the add-on stores, and where</h2>
+    <p>Everything below is kept in your browser's extension storage on your own device. None of it is sent to FicTracker or anyone else.</p>
     <ul>
-      <li>Your email address (required for authentication)</li>
-      <li>Your AO3 username, if you choose to provide one</li>
+      <li>Details of the fics you add: title, authors, fandoms, tags, word and chapter counts, and similar information shown publicly on AO3.</li>
+      <li>Your reading data: statuses, chapter progress, star ratings, notes, shelves, saved filters and a log of chapters read (used for your stats).</li>
+      <li>Authors and series you follow, and the works found on their AO3 pages.</li>
+      <li>Your AO3 username, read from AO3's page header when you're logged in, so the add-on can link to your AO3 history and bookmarks. Not your password.</li>
+      <li>Your settings, such as reading speed, how often to check AO3, and how the on-page panel is shown.</li>
     </ul>
-    <p>When you use FicTracker to track your reading, we collect:</p>
+    <p>Removing the add-on deletes all of it. You can also delete everything from the add-on's Settings tab, and export a backup file from its Import tab.</p>
+
+    <h2>What the add-on connects to</h2>
     <ul>
-      <li>Work metadata imported from AO3 (titles, authors, fandoms, tags, word counts, chapter counts, ratings, warnings, and other publicly visible information)</li>
-      <li>Your personal reading data: reading statuses, star ratings, personal notes, chapter progress, and reading activity logs</li>
-      <li>Bookshelf names and the works you assign to them</li>
+      <li><strong>archiveofourown.org.</strong> The add-on reads fic details from AO3 pages you open. It also fetches pages from AO3 when you add a fic by URL, import your AO3 history or bookmarks, and when it checks for new chapters and new works from authors and series you follow (automatically, a few times a day while your browser is open, unless you turn that off in Settings). Those requests go from your browser to AO3 like any other AO3 page visit, including your AO3 login if you're logged in, so locked works can be read. FicTracker never sees your AO3 password, session or cookies.</li>
+      <li><strong>fictracker.app.</strong> When you visit this website with the add-on installed, the add-on copies any library left over from the old FicTracker web app (stored by your browser for this site) into the add-on. Nothing is uploaded; the copy happens inside your browser.</li>
     </ul>
-    <p>If you subscribe to FicTracker Plus, we collect your Stripe customer ID and subscription status (plan, billing period, cancellation state). Payment processing is handled entirely by Stripe — we never see or store your credit card number or bank details.</p>
-    <p>We do not collect your AO3 password or session credentials, the full text of any fanwork, browsing history outside of AO3, or any data from websites other than archiveofourown.org.</p>
+    <p>The add-on doesn't run on any other website, doesn't read your browsing history and contains no tracking or analytics.</p>
 
-    <h2>How we handle your data</h2>
-    <p>All data collected is processed solely to provide and improve the FicTracker service. Specifically, we use your data to:</p>
-    <ul>
-      <li>Authenticate your account and maintain your session</li>
-      <li>Display your library, reading progress, statistics, and shelves</li>
-      <li>Sync your reading data between the browser extension, web app, and bookmarklets</li>
-      <li>Monitor works-in-progress for new chapters on your behalf</li>
-      <li>Generate personalized reading recommendations based on your ratings</li>
-      <li>Manage your subscription status and billing</li>
-    </ul>
-    <p>We do not use your data for advertising, behavioural profiling, or any purpose beyond operating FicTracker. We do not sell your data.</p>
+    <h2>No AI</h2>
+    <p>FicTracker doesn't use AI for anything, and your reading is never sent to an AI service.</p>
 
-    <h2>AI Picks feature (Plus only)</h2>
-    <p>When you use the AI Picks feature, a taste profile is constructed from the metadata of your highly-rated works (titles, authors, fandoms, and relationships/ships). This profile is sent to Anthropic's API (the service that powers Claude) to generate personalized search strategies. No personally identifiable information — such as your email address or AO3 username — is included in this request. Anthropic's data handling is governed by <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer">Anthropic's Privacy Policy</a>.</p>
+    <h2>This website</h2>
+    <p>fictracker.app is a static website hosted on Vercel and loads fonts from Google Fonts. Like any web host, they may log technical details such as your IP address when you load a page. The website itself sets no cookies and stores nothing about you.</p>
 
-    <h2>Data storage</h2>
-    <p>Your account and reading data is stored in a Supabase-hosted PostgreSQL database located in the United States. Row-level security is enforced at the database level, meaning no user can access another user's data. All data is encrypted in transit (TLS) and encrypted at rest. The web application frontend is hosted on Vercel.</p>
-    <p>The Chrome extension stores the following data locally in your browser using <code>chrome.storage.local</code>:</p>
-    <ul>
-      <li>Your session tokens (access token and refresh token) used to authenticate requests to FicTracker's backend. These expire automatically and are never shared with any third party.</li>
-      <li>Your panel display preference (a UI setting with no personal information).</li>
-    </ul>
-    <p>No other data is persisted locally by the extension. The extension does not use cookies.</p>
-
-    <h2>Data sharing and third parties</h2>
-    <p>We do not sell or share your personal data with advertisers or unaffiliated third parties. FicTracker uses the following third-party services, each of which may process a limited portion of your data as necessary to operate:</p>
-    <ul>
-      <li><strong>Supabase</strong> — database and authentication infrastructure. Your reading data, account credentials, and session tokens are handled here. Supabase operates under its own <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</li>
-      <li><strong>Vercel</strong> — web application hosting and serverless functions (including Stripe webhook handling). Operates under its own <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</li>
-      <li><strong>Stripe</strong> — payment processing for Plus subscriptions. Stripe receives only the information necessary to process your payment and manage your subscription. Operates under its own <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</li>
-      <li><strong>Anthropic</strong> — AI service used for the AI Picks feature (Plus only), as described above. Operates under its own <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</li>
-    </ul>
-
-    <h2>How the Chrome extension works</h2>
-    <p>The FicTracker Chrome extension is granted permission to run only on <code>archiveofourown.org</code> pages. It reads publicly visible metadata from AO3 work pages (title, author, tags, chapter count, and similar fields) to populate your library and track chapter progress. All data syncing occurs exclusively between the extension and FicTracker's backend on Supabase. The extension does not access any other websites, does not inject content into non-AO3 pages, and does not transmit data to any party other than Supabase.</p>
-
-    <h2>How bookmarklets work</h2>
-    <p>FicTracker's optional bookmarklets run in your browser on AO3 pages when you manually activate them. They read AO3 page content (bookmark lists, reading history, or individual work pages) and send the extracted work metadata to FicTracker's backend. The reading history bookmarklet operates on your private AO3 history page, but only the extracted work metadata is transmitted — we never access, read, or transmit your AO3 session, cookies, or credentials.</p>
-
-    <h2>Data retention and deletion</h2>
-    <p>Your data is retained for as long as your account remains active. You can remove individual works from your library at any time within the app. You have the following rights regarding your data:</p>
-    <ul>
-      <li><strong>Access</strong> — you can view all of your stored reading data within the FicTracker web app.</li>
-      <li><strong>Correction</strong> — you can update your personal notes, ratings, and reading status at any time.</li>
-      <li><strong>Deletion</strong> — to permanently delete your account and all associated data, email <a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a> and it will be done promptly.</li>
-    </ul>
+    <h2>The old FicTracker web app and accounts</h2>
+    <p>Before version 2, FicTracker had optional accounts stored with Supabase, a paid tier through Stripe, and an "AI Picks" feature that sent a taste profile (from your highly rated fics) to Anthropic. All of these have been shut down. The old account database has been deleted, and FicTracker no longer uses Supabase or Stripe at all. If you had an account and have questions about your old data, email <a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a>.</p>
 
     <h2>Changes to this policy</h2>
-    <p>If this policy changes in any meaningful way, the update date at the top of this page will be revised. FicTracker is a small, independent project — the goal is always to collect as little data as possible and keep your reading history private.</p>
+    <p>If this policy changes in a meaningful way, the date at the top of this page will change. The aim is always to collect nothing at all.</p>
 
     <h2>Contact</h2>
-    <p>Questions or concerns about this policy or how your data is handled? Email <a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a>.</p>
+    <p>Questions? Email <a href="mailto:ro.rakhit@gmail.com">ro.rakhit@gmail.com</a>.</p>
   </div>
 </body>
 </html>
