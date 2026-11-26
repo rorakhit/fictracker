@@ -2,7 +2,8 @@
 
 A free browser add-on for [AO3](https://archiveofourown.org) readers. It
 remembers the chapter you're on in every fic, checks your WIPs for new
-chapters, and keeps your reading list, ratings, notes and shelves in order.
+chapters, follows authors and series, imports your AO3 history and bookmarks,
+and keeps your reading list, ratings, notes and shelves in order.
 
 - **No account.** The library lives in your browser, inside the add-on.
 - **No AI.** Nothing is generated or recommended by AI.

@@ -2,10 +2,11 @@
   "manifest_version": 3,
   "name": "FicTracker",
   "version": "2.0.0",
-  "description": "Track your AO3 reading: where you left off in every fic, and which WIPs have new chapters. No account, no AI, nothing leaves your browser.",
+  "description": "Track your AO3 reading, WIP updates and authors you follow. No account, no AI: your library stays in your browser.",
   "permissions": [
     "storage",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "alarms"
   ],
   "host_permissions": [
     "https://archiveofourown.org/*",
@@ -16,14 +17,24 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://archiveofourown.org/works/*"],
-      "js": ["content/ao3.js"],
-      "css": ["content/content.css"],
+      "matches": [
+        "https://archiveofourown.org/*"
+      ],
+      "js": [
+        "content/ao3.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://fictracker.app/*"],
-      "js": ["content/site.js"],
+      "matches": [
+        "https://fictracker.app/*"
+      ],
+      "js": [
+        "content/site.js"
+      ],
       "run_at": "document_idle"
     }
   ],

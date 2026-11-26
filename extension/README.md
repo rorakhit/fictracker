@@ -8,10 +8,11 @@ library in the browser's extension storage, and has a full-tab library page
 
 | Path | What it is |
 | --- | --- |
-| `src/ext/background.js` | Service worker. The only code that writes the library; applies changes one at a time. |
-| `src/ext/content-ao3.js` | The panel on `archiveofourown.org/works/*`. |
+| `src/ext/background.js` | Service worker. The only code that writes the library, follows and news (one change at a time); owns AO3 request pacing, the scheduled checks (`chrome.alarms`) and the toolbar badge. |
+| `src/ext/content-ao3.js` | Runs on all of AO3: the panel on work pages (progress, follow buttons), and notes the logged-in username. |
+| `src/ext/ao3-import.js` | History and bookmarks import, shown on `/users/*/readings` and `/users/*/bookmarks`. Runs on AO3 so the pages come with your login. |
 | `src/ext/content-site.js` | Runs on `fictracker.app`; copies a library left by the old web app into the extension, once. |
-| `src/core/` | Shared library logic and the AO3 page parser (tests: `npm test`). |
+| `src/core/` | Shared logic: library ops, follows, AO3 page parsers (tests: `npm test`; parser fixtures in `src/core/fixtures/`, hand-made from AO3's markup). |
 | `src/` (React) | The library page, built by Vite into `app/` inside the extension. |
 | `extension/manifest.json`, `icons/`, `content/content.css` | Copied into the build as-is. |
 
@@ -35,6 +36,13 @@ This writes `extension/dist/build-chrome/` and `extension/dist/build-firefox/`
 
 ## Being polite to AO3
 
-AO3 is run by volunteers. Every request the library page makes to AO3 goes
-through `politeAo3Fetch` in `src/hooks/useLibrary.js`, which spaces requests
-at least 3 seconds apart and stops on HTTP 429. Keep new AO3 features on it.
+AO3 is run by volunteers. Every FicTracker request to AO3 waits its turn in
+the background worker (`takeSlot` in `src/ext/background.js`): one request at
+least 3 seconds after the last, from any tab. On HTTP 429 or 503 it pauses
+all requests for 10 minutes (longer if AO3's Retry-After says so). The library
+page fetches through the `AO3_FETCH` message; code running on AO3 itself asks
+for a turn with `AO3_SLOT` and reports a 429 with `AO3_RATE_LIMITED`. Keep new
+AO3 features on these.
+
+Chrome's background service worker has no `DOMParser`, so it parses AO3
+pages with `linkedom`. Firefox's background page uses the built-in parser.

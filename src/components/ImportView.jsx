@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { exportAllData, importAllData } from '../storage/local';
 
-export default function ImportView({ importing, importMsg, addByUrl, handleEpubFiles }) {
+export default function ImportView({ importing, importMsg, addByUrl, handleEpubFiles, ao3User }) {
   const [addUrl, setAddUrl]       = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
@@ -43,8 +43,39 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
     }
   }
 
+  const ao3 = path => `https://archiveofourown.org/users/${encodeURIComponent(ao3User)}/${path}`;
+
   return (
     <>
+      {/* ------------------------------------------------------------------ */}
+      {/* AO3 history and bookmarks                                          */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="import-section">
+        <h3>📖 Import from AO3</h3>
+        <p style={{ lineHeight: 1.6 }}>
+          Bring in the fics you've already read or bookmarked. Open your history or bookmarks
+          on AO3 and use the FicTracker panel there. It reads one page every few seconds, and
+          fics already in your library keep their status and progress.
+        </p>
+        {ao3User ? (
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <a className="btn btn-accent" href={ao3('readings')} target="_blank" rel="noopener noreferrer">Open my AO3 history</a>
+            <a className="btn btn-ghost" href={ao3('bookmarks')} target="_blank" rel="noopener noreferrer">Open my AO3 bookmarks</a>
+          </div>
+        ) : (
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 0 }}>
+            <a href="https://archiveofourown.org/users/login" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-teal)' }}>
+              Log in to AO3
+            </a>{' '}
+            in this browser, and links to your history and bookmarks appear here. Your history needs
+            AO3's history setting turned on (it is by default).
+          </p>
+        )}
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10, lineHeight: 1.6 }}>
+          Anyone's public bookmarks page can be imported the same way, which is handy for rec lists.
+        </div>
+      </div>
+
       {/* ------------------------------------------------------------------ */}
       {/* Add by URL                                                          */}
       {/* ------------------------------------------------------------------ */}

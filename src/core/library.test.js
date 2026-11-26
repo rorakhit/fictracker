@@ -74,3 +74,43 @@ test('progressFromVisit: reaching the last chapter completes a finished fic only
 test('unknown op throws', () => {
   assert.throws(() => applyOp(empty(), { op: 'nope' }), /Unknown library op/);
 });
+
+test('importListing adds new works with a status and leaves existing ones alone', () => {
+  let lib = applyOp(empty(), { op: 'upsertWork', work: work('1', { added_at: '2026-01-01' }) });
+  lib = applyOp(lib, { op: 'updateStatus', workId: '1', updates: { status: 'reading', current_chapter: 4 } });
+  const logBefore = lib.reading_log.length;
+  lib = applyOp(lib, { op: 'importListing', items: [
+    { work: work('1', { kudos: 99, added_at: '2030-01-01' }), status: 'completed' },
+    { work: work('2'), status: 'completed', added_at: '2025-05-05' },
+    { work: work('3'), status: 'to_read' },
+  ] });
+  assert.equal(lib.works.length, 3);
+  assert.equal(lib.works[0].kudos, 99);
+  assert.equal(lib.works[0].added_at, '2026-01-01');
+  assert.equal(lib.statuses['1'].status, 'reading');
+  assert.equal(lib.statuses['1'].current_chapter, 4);
+  assert.equal(lib.statuses['2'].status, 'completed');
+  assert.equal(lib.statuses['2'].current_chapter, 10);
+  assert.equal(lib.works[1].added_at, '2025-05-05');
+  assert.equal(lib.statuses['3'].status, 'to_read');
+  assert.equal(lib.reading_log.length, logBefore, 'imports are not reading activity');
+});
+
+test('catching up on a WIP clears its new-chapters flag', () => {
+  let lib = applyOp(empty(), { op: 'upsertWork', work: work('1', { chapter_count: 8, chapter_total: null, is_complete: false, wip_new_chapters: 2 }) });
+  lib = applyOp(lib, { op: 'updateStatus', workId: '1', updates: { status: 'reading', current_chapter: 7 } });
+  assert.equal(lib.works[0].wip_new_chapters, 2);
+  lib = applyOp(lib, { op: 'updateStatus', workId: '1', updates: { current_chapter: 8 } });
+  assert.equal(lib.works[0].wip_new_chapters, 0);
+});
+
+test('wipChecked counts new chapters and keeps your added date', () => {
+  let lib = applyOp(empty(), { op: 'upsertWork', work: work('1', { chapter_count: 5, chapter_total: null, is_complete: false, added_at: 'then' }) });
+  lib = applyOp(lib, { op: 'wipChecked', work: work('1', { chapter_count: 7, chapter_total: null, is_complete: false, added_at: 'now', source: 'url' }) });
+  assert.equal(lib.works[0].wip_new_chapters, 2);
+  assert.equal(lib.works[0].added_at, 'then');
+  assert.ok(lib.works[0].wip_checked_at);
+  lib = applyOp(lib, { op: 'wipChecked', work: work('1', { chapter_count: 8, chapter_total: 8, is_complete: true }) });
+  assert.equal(lib.works[0].wip_new_chapters, 3);
+  assert.equal(lib.works[0].is_complete, true);
+});

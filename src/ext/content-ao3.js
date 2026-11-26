@@ -1,14 +1,20 @@
 // src/ext/content-ao3.js
-// The FicTracker panel on AO3 work pages. Reads the work's details from the
-// page, shows whether it's in your library, and keeps your chapter progress
-// up to date as you read. All changes go to the background worker; nothing
-// is sent anywhere else.
+// FicTracker on AO3.
+// - On work pages: the panel. Reads the work's details from the page, shows
+//   whether it's in your library, keeps your chapter progress up to date as
+//   you read, and lets you follow the author or series.
+// - On your history and bookmarks pages: importing them (see ao3-import.js).
+// - On every page: notes which AO3 account you're logged in as, so the
+//   library can link to your history.
+// All changes go to the background worker; nothing is sent anywhere else.
 //
 // Panel modes: 'full' → 'mini' → 'hidden' (floating button only), saved
 // across page loads.
 
-import { parseWorkPage, detectCurrentChapter } from '../core/scrape.js';
+import { parseWorkPage, detectCurrentChapter, loggedInUser } from '../core/scrape.js';
 import { normalizeLibrary, progressFromVisit } from '../core/library.js';
+import { followKey } from '../core/follows.js';
+import { initImport, listingPageKind } from './ao3-import.js';
 
 const workMatch = window.location.pathname.match(/^\/works\/(\d+)/);
 const ao3Id = workMatch?.[1];
@@ -159,7 +165,9 @@ function renderNewWork(meta) {
       </select>
     </div>
     <button class="ft-btn ft-btn-accent" id="ft-add-btn">Add to Library</button>
+    <div class="ft-follows" id="ft-follows"></div>
   `;
+  renderFollows();
   forceWhiteAccentText(body);
 
   const miniBar = document.getElementById('ft-mini-bar');
@@ -228,8 +236,10 @@ function renderExistingWork(work, status) {
           `<option value="${k}" ${k === st ? 'selected' : ''}>${v}</option>`).join('')}
       </select>
     </div>
+    <div class="ft-follows" id="ft-follows"></div>
     <a class="ft-open-app" href="#" id="ft-open-library">Open your library →</a>
   `;
+  renderFollows();
 
   const miniBar = document.getElementById('ft-mini-bar');
   miniBar.innerHTML = `
@@ -274,6 +284,41 @@ function setChapter(work, status, chapter) {
     updates.completed_at = new Date().toISOString();
   }
   libOp({ op: 'updateStatus', workId: work.id, updates }).catch(err => showError(err.message));
+}
+
+// ---- Following the author or series ----
+
+let follows = {};
+
+function followTargets(meta) {
+  const authors = (meta.author_users || []).slice(0, 3).map(u => ({ kind: 'author', id: u, name: u }));
+  const series = (meta.series_memberships || []).slice(0, 3)
+    .map(s => ({ kind: 'series', id: String(s.ao3_series_id), name: s.series_name }));
+  return [...authors, ...series];
+}
+
+function renderFollows() {
+  const slot = document.getElementById('ft-follows');
+  if (!slot || !pageMeta) return;
+  const targets = followTargets(pageMeta);
+  if (!targets.length) { slot.innerHTML = ''; return; }
+  slot.innerHTML = `
+    <div class="ft-follows-label">Get told about new works from:</div>
+    ${targets.map(t => {
+      const on = Boolean(follows[followKey(t.kind, t.id)]);
+      return `<button class="ft-btn ft-btn-sm ft-btn-ghost ft-follow-btn${on ? ' ft-following' : ''}"
+        data-kind="${t.kind}" data-id="${escapeHtml(t.id)}" data-name="${escapeHtml(t.name)}"
+        title="${on ? 'Click to stop following' : 'Follow'}">
+        ${on ? '✓ ' : '+ '}${t.kind === 'series' ? 'Series: ' : ''}${escapeHtml(t.name)}</button>`;
+    }).join('')}
+  `;
+  slot.querySelectorAll('.ft-follow-btn').forEach(btn => btn.addEventListener('click', () => {
+    const { kind, id, name } = btn.dataset;
+    const key = followKey(kind, id);
+    btn.disabled = true;
+    const msg = follows[key] ? { type: 'UNFOLLOW', key } : { type: 'FOLLOW', kind, id, name };
+    send(msg).catch(err => showError(err.message)).finally(() => { btn.disabled = false; });
+  }));
 }
 
 // The chapter open on this page, or null on a full-work view or a
@@ -325,10 +370,25 @@ async function init() {
   createPanel();
   // Listen before the first render: that render may itself update the
   // library (fresh metadata, the chapter you opened) and must redraw after.
+  follows = (await chrome.storage.local.get('ft_follows')).ft_follows || {};
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && changes.ft_library) render();
+    if (area !== 'local') return;
+    if (changes.ft_follows) { follows = changes.ft_follows.newValue || {}; renderFollows(); }
+    if (changes.ft_library) render();
   });
   await render();
 }
 
+// Remember the logged-in AO3 account (only its username) so the library
+// page can link to your history and bookmarks.
+const user = loggedInUser(document);
+if (user) {
+  chrome.storage.local.get('ft_ao3_user').then(r => {
+    if (r.ft_ao3_user !== user) chrome.storage.local.set({ ft_ao3_user: user });
+  }).catch(() => {});
+}
+
 if (ao3Id) init();
+else if (listingPageKind(location.pathname)) {
+  initImport({ createPanel, loadPanelMode, applyPanelMode, setPanelMode, escapeHtml, send, forceWhiteAccentText });
+}

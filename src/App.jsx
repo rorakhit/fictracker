@@ -12,6 +12,7 @@ import ImportView from './components/ImportView';
 import WorkModal from './components/WorkModal';
 import SettingsView from './components/SettingsView';
 import Welcome from './components/Welcome';
+import FollowingView from './components/FollowingView';
 
 // The FicTracker library page. It runs inside the extension: no account,
 // no server, your data stays in this browser's extension storage.
@@ -36,6 +37,11 @@ function Dashboard() {
   const [welcome, setWelcome] = useState(() => window.location.hash === '#welcome');
   useEffect(() => {
     function fromHash() {
+      if (window.location.hash === '#following') {
+        setView('following');
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
       const id = window.location.hash.match(/^#work=(\d+)$/)?.[1];
       const w = id && lib.works.find(x => x.id === id);
       if (w) {
@@ -87,6 +93,7 @@ function Dashboard() {
     ['analytics','Analytics'],
     ['finder',   'Fic Finder'],
     ['series',   'Series'],
+    ['following', lib.news.length ? `Following (${lib.news.length})` : 'Following'],
     ['import',   'Import'],
     ['settings', 'Settings'],
   ];
@@ -160,6 +167,9 @@ function Dashboard() {
       {view === 'series' && (
         <SeriesView
           seriesMap={lib.seriesMap}
+          follows={lib.follows}
+          follow={lib.follow}
+          unfollow={lib.unfollow}
           statuses={lib.statuses}
           onOpenWork={openWork}
         />
@@ -181,6 +191,20 @@ function Dashboard() {
           importMsg={lib.importMsg}
           addByUrl={lib.addByUrl}
           handleEpubFiles={lib.handleEpubFiles}
+          ao3User={lib.ao3User}
+        />
+      )}
+
+      {view === 'following' && (
+        <FollowingView
+          follows={lib.follows}
+          news={lib.news}
+          follow={lib.follow}
+          unfollow={lib.unfollow}
+          addNews={lib.addNews}
+          dismissNews={lib.dismissNews}
+          checkFollows={lib.checkFollows}
+          check={lib.check}
         />
       )}
 

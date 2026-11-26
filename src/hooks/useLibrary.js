@@ -4,30 +4,25 @@
 // storage/local.js), and this hook re-renders whenever the data changes,
 // including changes made by the panel on an AO3 tab.
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import JSZip from 'jszip';
-import { getLibrary, libraryOp, subscribe } from '../storage/local';
+import {
+  getLibrary, libraryOp, subscribe, background,
+  getFollows, getNews, getCheck, getAo3User,
+} from '../storage/local';
 import { parseWorkPage, isGatedPage } from '../core/scrape';
 
 // ---------------------------------------------------------------------------
 // AO3 fetching
 // ---------------------------------------------------------------------------
-// The extension may fetch archiveofourown.org directly (it has permission
-// for that site), using your own AO3 login if you're signed in there, so
-// locked and adult works load too. Requests are spaced out: AO3 is run by
-// volunteers and asks tools not to hammer it.
-
-const AO3_GAP_MS = 3000;
-let lastAo3Request = 0;
+// Requests go through the background worker, which spaces every
+// FicTracker request to AO3 a few seconds apart (AO3 is run by volunteers
+// and asks tools not to hammer it) and uses your AO3 login if you're signed
+// in there, so locked and adult works load too.
 
 async function politeAo3Fetch(url) {
-  const wait = lastAo3Request + AO3_GAP_MS - Date.now();
-  if (wait > 0) await new Promise(r => setTimeout(r, wait));
-  lastAo3Request = Date.now();
-  const res = await fetch(url, { credentials: 'include' });
-  if (res.status === 429) throw new Error('AO3 asked us to slow down. Try again in a few minutes.');
-  if (!res.ok) throw new Error(`AO3 returned HTTP ${res.status}`);
-  return new DOMParser().parseFromString(await res.text(), 'text/html');
+  const { html } = await background({ type: 'AO3_FETCH', url });
+  return new DOMParser().parseFromString(html, 'text/html');
 }
 
 export async function fetchAO3Work(ao3Id) {
@@ -88,6 +83,34 @@ async function parseEpubMetadata(file) {
   };
 }
 
+// A line about the current or last check, for the Library and Following tabs.
+export function describeCheck(c) {
+  if (!c) return '';
+  if (c.running) {
+    return c.total
+      ? `Checking ${Math.min(c.done + 1, c.total)} of ${c.total}${c.current ? `: ${c.current}` : ''}…`
+      : 'Starting check…';
+  }
+  if (!c.finished_at && !c.interrupted) return '';
+  const when = new Date(c.finished_at || c.started_at).toLocaleString();
+  const parts = [
+    c.interrupted ? 'The last check was interrupted.'
+      : c.stopped ? `Stopped after ${c.done} of ${c.total}.`
+      : c.rate_limited ? `Paused after ${c.done} of ${c.total}.`
+      : `${c.manual ? 'Checked' : 'Checked automatically'} ${when}.`,
+  ];
+  if (c.new_chapters?.length) {
+    parts.push(`New chapters:\n${c.new_chapters.map(n => `${n.title} (+${n.gained})`).join('\n')}`);
+  } else if (c.scope !== 'follows' && c.total) {
+    parts.push('No new chapters.');
+  }
+  if (c.new_works) parts.push(`${c.new_works} new work${c.new_works !== 1 ? 's' : ''} from people and series you follow.`);
+  if (c.locked) parts.push(`${c.locked} fic${c.locked !== 1 ? 's' : ''} need you logged in to AO3 in this browser.`);
+  if (c.errors) parts.push(`${c.errors} couldn't be loaded from AO3.`);
+  if (c.rate_limited) parts.push(c.rate_limited);
+  return parts.join(' ');
+}
+
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
@@ -98,11 +121,19 @@ export function useLibrary() {
   const [importMsg, setImportMsg] = useState('');
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
-  const [checkingWips, setCheckingWips] = useState(false);
-  const [wipCheckMsg, setWipCheckMsg] = useState('');
-  const cancelWipCheck = useRef(false);
+  const [follows, setFollows] = useState(getFollows);
+  const [rawNews, setRawNews] = useState(getNews);
+  const [check, setCheck] = useState(getCheck);
+  const [ao3User, setAo3User] = useState(getAo3User);
+  const [checkError, setCheckError] = useState('');
 
-  useEffect(() => subscribe(() => setLibrary(getLibrary())), []);
+  useEffect(() => subscribe(() => {
+    setLibrary(getLibrary());
+    setFollows(getFollows());
+    setRawNews(getNews());
+    setCheck(getCheck());
+    setAo3User(getAo3User());
+  }), []);
 
   const works = library.works;
   const statuses = library.statuses;
@@ -200,47 +231,31 @@ export function useLibrary() {
   const wipTracking = useMemo(() => {
     const map = {};
     works.forEach(w => {
-      if (!w.is_complete) map[w.id] = { work_id: w.id, has_update: (w.wip_new_chapters || 0) > 0, new_chapters: w.wip_new_chapters || 0 };
+      // A WIP that just finished can still have chapters you haven't read.
+      if (!w.is_complete || w.wip_new_chapters > 0) map[w.id] = { work_id: w.id, has_update: (w.wip_new_chapters || 0) > 0, new_chapters: w.wip_new_chapters || 0 };
     });
     return map;
   }, [works]);
 
-  async function checkWipUpdates() {
-    if (checkingWips) { cancelWipCheck.current = true; return; }
-    const targets = works.filter(w => {
-      const st = statuses[w.id]?.status || 'to_read';
-      return !w.is_complete && ['reading', 'to_read', 'on_hold'].includes(st);
-    });
-    if (!targets.length) { setWipCheckMsg('No unfinished fics to check.'); return; }
+  // Checks run in the background worker, so they keep going if you close
+  // this tab, and share AO3's pace with everything else.
+  const checkingWips = Boolean(check?.running);
 
-    cancelWipCheck.current = false;
-    setCheckingWips(true);
-    const updated = [];
-    let errors = 0;
-    for (let i = 0; i < targets.length && !cancelWipCheck.current; i++) {
-      const w = targets[i];
-      setWipCheckMsg(`Checking ${i + 1} of ${targets.length}: ${w.title}`);
-      try {
-        const fresh = await fetchAO3Work(w.id);
-        const gained = (fresh.chapter_count || 0) - (w.chapter_count || 0);
-        const { added_at, source, ...meta } = fresh;
-        await libraryOp({
-          op: 'upsertWork',
-          work: { ...meta, wip_new_chapters: (w.wip_new_chapters || 0) + Math.max(0, gained) },
-        });
-        if (gained > 0) updated.push(`${w.title} (+${gained})`);
-      } catch {
-        errors++;
-      }
+  async function startCheck(scope) {
+    setCheckError('');
+    try {
+      await background(checkingWips ? { type: 'CHECK_STOP' } : { type: 'CHECK_START', scope });
+    } catch (e) {
+      setCheckError(e.message);
     }
-    const stopped = cancelWipCheck.current;
-    setCheckingWips(false);
-    setWipCheckMsg([
-      stopped ? 'Stopped.' : `Checked ${targets.length} fic${targets.length !== 1 ? 's' : ''}.`,
-      updated.length ? `New chapters:\n${updated.join('\n')}` : 'No new chapters.',
-      errors ? `${errors} couldn't be loaded from AO3.` : '',
-    ].filter(Boolean).join(' '));
   }
+  const checkWipUpdates = () => {
+    if (!checkingWips && !works.some(w => !w.is_complete)) { setCheckError('No unfinished fics to check.'); return; }
+    return startCheck('wips');
+  };
+  const checkFollows = () => startCheck('follows');
+
+  const wipCheckMsg = checkError || describeCheck(check);
 
   const dismissWipUpdate = workId => {
     const w = works.find(x => x.id === workId);
@@ -340,8 +355,17 @@ export function useLibrary() {
     return map;
   }, [works]);
 
+  // ---- Following ----
+  const libraryIds = useMemo(() => new Set(works.map(w => w.id)), [works]);
+  const news = useMemo(() => rawNews.filter(n => !libraryIds.has(n.work.id)), [rawNews, libraryIds]);
+  const follow = (kind, id, name) => background({ type: 'FOLLOW', kind, id: String(id), name });
+  const unfollow = key => background({ type: 'UNFOLLOW', key });
+  const addNews = (key, status) => background({ type: 'NEWS_ADD', key, status });
+  const dismissNews = keys => background({ type: 'NEWS_DISMISS', keys });
+
   return {
     works, statuses, readingLog, wipTracking, seriesMap,
+    follows, news, follow, unfollow, addNews, dismissNews, checkFollows, check, ao3User,
     stats, recommendations, tasteProfile,
     importing, importMsg, setImportMsg,
     checkingWips, wipCheckMsg,

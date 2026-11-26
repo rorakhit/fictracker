@@ -544,3 +544,45 @@
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
 }
+
+/* Follow buttons (author / series) */
+#fictracker-panel .ft-follows {
+  margin-top: 10px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+}
+#fictracker-panel .ft-follows:empty { display: none !important; }
+#fictracker-panel .ft-follows-label {
+  width: 100% !important;
+  font-size: 11px !important;
+  color: #888 !important;
+}
+#fictracker-panel .ft-follow-btn {
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+#fictracker-panel .ft-follow-btn.ft-following {
+  color: #14b8a6 !important;
+  border-color: rgba(20,184,166,0.4) !important;
+}
+
+/* History / bookmarks import */
+#fictracker-panel #ft-import-one { margin-top: 6px !important; }
+#fictracker-panel .ft-import-progress {
+  margin-top: 8px !important;
+  font-size: 11px !important;
+  color: #ccc !important;
+  line-height: 1.5 !important;
+}
+#fictracker-panel .ft-import-progress:empty { display: none !important; }
+#fictracker-panel .ft-import-picker {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+}
+#fictracker-panel .ft-import-picker select { width: 100% !important; min-width: 0 !important; }

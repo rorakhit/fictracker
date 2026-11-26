@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { clearAllData, getSettings, saveSettings } from '../storage/local';
 import { READING_SPEEDS } from '../utils/helpers';
+import { checkSettings } from '../core/follows';
+
+const CHECK_EVERY = [[6, 'Every 6 hours'], [12, 'Every 12 hours'], [24, 'Once a day'], [72, 'Every 3 days']];
 
 export default function SettingsView() {
   const [confirmClear, setConfirmClear]   = useState(false);
@@ -10,6 +13,13 @@ export default function SettingsView() {
   function setReadingWpm(wpm) {
     setReadingWpmState(wpm);
     saveSettings({ ...getSettings(), readingWpm: wpm });
+  }
+
+  const [checks, setChecksState] = useState(() => checkSettings(getSettings()));
+  function setChecks(next) {
+    const merged = { ...checks, ...next };
+    setChecksState(merged);
+    saveSettings({ ...getSettings(), autoCheck: merged.autoCheck, autoCheckHours: merged.hours });
   }
 
   async function handleClearData() {
@@ -112,12 +122,42 @@ export default function SettingsView() {
       </div>
 
       {/* ---------------------------------------------------------------- */}
+      {/* Automatic checks                                                  */}
+      {/* ---------------------------------------------------------------- */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginBottom: 28 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 4 }}>Automatic checks</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+          While your browser is open, FicTracker checks AO3 for new chapters in the unfinished fics
+          you're reading or plan to read, and for new works from authors and series you follow.
+          The number on the FicTracker toolbar button shows what's new. Requests go one every few
+          seconds, and FicTracker pauses if AO3 asks it to slow down.
+        </p>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, marginBottom: 12, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={checks.autoCheck}
+            onChange={e => setChecks({ autoCheck: e.target.checked })}
+          />
+          Check automatically
+        </label>
+        <select
+          value={checks.hours}
+          disabled={!checks.autoCheck}
+          onChange={e => setChecks({ hours: Number(e.target.value) })}
+          aria-label="How often to check"
+          style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13 }}
+        >
+          {CHECK_EVERY.map(([h, label]) => <option key={h} value={h}>{label}</option>)}
+        </select>
+      </div>
+
+      {/* ---------------------------------------------------------------- */}
       {/* Danger zone                                                       */}
       {/* ---------------------------------------------------------------- */}
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 8 }}>Danger zone</h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
-          Clearing all data removes your library, shelves, Fic Finder presets, and settings from this
+          Clearing all data removes your library, shelves, follows, Fic Finder presets, and settings from this
           browser. <strong>Export a backup first</strong> if you want to keep anything.
         </p>
         <button

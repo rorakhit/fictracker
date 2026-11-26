@@ -74,8 +74,15 @@ export function updateStatus(lib, workId, updates, now = new Date().toISOString(
   }
 
   const status = { ...(existing || { work_id: workId }), ...updates, updated_at: now };
+
+  // Reading up to the latest chapter clears its "new chapters" flag.
+  let works = lib.works;
+  if (work?.wip_new_chapters && status.current_chapter >= (work.chapter_count || Infinity)) {
+    works = works.map(w => (w.id === workId ? { ...w, wip_new_chapters: 0 } : w));
+  }
   return {
     ...lib,
+    works,
     statuses: { ...lib.statuses, [workId]: status },
     reading_log: log.length ? [...lib.reading_log, ...log] : lib.reading_log,
   };
@@ -107,6 +114,51 @@ export function mergeLibrary(lib, incoming) {
   const seen = new Set(next.reading_log.map(e => e.id));
   const log = [...next.reading_log, ...other.reading_log.filter(e => !seen.has(e.id))];
   return { works: next.works, statuses, reading_log: log };
+}
+
+// Add works found on an AO3 listing (your history or bookmarks). New works
+// get the given status; works already in your library only get fresh
+// metadata, so your status and progress are never touched. No reading-log
+// entries are written: you didn't read them today.
+//   items: [{ work, status, added_at? }]
+export function importListing(lib, items, now = new Date().toISOString()) {
+  const known = new Set(lib.works.map(w => w.id));
+  let next = lib;
+  const statuses = { ...lib.statuses };
+  let added = 0;
+  for (const { work, status, added_at } of items) {
+    if (known.has(work.id)) {
+      const { added_at: _a, source: _s, ...meta } = work;
+      next = upsertWork(next, meta);
+      continue;
+    }
+    known.add(work.id);
+    next = upsertWork(next, { ...work, added_at: added_at || now });
+    if (!statuses[work.id]) {
+      statuses[work.id] = {
+        work_id: work.id,
+        status: status || 'to_read',
+        current_chapter: status === 'completed' ? (work.chapter_count || 0) : 0,
+        updated_at: now,
+      };
+    }
+    added++;
+  }
+  return { lib: { ...next, statuses }, added };
+}
+
+// Record a fresh copy of a work fetched by a WIP check. New chapters since
+// the last copy add to its "new chapters" count until you read them.
+export function wipChecked(lib, fresh, now = new Date().toISOString()) {
+  const existing = lib.works.find(w => w.id === String(fresh.id));
+  if (!existing) return lib;
+  const gained = Math.max(0, (fresh.chapter_count || 0) - (existing.chapter_count || 0));
+  const { added_at: _a, source: _s, ...meta } = fresh;
+  return upsertWork(lib, {
+    ...meta,
+    wip_new_chapters: (existing.wip_new_chapters || 0) + gained,
+    wip_checked_at: now,
+  });
 }
 
 // Work out what the on-page panel should change when you open a chapter.
@@ -143,6 +195,9 @@ export function applyOp(lib, op) {
     case 'deleteWork':   return deleteWork(lib, op.workId);
     case 'deleteMany':   return op.workIds.reduce(deleteWork, lib);
     case 'merge':        return mergeLibrary(lib, op.library);
+    case 'importListing': return importListing(lib, op.items).lib;
+    case 'wipChecked':   return op.work ? wipChecked(lib, op.work)
+      : upsertWork(lib, { id: op.workId, wip_checked_at: new Date().toISOString() });
     case 'replace':      return normalizeLibrary(op.library);
     default: throw new Error(`Unknown library op: ${op.op}`);
   }
