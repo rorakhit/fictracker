@@ -45,6 +45,8 @@ export function initImport(ui) {
   const label = kind === 'history' ? 'your AO3 history' : 'these bookmarks';
   let stop = false;
   let running = false;
+  // Kept here because the panel is redrawn on every progress update.
+  let choice = kind === 'history' ? 'auto' : 'to_read';
 
   ui.loadPanelMode().then(() => {
     ui.createPanel();
@@ -63,7 +65,7 @@ export function initImport(ui) {
         <label for="ft-import-status">Add new fics as:</label>
         <select id="ft-import-status" ${running ? 'disabled' : ''}>
           ${Object.entries(STATUS_CHOICES).map(([k, v]) =>
-            `<option value="${k}" ${k === (kind === 'history' ? 'auto' : 'to_read') ? 'selected' : ''}>${v}</option>`).join('')}
+            `<option value="${k}" ${k === choice ? 'selected' : ''}>${v}</option>`).join('')}
         </select>
       </div>
       ${kind === 'history' ? '<div class="ft-work-meta">Fics you marked for later are added as To Read.</div>' : ''}
@@ -82,6 +84,7 @@ export function initImport(ui) {
       <button class="ft-mini-expand" title="Expand">▴</button>`;
     mini.querySelector('.ft-mini-expand').addEventListener('click', () => ui.setPanelMode('full'));
 
+    body.querySelector('#ft-import-status').addEventListener('change', e => { choice = e.target.value; });
     body.querySelector('#ft-import-all')?.addEventListener('click', () => run(false));
     body.querySelector('#ft-import-one')?.addEventListener('click', () => run(true));
     body.querySelector('#ft-import-stop')?.addEventListener('click', () => { stop = true; });
@@ -104,7 +107,6 @@ export function initImport(ui) {
   }
 
   async function run(onlyThisPage) {
-    const choice = document.getElementById('ft-import-status').value;
     running = true;
     stop = false;
     const order = onlyThisPage ? [here] : [here, ...Array.from({ length: pages }, (_, i) => i + 1).filter(n => n !== here)];
