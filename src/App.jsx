@@ -1,5 +1,5 @@
 import logoUrl from './assets/logo.svg';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLibrary } from './hooks/useLibrary';
 import { useLocalShelves } from './hooks/useLocalShelves';
 import { useAnalytics } from './hooks/useAnalytics';
@@ -26,7 +26,8 @@ function Dashboard() {
   const [editChapter, setEditChapter] = useState(0);
 
   const lib     = useLibrary();
-  const shelves = useLocalShelves();
+  const libraryIds = useMemo(() => new Set(lib.works.map(w => w.id)), [lib.works]);
+  const shelves = useLocalShelves(libraryIds);
   const analytics = useAnalytics(lib.works, lib.statuses, lib.readingLog);
 
   const [activeShelfId, setActiveShelfId]           = useState(null);

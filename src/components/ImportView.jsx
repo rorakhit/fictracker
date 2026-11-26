@@ -37,7 +37,7 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
       const text = await file.text();
       const data = JSON.parse(text);
       await importAllData(data);
-      setImportFileMsg('Backup restored. Reload this page to see restored shelves.');
+      setImportFileMsg('Backup restored.');
     } catch (e) {
       setImportFileMsg('Import failed: ' + e.message);
     }

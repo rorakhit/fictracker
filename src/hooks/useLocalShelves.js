@@ -1,16 +1,26 @@
 // src/hooks/useLocalShelves.js
 // Bookshelves (manual and smart). Stored in extension storage via storage/local.js.
 
-import { useState, useMemo } from 'react';
-import { getShelves, saveShelves, getSmartShelves, saveSmartShelves } from '../storage/local';
+import { useState, useMemo, useEffect } from 'react';
+import { getShelves, saveShelves, getSmartShelves, saveSmartShelves, subscribe } from '../storage/local';
+import { shelfMaps, nameTaken } from '../core/shelves';
 
 function uid() {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
 }
 
-export function useLocalShelves() {
+// libraryIds: ids of the fics in your library. Shelf counts and filters
+// only include those, so deleting a fic never leaves a ghost on a shelf.
+export function useLocalShelves(libraryIds) {
   const [shelves, setShelves]           = useState(() => getShelves());
   const [smartShelves, setSmartShelves] = useState(() => getSmartShelves());
+
+  // Restoring a backup, clearing data or another library tab can change
+  // shelves; follow storage rather than only our own edits.
+  useEffect(() => subscribe(() => {
+    setShelves(getShelves());
+    setSmartShelves(getSmartShelves());
+  }), []);
 
   // Each shelf stores its work IDs as an array embedded in the shelf object.
   // We derive the two Maps that Library/WorkModal need via useMemo.
@@ -18,19 +28,10 @@ export function useLocalShelves() {
   // shelvesByWork: work_id → Set<shelf_id>
   // worksByShelf:  shelf_id → Set<work_id>
 
-  const { shelvesByWork, worksByShelf } = useMemo(() => {
-    const byWork  = new Map();
-    const byShelf = new Map();
-    shelves.forEach(shelf => {
-      const wids = new Set(shelf.work_ids || []);
-      byShelf.set(shelf.id, wids);
-      wids.forEach(wid => {
-        if (!byWork.has(wid)) byWork.set(wid, new Set());
-        byWork.get(wid).add(shelf.id);
-      });
-    });
-    return { shelvesByWork: byWork, worksByShelf: byShelf };
-  }, [shelves]);
+  const { shelvesByWork, worksByShelf } = useMemo(
+    () => shelfMaps(shelves, libraryIds),
+    [shelves, libraryIds],
+  );
 
   // ---------------------------------------------------------------------------
   // Shelf CRUD
@@ -45,12 +46,16 @@ export function useLocalShelves() {
   }
 
   function createShelf({ name, color = '#6366f1' }) {
+    if (nameTaken(shelves, name)) return { error: 'You already have a shelf with that name' };
     const shelf = { id: uid(), name, color, work_ids: [], created_at: new Date().toISOString() };
     mutateShelves(prev => [...prev, shelf]);
     return { shelf };
   }
 
   function updateShelf(id, updates) {
+    if (updates.name !== undefined && nameTaken(shelves, updates.name, id)) {
+      return { error: 'You already have a shelf with that name' };
+    }
     let updated = null;
     mutateShelves(prev => prev.map(s => {
       if (s.id !== id) return s;
@@ -78,10 +83,10 @@ export function useLocalShelves() {
   }
 
   function createSmartShelf({ name, filterJson }) {
+    if (nameTaken(smartShelves, name)) return { error: 'You already have a smart shelf with that name' };
     const shelf = {
       id: uid(),
       name,
-      filter_json: filterJson,
       filterJson,
       created_at: new Date().toISOString(),
     };
