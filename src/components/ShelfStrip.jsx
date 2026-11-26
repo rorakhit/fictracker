@@ -25,12 +25,6 @@ export default function ShelfStrip({
   updateShelf,
   deleteShelf,
   deleteSmartShelf,
-  isAtShelfLimit,
-  shelvesRemaining,
-  totalShelfCount,
-  shelfLimit,
-  isPremium,
-  onUpgradeClick,
 }) {
   // Local UI state — the hook owns the data, the strip owns the affordances.
   const [creating, setCreating] = useState(false);
@@ -40,7 +34,6 @@ export default function ShelfStrip({
   const [menuOpenFor, setMenuOpenFor] = useState(null); // shelf id
   const [editingShelfId, setEditingShelfId] = useState(null);
   const [editName, setEditName] = useState('');
-  const [hitLimitFlash, setHitLimitFlash] = useState(false);
 
   const createInputRef = useRef(null);
   const editInputRef = useRef(null);
@@ -72,12 +65,6 @@ export default function ShelfStrip({
   }, [menuOpenFor]);
 
   function startCreate() {
-    if (isAtShelfLimit) {
-      // Flash the limit indicator instead of silently failing.
-      setHitLimitFlash(true);
-      setTimeout(() => setHitLimitFlash(false), 2000);
-      return;
-    }
     setCreating(true);
     setNewName('');
     setNewColor(SHELF_COLORS[0]);
@@ -101,18 +88,8 @@ export default function ShelfStrip({
       return;
     }
     const result = await createShelf({ name: trimmed, color: newColor });
-    if (result.hitLimit) {
-      setCreateError('Free tier is limited to 3 shelves');
-      setHitLimitFlash(true);
-      return;
-    }
     if (result.error) {
-      // Duplicate name comes back as a 23505 (unique_violation)
-      if (result.error.code === '23505') {
-        setCreateError('You already have a shelf with that name');
-      } else {
-        setCreateError('Could not create shelf');
-      }
+      setCreateError(result.error);
       return;
     }
     cancelCreate();
@@ -132,11 +109,11 @@ export default function ShelfStrip({
     }
     const result = await updateShelf(shelf.id, { name: trimmed });
     if (result.error) {
-      // Silently revert on error — the chip stays as it was.
-      // A toast system would be better but we don't have one in
-      // this codebase yet.
-      console.error('Rename failed:', result.error);
+      // Keep the rename box open so the name can be changed.
+      setCreateError(result.error);
+      return;
     }
+    setCreateError('');
     setEditingShelfId(null);
   }
 

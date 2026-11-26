@@ -2,60 +2,67 @@
 /**
  * FicTracker extension build script.
  *
- * Builds both Chrome and Firefox zips from a single source tree. The
- * Chrome zip is an as-is copy of the source. The Firefox zip gets a
- * mutated manifest.json: `background.service_worker` is rewritten to
- * `background.scripts` (Firefox MV3's preferred form, supported all
- * the way back to Firefox 115 ESR), and a `browser_specific_settings`
- * block is injected with the gecko extension ID required by AMO.
+ * 1. Builds the library page (React, via Vite) into dist/stage/app/.
+ * 2. Bundles the background worker and content scripts (esbuild) from src/ext/.
+ * 3. Copies the manifest, icons and panel CSS.
+ * 4. Makes a Chrome and a Firefox copy and zips each. The Firefox manifest
+ *    gets `background.scripts` instead of `service_worker` and the gecko
+ *    settings AMO requires. The code is identical: Firefox aliases chrome.*.
  *
- * The .js files themselves are identical across both targets — Firefox
- * aliases `chrome.*` to `browser.*` so `chrome.runtime.sendMessage`,
- * `chrome.storage.local`, etc. work verbatim.
- *
- * Usage:   node extension/build.mjs
- * Output:  extension/dist/fictracker-chrome-v{version}.zip
- *          extension/dist/fictracker-firefox-v{version}.zip
+ * Usage:   node extension/build.mjs   (or npm run build:ext)
+ * Output:  extension/dist/build-{chrome,firefox}/   (load these unpacked)
+ *          extension/dist/fictracker-{chrome,firefox}-v{version}.zip
  */
 
 import { execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { build as viteBuild } from 'vite';
+import { build as esbuild } from 'esbuild';
 
 const EXT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(EXT_DIR, '..');
 const DIST_DIR = path.join(EXT_DIR, 'dist');
+const STAGE_DIR = path.join(DIST_DIR, 'stage');
 
-// Explicit allowlist of what ships in the extension zip. Everything else
-// in extension/ (README, bookmarklet.js reference file, store-listing
-// PNGs, previous zips, this build script) is excluded.
-const INCLUDE = [
-  'background',
-  'content',
-  'popup',
-  'icons',
-  'manifest.json',
-];
+const SCRIPTS = {
+  'background.js': 'src/ext/background.js',
+  'content/ao3.js': 'src/ext/content-ao3.js',
+  'content/site.js': 'src/ext/content-site.js',
+};
 
 // Gecko extension ID for AMO. Once uploaded to AMO under this ID, it
 // cannot be changed — any rename creates a new listing. Email-style IDs
 // are conventional; the domain does not need to resolve.
 const GECKO_ID = 'fictracker@fictracker.app';
 
-// Firefox ESR baseline. MV3 background.scripts has been supported since
-// Firefox 109 (MV3 launch, Jan 2023), but 115 is the current ESR and a
-// safer floor for orgs that lag behind rapid release.
-const GECKO_MIN_VERSION = '115.0';
+// Firefox 128 (an ESR) is the first version that grants an MV3 add-on's
+// host permissions at install time. Before that, people had to switch on
+// AO3 access by hand, or the panel never appeared.
+const GECKO_MIN_VERSION = '128.0';
 
 async function rimraf(p) {
   await fs.rm(p, { recursive: true, force: true });
 }
 
-async function copyIncluded(src, dest) {
-  await fs.mkdir(dest, { recursive: true });
-  for (const name of INCLUDE) {
-    await fs.cp(path.join(src, name), path.join(dest, name), { recursive: true });
-  }
+async function stage() {
+  await rimraf(STAGE_DIR);
+  await viteBuild({ configFile: path.join(ROOT, 'vite.config.js'), logLevel: 'warn' });
+  await esbuild({
+    absWorkingDir: ROOT,
+    entryPoints: Object.fromEntries(
+      Object.entries(SCRIPTS).map(([out, src]) => [out.replace(/\.js$/, ''), src]),
+    ),
+    outdir: STAGE_DIR,
+    bundle: true,
+    format: 'iife',
+    target: ['chrome110', 'firefox128'],
+    logLevel: 'warning',
+  });
+  await fs.cp(path.join(EXT_DIR, 'icons'), path.join(STAGE_DIR, 'icons'), { recursive: true });
+  await fs.cp(path.join(EXT_DIR, 'content/content.css'), path.join(STAGE_DIR, 'content/content.css'));
+  await fs.cp(path.join(EXT_DIR, 'manifest.json'), path.join(STAGE_DIR, 'manifest.json'));
 }
 
 function transformManifestForFirefox(manifest) {
@@ -67,20 +74,10 @@ function transformManifestForFirefox(manifest) {
     gecko: {
       id: GECKO_ID,
       strict_min_version: GECKO_MIN_VERSION,
-      // Mozilla requires this block to be present (AMO rejects uploads
-      // without it as of late 2024). Values must be drawn from Mozilla's
-      // fixed taxonomy. FicTracker collects two categories, both required:
-      //   - authenticationInfo: email + password sent to Supabase Auth
-      //     on sign-in; session tokens stored in chrome.storage.local.
-      //   - websiteContent: the extension scrapes AO3 work page DOM
-      //     (title, authors, tags, kudos, chapter count) and POSTs it to
-      //     the FicTracker Supabase backend. This is the core value prop
-      //     of the extension, so it can't be marked optional.
-      // Nothing else is collected — no location, no health/payment info,
-      // no browsing activity beyond AO3 work pages, no search terms, no
-      // personal communications, no telemetry.
+      // Mozilla requires this block. FicTracker collects nothing: the
+      // library stays in extension storage and the only requests go to AO3.
       data_collection_permissions: {
-        required: ['authenticationInfo', 'websiteContent'],
+        required: ['none'],
         optional: [],
       },
     },
@@ -97,7 +94,7 @@ async function buildTarget(target) {
 
   await rimraf(buildDir);
   await rimraf(zipPath);
-  await copyIncluded(EXT_DIR, buildDir);
+  await fs.cp(STAGE_DIR, buildDir, { recursive: true });
 
   if (target === 'firefox') {
     const transformed = transformManifestForFirefox(manifest);
@@ -127,6 +124,7 @@ async function main() {
   );
   console.log(`Building FicTracker extensions v${manifest.version}...`);
   await fs.mkdir(DIST_DIR, { recursive: true });
+  await stage();
   await buildTarget('chrome');
   await buildTarget('firefox');
   console.log('Done.');

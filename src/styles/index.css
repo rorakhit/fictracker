@@ -80,6 +80,7 @@ h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; }
 .modal-section label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
 
+a.btn { display: inline-block; text-decoration: none; }
 .btn { padding: 9px 18px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .btn-accent { background: var(--accent); color: white; }
 .btn-accent:hover { background: var(--accent-hover); }
@@ -105,8 +106,6 @@ input:focus { border-color: var(--accent); }
 .import-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; }
 .import-section h3 { font-size: 16px; margin-bottom: 8px; }
 .import-section p { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
-.bookmarklet-link { display: inline-block; padding: 10px 20px; background: var(--accent); color: white; border-radius: 10px; font-weight: 600; font-size: 14px; text-decoration: none; cursor: grab; }
-.bookmarklet-link:hover { background: var(--accent-hover); }
 code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--accent-hover); }
 
 /* Drop zone */
@@ -142,22 +141,6 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
 .work-card.selected { border-color: var(--accent); background: var(--accent-dim); }
 .select-all-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: var(--text-muted); }
 
-/* Login page */
-.login-page { max-width: 400px; margin: 80px auto; padding: 0 16px; }
-.login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
-.login-card h2 { text-align: center; margin-bottom: 8px; }
-.login-card .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
-.login-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 14px; margin-bottom: 12px; outline: none; box-sizing: border-box; }
-.login-input:focus { border-color: var(--accent); }
-.login-input::placeholder { color: var(--text-muted); }
-.login-error { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
-.login-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 12px; }
-.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-.oauth-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.oauth-btn:hover { border-color: var(--accent); background: var(--surface-hover); }
-.login-toggle { text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
-.login-toggle a { color: var(--accent); cursor: pointer; text-decoration: none; }
-.login-toggle a:hover { color: var(--accent-hover); }
 
 /* Settings page */
 .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; max-width: 500px; }
@@ -179,15 +162,6 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
 .analytics-stat-value { font-size: 28px; font-weight: 700; line-height: 1.1; }
 .analytics-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
 
-/* Wrapped cards */
-.wrapped-container { margin-top: 24px; }
-.wrapped-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
-.wrapped-card h3 { font-size: 18px; margin-bottom: 16px; }
-.wrapped-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.wrapped-stat { }
-.wrapped-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
-.wrapped-stat-value { font-size: 20px; font-weight: 700; }
-.wrapped-highlight { background: var(--bg); border-radius: 12px; padding: 16px; margin-top: 16px; grid-column: 1 / -1; text-align: center; }
 
 /* Shelf strip (bookshelf feature) */
 .shelf-strip { margin-bottom: 16px; }

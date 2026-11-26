@@ -10,76 +10,10 @@
 //   1. Your Queue  — taste-based ordering of your existing to_read/reading
 //   2. Fic Finder  — create/run/save filter presets
 
-import { useState, useMemo } from 'react';
-import { getFinderPresets, saveFinderPresets } from '../storage/local';
+import { useState, useMemo, useEffect } from 'react';
+import { getFinderPresets, saveFinderPresets, subscribe } from '../storage/local';
+import { applyPreset, buildAO3SearchUrl } from '../core/finder';
 import { wordCountLabel } from '../utils/helpers';
-
-// ---------------------------------------------------------------------------
-// AO3 search URL builder
-// AO3's search form uses array-style query params: work_search[fandom_names][]
-// ---------------------------------------------------------------------------
-function buildAO3SearchUrl(preset) {
-  const params = new URLSearchParams();
-
-  (preset.fandoms_include || []).forEach(f => {
-    params.append('work_search[fandom_names][]', f);
-  });
-  (preset.ships_include || []).forEach(r => {
-    params.append('work_search[relationship_names][]', r);
-  });
-  (preset.tags_include || []).forEach(t => {
-    params.append('work_search[freeform_names][]', t);
-  });
-  (preset.tags_exclude || []).forEach(t => {
-    params.append('work_search[excluded_tag_names][]', t);
-  });
-
-  if (preset.word_count_min) params.set('work_search[word_count_min]', preset.word_count_min);
-  if (preset.word_count_max) params.set('work_search[word_count_max]', preset.word_count_max);
-
-  if (preset.completion === 'complete') params.set('work_search[complete]', 'T');
-  if (preset.completion === 'wip')      params.set('work_search[complete]', 'F');
-
-  params.set('commit', 'Search Works');
-  return `https://archiveofourown.org/works/search?${params.toString()}`;
-}
-
-// ---------------------------------------------------------------------------
-// Filter a works array against a preset
-// ---------------------------------------------------------------------------
-function applyPreset(works, statuses, preset) {
-  return works.filter(w => {
-    const fandoms  = w.fandoms        || [];
-    const ships    = w.relationships  || [];
-    const tags     = w.freeform_tags  || [];
-    const wc       = w.word_count     || 0;
-
-    if ((preset.fandoms_include || []).length > 0) {
-      if (!preset.fandoms_include.some(f => fandoms.includes(f))) return false;
-    }
-    if ((preset.fandoms_exclude || []).length > 0) {
-      if (preset.fandoms_exclude.some(f => fandoms.includes(f))) return false;
-    }
-    if ((preset.ships_include || []).length > 0) {
-      if (!preset.ships_include.some(r => ships.includes(r))) return false;
-    }
-    if ((preset.ships_exclude || []).length > 0) {
-      if (preset.ships_exclude.some(r => ships.includes(r))) return false;
-    }
-    if ((preset.tags_include || []).length > 0) {
-      if (!preset.tags_include.some(t => tags.includes(t))) return false;
-    }
-    if ((preset.tags_exclude || []).length > 0) {
-      if (preset.tags_exclude.some(t => tags.includes(t))) return false;
-    }
-    if (preset.word_count_min && wc < Number(preset.word_count_min)) return false;
-    if (preset.word_count_max && wc > Number(preset.word_count_max)) return false;
-    if (preset.completion === 'complete' && !w.is_complete)  return false;
-    if (preset.completion === 'wip'      &&  w.is_complete)  return false;
-
-    return true;
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Empty preset factory
@@ -360,7 +294,7 @@ function PresetCard({ preset, works, statuses, onOpenWork, onEdit, onDelete }) {
   const [resultsOpen, setResultsOpen] = useState(false);
 
   const results = useMemo(
-    () => resultsOpen ? applyPreset(works, statuses, preset) : [],
+    () => resultsOpen ? applyPreset(works, preset) : [],
     [resultsOpen, works, statuses, preset]
   );
 
@@ -384,6 +318,7 @@ function PresetCard({ preset, works, statuses, onOpenWork, onEdit, onDelete }) {
     ...(preset.ships_include   || []).map(r => `ship: ${r}`),
     ...(preset.tags_include    || []).map(t => `tag: ${t}`),
     ...(preset.fandoms_exclude || []).map(f => `not: ${f}`),
+    ...(preset.ships_exclude   || []).map(r => `no ship: ${r}`),
     ...(preset.tags_exclude    || []).map(t => `no: ${t}`),
     preset.word_count_min ? `${Number(preset.word_count_min).toLocaleString()}+ words` : null,
     preset.word_count_max ? `under ${Number(preset.word_count_max).toLocaleString()} words` : null,
@@ -480,6 +415,8 @@ function PresetCard({ preset, works, statuses, onOpenWork, onEdit, onDelete }) {
 // ---------------------------------------------------------------------------
 export default function FicFinderView({ recommendations, tasteProfile, onOpenWork, works, statuses }) {
   const [presets, setPresets]   = useState(() => getFinderPresets());
+  // A restored backup (or another library tab) can change presets.
+  useEffect(() => subscribe(() => setPresets(getFinderPresets())), []);
   const [editing, setEditing]   = useState(null);   // preset being edited (or null)
   const [creating, setCreating] = useState(false);
   const [draft, setDraft]       = useState(null);

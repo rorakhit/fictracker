@@ -3,6 +3,7 @@ import Stars from './Stars';
 import ShelfStrip from './ShelfStrip';
 import { ratingClass, wordCountLabel, readingTime, timeAgo } from '../utils/helpers';
 import { getSettings } from '../storage/local';
+import { smartShelfFilter } from '../core/shelves';
 
 export default function Library({
   works, statuses, stats, wipTracking,
@@ -11,13 +12,10 @@ export default function Library({
   importing, importMsg, addByUrl,
   readingLog = [],
   checkingWips, wipCheckMsg, checkWipUpdates, dismissWipUpdate, dismissAllWipUpdates,
-  isAtFicLimit, ficsRemaining, ficLimit,
   onOpenWork,
   // Bookshelf props
   shelves, worksByShelf, activeShelfId, setActiveShelfId,
   createShelf, updateShelf, deleteShelf, addWorksToShelf,
-  isAtShelfLimit, shelvesRemaining, totalShelfCount, shelfLimit,
-  isPremium, onShelfUpgradeClick,
   // Smart shelf props
   smartShelves, activeSmartShelfId, setActiveSmartShelfId,
   createSmartShelf, deleteSmartShelf,
@@ -59,16 +57,8 @@ export default function Library({
     if (!trimmed) { setSmartShelfError('Name is required'); return; }
     const filterJson = { statusFilter, search: search.trim(), sortBy };
     const result = await createSmartShelf({ name: trimmed, filterJson });
-    if (result?.hitLimit) {
-      setSmartShelfError('Free tier is limited to 3 shelves');
-      return;
-    }
     if (result?.error) {
-      if (result.error.code === '23505') {
-        setSmartShelfError('You already have a shelf with that name');
-      } else {
-        setSmartShelfError('Could not save');
-      }
+      setSmartShelfError(result.error);
       return;
     }
     // Success: close the input, clear state, activate the new smart shelf
@@ -82,10 +72,10 @@ export default function Library({
   // back to Library's local state and mark it as the active smart shelf.
   // Also clears any active manual shelf (mutually exclusive).
   function applySmartShelf(shelf) {
-    const f = shelf.filterJson || {};
-    setStatusFilter(f.statusFilter || 'all');
-    setSearch(f.search || '');
-    setSortBy(f.sortBy || 'shuffle');
+    const f = smartShelfFilter(shelf);
+    setStatusFilter(f.statusFilter);
+    setSearch(f.search);
+    setSortBy(f.sortBy);
     setActiveSmartShelfId(shelf.id);
     setActiveShelfId(null);
   }
@@ -137,7 +127,7 @@ export default function Library({
         const hb = (hashCode(b.id, shuffleSeed) & 0x7fffffff);
         return ha - hb;
       }
-      if (effectiveSort === 'recent') return new Date(b.imported_at) - new Date(a.imported_at);
+      if (effectiveSort === 'recent') return (b.added_at || b.imported_at || '').localeCompare(a.added_at || a.imported_at || '');
       if (effectiveSort === 'words') return (b.word_count || 0) - (a.word_count || 0);
       if (effectiveSort === 'kudos') return (b.kudos || 0) - (a.kudos || 0);
       if (effectiveSort === 'title') return (a.title || '').localeCompare(b.title || '');
@@ -198,12 +188,6 @@ export default function Library({
           updateShelf={updateShelf}
           deleteShelf={deleteShelf}
           deleteSmartShelf={deleteSmartShelf}
-          isAtShelfLimit={isAtShelfLimit}
-          shelvesRemaining={shelvesRemaining}
-          totalShelfCount={totalShelfCount}
-          shelfLimit={shelfLimit}
-          isPremium={isPremium}
-          onUpgradeClick={onShelfUpgradeClick}
         />
       )}
 
@@ -221,11 +205,10 @@ export default function Library({
                   <div style={{ fontSize: 12, marginTop: 4, opacity: 0.9 }}>
                     {updatedWips.map(w => {
                       const wip = wipTracking[w.id];
-                      const newCh = wip?.updated_chapter_count;
-                      const oldCh = wip?.last_known_chapters || w.chapter_count;
+                      const n = wip?.new_chapters || 0;
                       return (
                         <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                          <span>📖 {w.title}{newCh ? ` — Ch. ${newCh} is out!` : ''}</span>
+                          <span>📖 {w.title}{n ? ` — ${n} new chapter${n > 1 ? 's' : ''}` : ''}</span>
                           <button className="btn btn-ghost" style={{ fontSize: 11, padding: '1px 6px', minHeight: 0 }}
                             onClick={e => { e.stopPropagation(); dismissWipUpdate(w.id); }}>dismiss</button>
                         </div>
@@ -244,10 +227,9 @@ export default function Library({
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={checkWipUpdates}
-                disabled={checkingWips}
-                title="Check AO3 for new chapters on your WIPs"
+                title={checkingWips ? 'Stop checking' : 'Check AO3 for new chapters on your unfinished fics'}
               >
-                {checkingWips ? 'Checking...' : 'Check WIPs'}
+                {checkingWips ? 'Stop' : 'Check WIPs'}
               </button>
             </div>
           </>

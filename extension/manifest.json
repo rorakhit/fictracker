@@ -1,27 +1,45 @@
 {
   "manifest_version": 3,
   "name": "FicTracker",
-  "version": "1.1.0",
-  "description": "Track your AO3 reading — add fics, update progress, and get WIP notifications.",
+  "version": "2.0.0",
+  "description": "Track your AO3 reading, WIP updates and authors you follow. No account, no AI: your library stays in your browser.",
   "permissions": [
-    "storage"
+    "storage",
+    "unlimitedStorage",
+    "alarms"
   ],
   "host_permissions": [
-    "https://archiveofourown.org/*"
+    "https://archiveofourown.org/*",
+    "https://fictracker.app/*"
   ],
   "background": {
-    "service_worker": "background/service-worker.js"
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://archiveofourown.org/works/*"],
-      "js": ["content/content.js"],
-      "css": ["content/content.css"],
+      "matches": [
+        "https://archiveofourown.org/*"
+      ],
+      "js": [
+        "content/ao3.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://fictracker.app/*"
+      ],
+      "js": [
+        "content/site.js"
+      ],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "popup/popup.html",
+    "default_title": "Open your FicTracker library",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",

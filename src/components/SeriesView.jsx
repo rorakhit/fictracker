@@ -2,10 +2,9 @@
 // in your library. Works within a series are displayed in position order so
 // you can spot gaps (e.g. you have parts 1, 3, 4 but skipped part 2).
 //
-// Design note: we intentionally don't fetch the AO3 series page here because
-// (a) it's an extra network call per series and (b) the local-first philosophy
-// means we don't pull data you haven't explicitly added. We surface what you
-// have and let you click through to AO3 for the full picture.
+// This view only shows what's in your library; it doesn't fetch the series
+// from AO3. Following a series (the button here, or the panel on AO3) is
+// what asks FicTracker to check the series page for new parts.
 
 import { ratingClass } from '../utils/helpers';
 
@@ -25,7 +24,7 @@ function progressSummary(works, statuses) {
   return { total, done };
 }
 
-export default function SeriesView({ seriesMap, statuses, onOpenWork }) {
+export default function SeriesView({ seriesMap, statuses, onOpenWork, follows = {}, follow, unfollow }) {
   const series = Array.from(seriesMap.values());
 
   if (series.length === 0) {
@@ -70,6 +69,21 @@ export default function SeriesView({ seriesMap, statuses, onOpenWork }) {
                   {done}/{total} parts completed in your library
                 </div>
               </div>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              {follow && (() => {
+                const key = `series:${sr.ao3_series_id}`;
+                const on = Boolean(follows[key]);
+                return (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={on ? { color: 'var(--accent-teal)', borderColor: 'rgba(20,184,166,0.4)' } : undefined}
+                    title={on ? 'Stop following this series' : 'Get told when a new part is posted'}
+                    onClick={() => (on ? unfollow(key) : follow('series', sr.ao3_series_id, sr.series_name)).catch(() => {})}
+                  >
+                    {on ? '✓ Following' : '+ Follow'}
+                  </button>
+                );
+              })()}
               <a
                 href={ao3SeriesUrl}
                 target="_blank"
@@ -87,6 +101,7 @@ export default function SeriesView({ seriesMap, statuses, onOpenWork }) {
               >
                 Full series on AO3 →
               </a>
+              </div>
             </div>
 
             {/* Progress bar */}

@@ -5,17 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "test": "node --test \"src/**/*.test.js\"",
     "preview": "vite preview",
     "build:ext": "node extension/build.mjs"
   },
   "dependencies": {
+    "@fontsource/fraunces": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
     "jszip": "^3.10.1",
+    "linkedom": "^0.18.15",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^6.22.0",
-    "recharts": "^2.10.3",
-    "stripe": "^20.4.1"
+    "recharts": "^2.10.3"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -24,6 +26,7 @@
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
+    "esbuild": "^0.21.5",
     "vite": "^5.0.8"
   }
 }

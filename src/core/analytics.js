@@ -1,0 +1,264 @@
+// src/core/analytics.js
+// Reading analytics from your library: words and chapters read, streaks,
+// fandoms over time, ratings. Pure, so it can be tested; days and weeks are
+// in your own time zone.
+
+// "2026-11-26" for a date, in local time.
+export function dayKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function computeAnalytics(works, statuses, readingLog, now = new Date()) {
+
+  // --- Helper: group items into time buckets ---
+  function bucketByWeek(items, dateKey) {
+    const buckets = {};
+    items.forEach(item => {
+      const d = new Date(item[dateKey]);
+      if (isNaN(d)) return;
+      // Week key = Monday of that week, in your time zone
+      const monday = new Date(d);
+      monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      const key = dayKey(monday);
+      if (!buckets[key]) buckets[key] = { week: key, words: 0, chapters: 0, fics: 0 };
+      buckets[key].words += item.word_count_read || item.word_count || 0;
+      buckets[key].chapters += item.chapters_read || 1;
+      buckets[key].fics += item._isFicCompletion ? 1 : 0;
+    });
+    return Object.values(buckets).sort((a, b) => a.week.localeCompare(b.week));
+  }
+
+  function bucketByMonth(items, dateKey) {
+    const buckets = {};
+    items.forEach(item => {
+      const d = new Date(item[dateKey]);
+      if (isNaN(d)) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!buckets[key]) buckets[key] = { month: key, words: 0, chapters: 0, fics: 0 };
+      buckets[key].words += item.word_count_read || item.word_count || 0;
+      buckets[key].chapters += item.chapters_read || 1;
+      buckets[key].fics += item._isFicCompletion ? 1 : 0;
+    });
+    return Object.values(buckets).sort((a, b) => a.month.localeCompare(b.month));
+  }
+
+  // --- Build unified activity timeline ---
+  // Merge reading_log entries with bootstrapped events from reading_status
+  const activityEvents = [];
+
+  // 1. Real reading_log entries (these have precise timestamps)
+  readingLog.forEach(entry => {
+    activityEvents.push({
+      work_id: entry.work_id,
+      read_at: entry.read_at,
+      word_count_read: entry.word_count_read || 0,
+      chapters_read: entry.chapters_read || 0,
+      _isFicCompletion: false,
+      _source: 'log',
+    });
+  });
+
+  // 2. Bootstrap from reading_status timestamps (for pre-logging history)
+  const loggedWorkIds = new Set(readingLog.map(e => e.work_id));
+  works.forEach(w => {
+    const st = statuses[w.id];
+    if (!st) return;
+
+    // If this work has real log entries, skip bootstrapping
+    if (loggedWorkIds.has(w.id)) return;
+
+    // Use completed_at as a completion event. Fics imported from your AO3
+    // history as Completed have no completed_at; the date you last visited
+    // them on AO3 (their added_at) is the best estimate.
+    const completedAt = st.completed_at || (st.status === 'completed' ? w.added_at : null);
+    if (completedAt) {
+      activityEvents.push({
+        work_id: w.id,
+        read_at: completedAt,
+        word_count_read: w.word_count || 0,
+        chapters_read: w.chapter_count || 1,
+        _isFicCompletion: true,
+        _source: 'bootstrap',
+      });
+    }
+    // Use started_at as a "started reading" event (estimate 1 chapter)
+    else if (st.started_at && st.status === 'reading') {
+      const wordsPerCh = w.word_count && w.chapter_count
+        ? Math.round(w.word_count / w.chapter_count) : 0;
+      const chaptersRead = st.current_chapter || 1;
+      activityEvents.push({
+        work_id: w.id,
+        read_at: st.started_at,
+        word_count_read: chaptersRead * wordsPerCh,
+        chapters_read: chaptersRead,
+        _isFicCompletion: false,
+        _source: 'bootstrap',
+      });
+    }
+  });
+
+  // Mark completion events from log entries too
+  const completedWorkIds = new Set();
+  works.forEach(w => {
+    const st = statuses[w.id];
+    if (st?.status === 'completed') completedWorkIds.add(w.id);
+  });
+
+  // Sort all events chronologically
+  activityEvents.sort((a, b) => new Date(a.read_at) - new Date(b.read_at));
+
+  // --- Compute aggregate analytics ---
+  // Timeline charts use real events only — bootstrap events create a
+  // misleading spike at import time that dwarfs actual reading activity.
+  const realTimelineEvents = activityEvents.filter(e => e._source === 'log');
+  const weeklyActivity = bucketByWeek(realTimelineEvents, 'read_at');
+  const monthlyActivity = bucketByMonth(realTimelineEvents, 'read_at');
+
+  // Total words read (from all events)
+  const totalWordsRead = activityEvents.reduce((sum, e) => sum + (e.word_count_read || 0), 0);
+  const totalChaptersRead = activityEvents.reduce((sum, e) => sum + (e.chapters_read || 0), 0);
+
+  // Completion stats
+  const completedWorks = works.filter(w => statuses[w.id]?.status === 'completed');
+  const totalCompleted = completedWorks.length;
+  const totalStarted = works.filter(w => {
+    const s = statuses[w.id]?.status;
+    return s === 'reading' || s === 'completed';
+  }).length;
+  const completionRate = totalStarted > 0 ? Math.round((totalCompleted / totalStarted) * 100) : 0;
+
+  // Average words per completed fic
+  const avgWordsPerFic = totalCompleted > 0
+    ? Math.round(completedWorks.reduce((s, w) => s + (w.word_count || 0), 0) / totalCompleted)
+    : 0;
+
+  // Reading pace: words per day over the last 30 days
+  // Uses only real log events — bootstrap events would inflate this
+  // with "words" from organizing your library, not actual reading.
+  const realEventsOnly = activityEvents.filter(e => e._source === 'log');
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentEvents = realEventsOnly.filter(e => new Date(e.read_at) >= thirtyDaysAgo);
+  const recentWords = recentEvents.reduce((s, e) => s + (e.word_count_read || 0), 0);
+  const wordsPerDay = Math.round(recentWords / 30);
+
+  // Reading streak: consecutive days with real activity
+  const activeDays = new Set();
+  realEventsOnly.forEach(e => {
+    const d = new Date(e.read_at);
+    if (!isNaN(d)) activeDays.add(dayKey(d));
+  });
+  const sortedDays = Array.from(activeDays).sort();
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
+  const todayStr = dayKey(now);
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const yesterdayStr = dayKey(yesterday);
+
+  for (let i = 0; i < sortedDays.length; i++) {
+    if (i === 0) {
+      tempStreak = 1;
+    } else {
+      const prev = new Date(`${sortedDays[i - 1]}T12:00:00`);
+      const curr = new Date(`${sortedDays[i]}T12:00:00`);
+      const diffDays = Math.round((curr - prev) / 86400000);
+      tempStreak = diffDays === 1 ? tempStreak + 1 : 1;
+    }
+    longestStreak = Math.max(longestStreak, tempStreak);
+
+    // Current streak: must include today or yesterday
+    if (sortedDays[i] === todayStr || sortedDays[i] === yesterdayStr) {
+      currentStreak = Math.max(currentStreak, tempStreak);
+    }
+  }
+
+  // Fandom breakdown over time (monthly)
+  const workById = new Map(works.map(w => [w.id, w]));
+  const fandomTimeline = {};
+  activityEvents.forEach(e => {
+    const d = new Date(e.read_at);
+    if (isNaN(d)) return;
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const work = workById.get(e.work_id);
+    if (!work) return;
+    (work.fandoms || []).forEach(f => {
+      if (!fandomTimeline[f]) fandomTimeline[f] = {};
+      if (!fandomTimeline[f][monthKey]) fandomTimeline[f][monthKey] = 0;
+      fandomTimeline[f][monthKey] += e.word_count_read || 0;
+    });
+  });
+
+  // Get top 5 fandoms for the timeline chart
+  const fandomTotals = {};
+  Object.entries(fandomTimeline).forEach(([f, months]) => {
+    fandomTotals[f] = Object.values(months).reduce((s, v) => s + v, 0);
+  });
+  const topFandomNames = Object.entries(fandomTotals)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name]) => name);
+
+  // Build stacked area chart data: each row is a month, columns are fandoms
+  const allMonths = new Set();
+  Object.values(fandomTimeline).forEach(months => {
+    Object.keys(months).forEach(m => allMonths.add(m));
+  });
+  const fandomAreaData = Array.from(allMonths).sort().map(month => {
+    const row = { month };
+    topFandomNames.forEach(f => {
+      row[f] = fandomTimeline[f]?.[month] || 0;
+    });
+    return row;
+  });
+
+  // Rating distribution of completed works (personal ratings)
+  const ratingDistribution = [1, 2, 3, 4, 5].map(r => ({
+    rating: `${r}★`,
+    count: completedWorks.filter(w => statuses[w.id]?.rating_personal === r).length,
+  }));
+  const rated = completedWorks.filter(w => statuses[w.id]?.rating_personal > 0);
+  const avgRating = rated.length > 0
+    ? (rated.reduce((s, w) => s + statuses[w.id].rating_personal, 0) / rated.length).toFixed(1)
+    : 'N/A';
+
+  // Time to complete: days between started_at and completed_at
+  const completionTimes = completedWorks
+    .filter(w => statuses[w.id]?.started_at && statuses[w.id]?.completed_at)
+    .map(w => {
+      const start = new Date(statuses[w.id].started_at);
+      const end = new Date(statuses[w.id].completed_at);
+      return Math.max(1, Math.round((end - start) / 86400000));
+    });
+  const avgDaysToComplete = completionTimes.length > 0
+    ? Math.round(completionTimes.reduce((s, d) => s + d, 0) / completionTimes.length)
+    : null;
+  const fastestComplete = completionTimes.length > 0 ? Math.min(...completionTimes) : null;
+
+  return {
+    // Timeline data
+    weeklyActivity,
+    monthlyActivity,
+    fandomAreaData,
+    topFandomNames,
+
+    // Aggregate stats
+    totalWordsRead,
+    totalChaptersRead,
+    totalCompleted,
+    completionRate,
+    avgWordsPerFic,
+    wordsPerDay,
+    currentStreak,
+    longestStreak,
+    avgDaysToComplete,
+    fastestComplete,
+    avgRating,
+    ratingDistribution,
+
+    // Meta
+    hasLogData: readingLog.length > 0,
+    totalEvents: activityEvents.length,
+  };
+}
