@@ -42,7 +42,7 @@ export default function SettingsView() {
           to say thanks, a small tip genuinely helps keep it going.
         </p>
         <a
-          href="https://ko-fi.com/fictracker"
+          href="https://ko-fi.com/rorak"
           target="_blank"
           rel="noopener noreferrer"
           style={{
