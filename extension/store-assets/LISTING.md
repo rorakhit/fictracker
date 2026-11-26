@@ -9,8 +9,10 @@ Uploads live in `extension/dist/` after `npm run build:ext`:
 
 Images in this folder: `marquee-1400x560.png` (Chrome marquee),
 `small-tile-440x280.png` (Chrome small promo tile). Rendered from
-`promo-tile.html` at the repo root. Screenshots (1280x800) still to take
-from a real library.
+`promo-tile.html` at the repo root. Screenshots (1280x800) are in
+`screenshots/`, made in Playwright with a made-up library and a made-up fic
+(Original Work) on a styled copy of AO3. Chrome takes up to 5: use 1-5.
+AMO can take all 6.
 
 ---
 
