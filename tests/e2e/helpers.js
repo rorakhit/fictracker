@@ -33,9 +33,12 @@ export const squash = s => s.replace(/\s+/g, ' ').trim();
 // (route, url) => fulfilled, or undefined for an empty 204.
 export async function launch({ ao3 } = {}) {
   const ctx = await chromium.launchPersistentContext(mkdtempSync(path.join(tmpdir(), 'ft-e2e-')), {
-    executablePath: process.env.CHROMIUM_PATH || undefined,
+    // Extensions need the full browser in its new headless mode, not
+    // Playwright's headless shell: the 'chromium' channel picks that.
+    ...(process.env.CHROMIUM_PATH
+      ? { executablePath: process.env.CHROMIUM_PATH }
+      : { channel: 'chromium' }),
     headless: true,
-    // Extensions need the full browser's new headless mode, not the shell.
     args: ['--headless=new', `--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
     viewport: { width: 1280, height: 900 },
   });
