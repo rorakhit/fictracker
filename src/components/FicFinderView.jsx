@@ -146,7 +146,7 @@ function PresetEditor({ preset, onChange, onSave, onCancel }) {
           values={preset.fandoms_include}
           onChange={v => update('fandoms_include', v)}
           placeholder="Bridgerton, Harry Potter…"
-          accentColor="var(--accent-teal)"
+          accentColor="var(--accent)"
         />
         <TagInput
           label="Fandoms — exclude"
@@ -160,7 +160,7 @@ function PresetEditor({ preset, onChange, onSave, onCancel }) {
           values={preset.ships_include}
           onChange={v => update('ships_include', v)}
           placeholder="Hermione Granger/Draco Malfoy…"
-          accentColor="var(--accent-teal)"
+          accentColor="var(--accent)"
         />
         <TagInput
           label="Ships — exclude"
@@ -174,7 +174,7 @@ function PresetEditor({ preset, onChange, onSave, onCancel }) {
           values={preset.tags_include}
           onChange={v => update('tags_include', v)}
           placeholder="hurt/comfort, slow burn…"
-          accentColor="var(--accent-teal)"
+          accentColor="var(--accent)"
         />
         <TagInput
           label="Tags — exclude"
@@ -250,7 +250,7 @@ function PresetEditor({ preset, onChange, onSave, onCancel }) {
 // ---------------------------------------------------------------------------
 function WorkCard({ work, status, onOpenWork }) {
   const st = status?.status || 'to_read';
-  const stLabel = { to_read: 'To read', reading: 'Reading', completed: 'Completed', dropped: 'Dropped', on_hold: 'On hold', author_abandoned: 'Abandoned' };
+  const stLabel = { to_read: 'To read', reading: 'Reading', completed: 'Completed', dnf: 'DNF', on_hold: 'On hold', author_abandoned: 'Abandoned' };
 
   return (
     <div className="rec-card" style={{ cursor: 'pointer' }} onClick={() => onOpenWork(work)}>
@@ -263,7 +263,7 @@ function WorkCard({ work, status, onOpenWork }) {
         {work.word_count && <span>{wordCountLabel(work.word_count)} words</span>}
         {work.kudos     && <span>♥ {work.kudos.toLocaleString()}</span>}
         {work.is_complete !== undefined && (
-          <span style={{ color: work.is_complete ? 'var(--accent-teal)' : 'var(--text-muted)' }}>
+          <span style={{ color: work.is_complete ? 'var(--accent)' : 'var(--text-muted)' }}>
             {work.is_complete ? 'Complete' : 'WIP'}
           </span>
         )}

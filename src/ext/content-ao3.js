@@ -14,6 +14,7 @@
 import { parseWorkPage, detectCurrentChapter, loggedInUser } from '../core/scrape.js';
 import { normalizeLibrary, progressFromVisit } from '../core/library.js';
 import { followKey } from '../core/follows.js';
+import { moreLikeThisUrl } from '../core/finder.js';
 import { initImport, listingPageKind } from './ao3-import.js';
 
 const workMatch = window.location.pathname.match(/^\/works\/(\d+)/);
@@ -24,7 +25,7 @@ const STATUS_LABELS = {
   reading: 'Reading',
   completed: 'Completed',
   on_hold: 'On Hold',
-  dropped: 'Dropped',
+  dnf: 'DNF',
   author_abandoned: 'Author Abandoned',
 };
 const STATUS_COLORS = {
@@ -32,12 +33,13 @@ const STATUS_COLORS = {
   reading: '#f59e0b',
   completed: '#22c55e',
   on_hold: '#8b5cf6',
-  dropped: '#ef4444',
+  dnf: '#f97316',
   author_abandoned: '#e04666',
 };
 
 let panelMode = 'full';
 let pageMeta = null;
+let currentLib = null; // the library as of the last redraw
 
 function send(msg) {
   return chrome.runtime.sendMessage(msg).then(res => {
@@ -129,9 +131,10 @@ function createPanel() {
   panel.querySelector('.ft-close').addEventListener('click', () => setPanelMode('hidden'));
 }
 
-function forceWhiteAccentText(root) {
+function forceAccentText(root) {
   // Some AO3 site skins override button text colour even with !important.
-  root.querySelectorAll('.ft-btn-accent').forEach(b => b.style.setProperty('color', '#ffffff', 'important'));
+  // Dark text on the amber accent: white on amber is too faint to read.
+  root.querySelectorAll('.ft-btn-accent').forEach(b => b.style.setProperty('color', '#171520', 'important'));
 }
 
 function showError(message) {
@@ -147,6 +150,14 @@ function showError(message) {
 }
 
 // ---- Rendering ----
+
+// An AO3 search for fics like this one, from its own tags (see finder.js).
+function moreLikeThisLink() {
+  if (!pageMeta?.fandoms?.length) return '';
+  const url = moreLikeThisUrl(pageMeta, currentLib);
+  return `<a class="ft-more-like" href="${escapeHtml(url)}" target="_blank" rel="noopener"
+    title="An AO3 search for this fic's fandom, ship and tags">More like this on AO3 →</a>`;
+}
 
 function renderNewWork(meta) {
   const body = document.getElementById('ft-body');
@@ -166,9 +177,10 @@ function renderNewWork(meta) {
     </div>
     <button class="ft-btn ft-btn-accent" id="ft-add-btn">Add to Library</button>
     <div class="ft-follows" id="ft-follows"></div>
+    ${moreLikeThisLink()}
   `;
   renderFollows();
-  forceWhiteAccentText(body);
+  forceAccentText(body);
 
   const miniBar = document.getElementById('ft-mini-bar');
   miniBar.innerHTML = `
@@ -207,6 +219,36 @@ function renderNewWork(meta) {
   });
 }
 
+// What you're in the middle of in the note box, so a redraw (which happens
+// whenever the library changes, including when the note itself is saved)
+// doesn't lose your cursor or what you typed since the last save.
+function noteState(body) {
+  const box = body.querySelector('#ft-note-text');
+  if (!box) return null;
+  return {
+    open: body.querySelector('.ft-note')?.open,
+    focused: document.activeElement === box,
+    value: box.value,
+    start: box.selectionStart,
+    end: box.selectionEnd,
+  };
+}
+
+function restoreNoteState(body, saved) {
+  if (!saved) return;
+  const details = body.querySelector('.ft-note');
+  const box = body.querySelector('#ft-note-text');
+  if (details && saved.open) details.open = true;
+  if (box && saved.focused) {
+    box.value = saved.value;
+    box.focus();
+    box.setSelectionRange(saved.start, saved.end);
+  }
+}
+
+const NOTE_SAVE_MS = 600;
+let noteTimer = null;
+
 function renderExistingWork(work, status) {
   const body = document.getElementById('ft-body');
   const st = status?.status || 'to_read';
@@ -214,6 +256,11 @@ function renderExistingWork(work, status) {
   const current = status?.current_chapter || 0;
   const progress = total ? Math.min(100, Math.round((current / total) * 100)) : 0;
   const atEnd = total !== null && current >= total;
+  const rating = status?.rating_personal || 0;
+  const notes = status?.notes || '';
+  // Just finished and not rated yet: ask, right where you are.
+  const askRating = !rating && (st === 'completed' || (atEnd && work.is_complete));
+  const savedNote = noteState(body);
 
   body.innerHTML = `
     <div class="ft-in-library">
@@ -236,10 +283,50 @@ function renderExistingWork(work, status) {
           `<option value="${k}" ${k === st ? 'selected' : ''}>${v}</option>`).join('')}
       </select>
     </div>
+    <div class="ft-rating${askRating ? ' ft-rating-ask' : ''}">
+      <span class="ft-rating-label">${askRating ? 'Finished! Rate it?' : 'Your rating'}</span>
+      <span class="ft-stars" role="group" aria-label="Your rating">
+        ${[1, 2, 3, 4, 5].map(i => `<button class="ft-star${i <= rating ? ' ft-star-on' : ''}" data-star="${i}"
+          title="${i === rating ? 'Clear rating' : `${i} star${i > 1 ? 's' : ''}`}"
+          aria-pressed="${i <= rating}">★</button>`).join('')}
+      </span>
+    </div>
+    <details class="ft-note">
+      <summary>${notes ? 'Your note' : 'Add a note'}${notes ? `<span class="ft-note-preview">${escapeHtml(notes.slice(0, 40))}${notes.length > 40 ? '…' : ''}</span>` : ''}</summary>
+      <textarea id="ft-note-text" class="ft-input ft-note-text" rows="3"
+        placeholder="Where you left off, the good part, anything">${escapeHtml(notes)}</textarea>
+    </details>
     <div class="ft-follows" id="ft-follows"></div>
+    ${moreLikeThisLink()}
     <a class="ft-open-app" href="#" id="ft-open-library">Open your library →</a>
   `;
   renderFollows();
+  restoreNoteState(body, savedNote);
+
+  body.querySelectorAll('.ft-star').forEach(btn => btn.addEventListener('click', () => {
+    const n = Number(btn.dataset.star);
+    // Same as the library: clicking your current rating clears it.
+    const next = n === rating ? null : n;
+    libOp({ op: 'updateStatus', workId: work.id, updates: { rating_personal: next } })
+      .catch(err => showError(err.message));
+  }));
+
+  const noteBox = body.querySelector('#ft-note-text');
+  const saveNote = () => {
+    clearTimeout(noteTimer);
+    noteTimer = null;
+    const text = noteBox.value.trim();
+    if (text === notes.trim()) return;
+    libOp({ op: 'updateStatus', workId: work.id, updates: { notes: text || null } })
+      .catch(err => showError(`Couldn't save your note: ${err.message}`));
+  };
+  noteBox.addEventListener('input', () => {
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(saveNote, NOTE_SAVE_MS);
+  });
+  // A redraw replaces the box, which can fire blur on the old one: only a
+  // box still on the page saves on blur (the new one has your text).
+  noteBox.addEventListener('blur', () => { if (noteBox.isConnected) saveNote(); });
 
   const miniBar = document.getElementById('ft-mini-bar');
   miniBar.innerHTML = `
@@ -342,6 +429,7 @@ async function render() {
   const seq = ++renderSeq;
   const lib = await readLibrary();
   if (seq !== renderSeq) return;
+  currentLib = lib;
   const work = lib.works.find(w => w.id === pageMeta.id);
   if (!work) {
     renderNewWork(pageMeta);
@@ -390,5 +478,5 @@ if (user) {
 
 if (ao3Id) init();
 else if (listingPageKind(location.pathname)) {
-  initImport({ createPanel, loadPanelMode, applyPanelMode, setPanelMode, escapeHtml, send, forceWhiteAccentText });
+  initImport({ createPanel, loadPanelMode, applyPanelMode, setPanelMode, escapeHtml, send, forceAccentText });
 }

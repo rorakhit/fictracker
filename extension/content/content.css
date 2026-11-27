@@ -27,7 +27,8 @@
 
 #fictracker-panel button,
 #fictracker-panel input,
-#fictracker-panel select {
+#fictracker-panel select,
+#fictracker-panel textarea {
   color: inherit !important;
   -webkit-text-fill-color: inherit !important;
   height: auto !important;
@@ -45,13 +46,13 @@
   bottom: 16px !important;
   right: 16px !important;
   width: 280px !important;
-  background: #0f1318 !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: #171520 !important;
+  border: 1px solid #2e293d !important;
   border-radius: 14px !important;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   font-size: 13px !important;
-  color: #e8e6e3 !important;
+  color: #e8e4df !important;
   z-index: 999999 !important;
   overflow: hidden !important;
   transition: opacity 0.2s, transform 0.2s !important;
@@ -77,19 +78,19 @@
   font-weight: 700 !important;
 }
 
-.ft-fic { color: #14b8a6 !important; }
-.ft-tracker { color: #e8e6e3 !important; }
+.ft-fic { color: #e0a872 !important; }
+.ft-tracker { color: #e8e4df !important; }
 
 .ft-close {
   background: none !important;
   border: none !important;
-  color: #666 !important;
+  color: #7d7889 !important;
   font-size: 18px !important;
   cursor: pointer !important;
   padding: 0 4px !important;
   line-height: 1 !important;
 }
-.ft-close:hover { color: #e8e6e3 !important; }
+.ft-close:hover { color: #e8e4df !important; }
 
 /* Body */
 .ft-body {
@@ -98,12 +99,12 @@
 
 .ft-loading {
   text-align: center !important;
-  color: #666 !important;
+  color: #7d7889 !important;
   padding: 8px 0 !important;
 }
 
 .ft-message {
-  color: #999 !important;
+  color: #9590a0 !important;
   font-size: 12px !important;
   margin-bottom: 10px !important;
 }
@@ -116,22 +117,22 @@
 }
 
 .ft-input {
-  background: #1a1f26 !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: #1e1b2a !important;
+  border: 1px solid #2e293d !important;
   border-radius: 6px !important;
   padding: 8px 10px !important;
-  color: #e8e6e3 !important;
+  color: #e8e4df !important;
   font-size: 12px !important;
   outline: none !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
-.ft-input:focus { border-color: #14b8a6 !important; }
-.ft-input::placeholder { color: #555 !important; }
+.ft-input:focus { border-color: #e0a872 !important; }
+.ft-input::placeholder { color: #6b6678 !important; }
 
 /* Work preview */
 .ft-work-preview {
-  background: #1a1f26 !important;
+  background: #1e1b2a !important;
   border-radius: 8px !important;
   padding: 10px 12px !important;
   margin-bottom: 10px !important;
@@ -146,7 +147,7 @@
 
 .ft-work-meta {
   font-size: 11px !important;
-  color: #888 !important;
+  color: #9590a0 !important;
 }
 
 /* Status picker */
@@ -159,18 +160,19 @@
 }
 
 .ft-status-picker label {
-  color: #999 !important;
+  color: #9590a0 !important;
   white-space: nowrap !important;
 }
 
 .ft-status-picker select,
 .ft-status-update select {
   flex: 1 !important;
-  background: #1a1f26 !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  width: 100% !important;
+  background: #1e1b2a !important;
+  border: 1px solid #2e293d !important;
   border-radius: 6px !important;
   padding: 6px 8px !important;
-  color: #e8e6e3 !important;
+  color: #e8e4df !important;
   font-size: 12px !important;
   outline: none !important;
 }
@@ -198,14 +200,14 @@
 
 .ft-btn-accent,
 #fictracker-panel button.ft-btn-accent {
-  background: #14b8a6 !important;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  background: #e0a872 !important;
+  color: #171520 !important;
+  -webkit-text-fill-color: #171520 !important;
 }
 .ft-btn-ghost {
   background: transparent !important;
-  color: #999 !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: #9590a0 !important;
+  border: 1px solid #2e293d !important;
 }
 .ft-btn-sm {
   display: inline-flex !important;
@@ -246,13 +248,13 @@
 
 .ft-progress-label {
   font-size: 11px !important;
-  color: #999 !important;
+  color: #9590a0 !important;
   margin-bottom: 6px !important;
 }
 
 .ft-progress-bar {
   height: 4px !important;
-  background: #1a1f26 !important;
+  background: #1e1b2a !important;
   border-radius: 2px !important;
   overflow: hidden !important;
   margin-bottom: 8px !important;
@@ -260,7 +262,7 @@
 
 .ft-progress-fill {
   height: 100% !important;
-  background: linear-gradient(90deg, #14b8a6, #f59e0b) !important;
+  background: linear-gradient(90deg, #e0a872, #ebb988) !important;
   border-radius: 2px !important;
   transition: width 0.3s !important;
 }
@@ -288,12 +290,29 @@
 .ft-open-app {
   display: block !important;
   text-align: center !important;
-  color: #14b8a6 !important;
+  color: #e0a872 !important;
   font-size: 11px !important;
   text-decoration: none !important;
+  border: none !important; /* AO3 underlines links with a bottom border */
   margin-top: 6px !important;
 }
 .ft-open-app:hover { text-decoration: underline !important; }
+
+/* More like this (an AO3 search) */
+#fictracker-panel .ft-more-like {
+  display: block !important;
+  margin-top: 10px !important;
+  padding: 7px 10px !important;
+  border: 1px solid #2e293d !important;
+  border-radius: 8px !important;
+  background: #1e1b2a !important;
+  color: #e0a872 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+}
+#fictracker-panel .ft-more-like:hover { border-color: #e0a872 !important; }
 
 /* Floating action button (shown when panel is closed) */
 #fictracker-fab {
@@ -303,8 +322,8 @@
   width: 44px !important;
   height: 44px !important;
   border-radius: 50% !important;
-  background: #0f1318 !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: #171520 !important;
+  border: 1px solid #2e293d !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
   font-size: 20px !important;
   cursor: pointer !important;
@@ -373,7 +392,7 @@
   background: rgba(255,255,255,0.08) !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   border-radius: 4px !important;
-  color: #e8e6e3 !important;
+  color: #e8e4df !important;
   font-size: 14px !important;
   font-weight: 700 !important;
   width: 22px !important;
@@ -393,7 +412,7 @@
 .ft-mini-ch-num {
   font-size: 11px !important;
   font-weight: 600 !important;
-  color: #e8e6e3 !important;
+  color: #e8e4df !important;
   min-width: 52px !important;
   text-align: center !important;
 }
@@ -402,7 +421,7 @@
 .ft-mini-expand {
   background: none !important;
   border: none !important;
-  color: #888 !important;
+  color: #9590a0 !important;
   font-size: 14px !important;
   cursor: pointer !important;
   padding: 0 2px !important;
@@ -410,13 +429,13 @@
   transition: color 0.15s !important;
 }
 .ft-mini-expand:hover {
-  color: #e8e6e3 !important;
+  color: #e8e4df !important;
 }
 
 /* Label text shown for new works / logged-out state in mini bar */
 .ft-mini-label {
   font-size: 11px !important;
-  color: #888 !important;
+  color: #9590a0 !important;
 }
 
 /* ── Header action buttons (minimize + close) ──────────── */
@@ -429,13 +448,13 @@
 .ft-minimize {
   background: none !important;
   border: none !important;
-  color: #666 !important;
+  color: #7d7889 !important;
   font-size: 16px !important;
   cursor: pointer !important;
   padding: 0 4px !important;
   line-height: 1 !important;
 }
-.ft-minimize:hover { color: #e8e6e3 !important; }
+.ft-minimize:hover { color: #e8e4df !important; }
 
 /* ── Mobile / Firefox for Android ──────────────────────────
  * Kicks in on viewports narrower than 540px (phones in portrait).
@@ -556,7 +575,7 @@
 #fictracker-panel .ft-follows-label {
   width: 100% !important;
   font-size: 11px !important;
-  color: #888 !important;
+  color: #9590a0 !important;
 }
 #fictracker-panel .ft-follow-btn {
   font-size: 11px !important;
@@ -567,8 +586,8 @@
   white-space: nowrap !important;
 }
 #fictracker-panel .ft-follow-btn.ft-following {
-  color: #14b8a6 !important;
-  border-color: rgba(20,184,166,0.4) !important;
+  color: #e0a872 !important;
+  border-color: rgba(224,168,114,0.4) !important;
 }
 
 /* History / bookmarks import */
@@ -576,7 +595,7 @@
 #fictracker-panel .ft-import-progress {
   margin-top: 8px !important;
   font-size: 11px !important;
-  color: #ccc !important;
+  color: #c9c4cf !important;
   line-height: 1.5 !important;
 }
 #fictracker-panel .ft-import-progress:empty { display: none !important; }
@@ -586,3 +605,77 @@
   gap: 4px !important;
 }
 #fictracker-panel .ft-import-picker select { width: 100% !important; min-width: 0 !important; }
+
+/* Rating and note (in-library state) */
+#fictracker-panel .ft-rating {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+#fictracker-panel .ft-rating-label {
+  font-size: 11px !important;
+  color: #9590a0 !important;
+}
+#fictracker-panel .ft-rating-ask .ft-rating-label {
+  color: #e0a872 !important;
+  font-weight: 600 !important;
+}
+#fictracker-panel .ft-stars {
+  display: inline-flex !important;
+  gap: 1px !important;
+}
+#fictracker-panel .ft-star {
+  background: none !important;
+  border: none !important;
+  padding: 0 2px !important;
+  margin: 0 !important;
+  font-size: 17px !important;
+  line-height: 1 !important;
+  color: #3d3750 !important;
+  cursor: pointer !important;
+  transition: color 0.1s !important;
+}
+#fictracker-panel .ft-stars:hover .ft-star { color: #f59e0b !important; }
+#fictracker-panel .ft-stars .ft-star:hover ~ .ft-star { color: #3d3750 !important; }
+#fictracker-panel .ft-star.ft-star-on { color: #f59e0b !important; }
+
+#fictracker-panel .ft-note {
+  margin-bottom: 8px !important;
+}
+#fictracker-panel .ft-note summary {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+  font-size: 11px !important;
+  color: #9590a0 !important;
+  cursor: pointer !important;
+  list-style: none !important;
+}
+#fictracker-panel .ft-note summary::-webkit-details-marker { display: none !important; }
+#fictracker-panel .ft-note summary::before { content: '✎' !important; }
+#fictracker-panel .ft-note summary:hover { color: #e8e4df !important; }
+#fictracker-panel .ft-note-preview {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #c9c4cf !important;
+  font-style: italic !important;
+}
+#fictracker-panel .ft-note[open] .ft-note-preview { display: none !important; }
+#fictracker-panel .ft-note-text {
+  display: block !important;
+  margin-top: 6px !important;
+  min-height: 60px !important;
+  resize: vertical !important;
+  font-family: inherit !important;
+  line-height: 1.4 !important;
+}
+
+@media (max-width: 539px) {
+  #fictracker-panel .ft-star { font-size: 24px !important; padding: 4px !important; }
+  #fictracker-panel .ft-note-text { font-size: 16px !important; }
+}

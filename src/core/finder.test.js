@@ -69,3 +69,35 @@ test('applyPreset finds GoT/ASOIAF fics under their full AO3 tags', () => {
   assert.deepEqual(ids, ['a', 'b', 'c']);
   assert.deepEqual(applyPreset(lib, { fandoms_exclude: ['game of thrones'] }).map(w => w.id), ['b', 'd']);
 });
+
+test('More like this: fandom, first ship, any of 3 tags, most kudos first', async () => {
+  const { moreLikeThisUrl } = await import('./finder.js');
+  const work = {
+    id: '1', title: 'Fic', fandoms: ['Star Wars'], relationships: ['A/B', 'C/D'],
+    freeform_tags: ['Fluff', 'Angst', 'Slow Burn', 'Coffee Shop AU'],
+  };
+  const q = Object.fromEntries(new URL(moreLikeThisUrl(work)).searchParams);
+  assert.equal(q['work_search[query]'], 'tag:"Star Wars" tag:"A/B" (tag:"Fluff" OR tag:"Angst" OR tag:"Slow Burn")');
+  assert.equal(q['work_search[sort_column]'], 'kudos_count');
+});
+
+test('More like this prefers tags from fics you rated highly', async () => {
+  const { pickTags } = await import('./finder.js');
+  const work = { id: '1', freeform_tags: ['Fluff', 'Angst', 'Slow Burn', 'Coffee Shop AU', 'Pining'] };
+  const library = {
+    works: [
+      work,
+      { id: '2', freeform_tags: ['Pining', 'Coffee Shop AU'] },
+      { id: '3', freeform_tags: ['Pining'] },
+      { id: '4', freeform_tags: ['Fluff', 'Angst'] }, // rated low: doesn't count
+    ],
+    statuses: { 2: { rating_personal: 5 }, 3: { rating_personal: 4 }, 4: { rating_personal: 2 } },
+  };
+  assert.deepEqual(pickTags(work, library), ['Pining', 'Coffee Shop AU', 'Fluff']);
+});
+
+test('More like this works with no ship or tags', async () => {
+  const { moreLikeThisUrl } = await import('./finder.js');
+  const q = Object.fromEntries(new URL(moreLikeThisUrl({ id: '1', fandoms: ['Original Work'] })).searchParams);
+  assert.equal(q['work_search[query]'], 'tag:"Original Work"');
+});

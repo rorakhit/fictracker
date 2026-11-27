@@ -114,3 +114,22 @@ test('wipChecked counts new chapters and keeps your added date', () => {
   assert.equal(lib.works[0].wip_new_chapters, 3);
   assert.equal(lib.works[0].is_complete, true);
 });
+
+test('Dropped is read as DNF, and the rest of the status is kept', () => {
+  const statuses = { '1': { status: 'dropped', rating_personal: 2, notes: 'meh' }, '2': { status: 'dnf' } };
+  const lib = normalizeLibrary({ works: [work('1'), work('2')], statuses });
+  assert.deepEqual(lib.statuses['1'], { status: 'dnf', rating_personal: 2, notes: 'meh' });
+  assert.equal(lib.statuses['2'].status, 'dnf');
+  assert.equal(statuses['1'].status, 'dropped', 'input is not changed');
+  // Nothing to migrate: the same object comes back, so callers can tell.
+  const clean = { '2': { status: 'dnf' } };
+  assert.equal(normalizeLibrary({ statuses: clean }).statuses, clean);
+});
+
+test('restoring a backup or v1 library with Dropped brings it in as DNF', () => {
+  const backup = { works: [work('1')], statuses: { '1': { status: 'dropped', updated_at: '2026-01-01' } } };
+  const merged = applyOp(empty(), { op: 'merge', library: backup });
+  assert.equal(merged.statuses['1'].status, 'dnf');
+  const replaced = applyOp(empty(), { op: 'replace', library: backup });
+  assert.equal(replaced.statuses['1'].status, 'dnf');
+});

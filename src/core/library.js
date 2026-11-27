@@ -11,9 +11,25 @@ export const EMPTY_LIBRARY = Object.freeze({ works: [], statuses: {}, reading_lo
 export function normalizeLibrary(lib) {
   return {
     works: Array.isArray(lib?.works) ? lib.works : [],
-    statuses: lib?.statuses && typeof lib.statuses === 'object' ? lib.statuses : {},
+    statuses: migrateStatuses(lib?.statuses && typeof lib.statuses === 'object' ? lib.statuses : {}),
     reading_log: Array.isArray(lib?.reading_log) ? lib.reading_log : [],
   };
+}
+
+// Statuses that were merged into another one. "Dropped" meant the same as
+// DNF, so 2.0.1 keeps DNF only. Old libraries, backups and v1 copies are
+// mapped on every read, so a retired status never comes back.
+const RETIRED_STATUSES = { dropped: 'dnf' };
+
+export function migrateStatuses(statuses) {
+  let out = statuses;
+  for (const [id, st] of Object.entries(statuses)) {
+    const next = RETIRED_STATUSES[st?.status];
+    if (!next) continue;
+    if (out === statuses) out = { ...statuses };
+    out[id] = { ...st, status: next };
+  }
+  return out;
 }
 
 function uid() {

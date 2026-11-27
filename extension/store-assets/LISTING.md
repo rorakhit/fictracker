@@ -27,16 +27,19 @@ nothing to paste. AMO's summary (250 max):
 
 > FicTracker keeps track of what you're reading on Archive of Our Own, right where you read it.
 >
-> Open a fic on AO3 and a small panel shows your progress. Read the next chapter and it moves along with you. Set a status (Reading, To Read, Completed, On Hold, Dropped), and rate it or add notes from your library.
+> Open a fic on AO3 and a small panel shows your progress. Read the next chapter and it moves along with you. Set a status (Reading, To Read, Completed, On Hold, DNF), rate it and jot a note, right there on the page.
 >
 > What it does:
 > - Tracks your chapter and status in every fic as you read on AO3
 > - Imports your AO3 history and bookmarks, a page at a time, from those pages on AO3
 > - Checks your WIPs for new chapters and shows a count on the toolbar button
 > - Follows authors and series and tells you when they post something new
+> - "More like this": an AO3 search built from a fic's own fandom, ship and tags, most kudos first
 > - Shelves, smart shelves and saved Fic Finder searches, in your library or on AO3
 > - Stats on what you read: words, fandoms, ships, streaks
-> - EPUB import and a backup file you can export and restore
+> - EPUB import, and backups that merge, so you can carry your library between computers
+> - Optional sync of settings, presets and follows through Chrome or Firefox Sync
+> - Works on Firefox for Android too
 >
 > What it doesn't do:
 > - No account. Your library is stored in your browser and never sent to us.
@@ -49,7 +52,11 @@ nothing to paste. AMO's summary (250 max):
 >
 > FicTracker isn't affiliated with AO3 or the Organization for Transformative Works.
 
-## What's new in 2.0.0 (AMO version notes / Chrome has no field)
+## What's new in 2.1.0 (AMO version notes / Chrome has no field)
+
+> Rate a fic and jot a note right from the panel on AO3, and it'll ask for a rating when you finish one. New "More like this" button: an AO3 search built from a fic's own fandom, ship and tags, most kudos first. Use FicTracker on more than one computer: restoring a backup now merges, and you can sync settings, Fic Finder presets and follows through Chrome or Firefox Sync (off by default). Works on Firefox for Android. The panel matches the library's colors, and DNF and Dropped are one status now (your Dropped fics are under DNF).
+
+## What's new in 2.0.0
 
 > FicTracker 2.0 is a rebuild based on your feedback. Sign-in is gone (it was broken, sorry!) and so are accounts, the paid tier and AI Picks. Everything now lives in the extension: your library opens from the toolbar button. New: AO3 history import, WIP and author/series update checks, and a Fic Finder that searches AO3 for any of your tags.
 
@@ -64,7 +71,7 @@ nothing to paste. AMO's summary (250 max):
 **Permission justifications**
 
 - **storage**
-  > Stores the user's library (fics, reading progress, statuses, shelves, follows and settings) in the browser. This is the only place the data lives; there is no server.
+  > Stores the user's library (fics, reading progress, statuses, shelves, follows and settings) in the browser. This is the only place the data lives; there is no server. If the user switches on sync in Settings (off by default), settings, saved filters, smart shelves and the list of followed authors and series also go into chrome.storage.sync, the user's own Chrome sync; the library itself never does.
 - **unlimitedStorage**
   > Libraries can hold thousands of fics with tags and reading history, which can grow past the default local storage quota. Without it, imports of a large AO3 history would fail partway.
 - **alarms**
@@ -86,7 +93,7 @@ nothing to paste. AMO's summary (250 max):
 - **Support site:** https://fictracker.app
 - **Privacy policy:** paste the text of `site/privacy.html` (AMO hosts its own copy) or link it.
 - **Notes to reviewer:**
-  > Source is attached (fictracker-source-v2.0.0.zip). Build steps are in BUILD-FOR-REVIEWERS.md: `npm ci && npm run build:ext` with Node 24; the output in extension/dist/build-firefox matches the uploaded package byte for byte. The background script and content scripts are not minified; the library page (app/) is built by Vite. To test: open any work on archiveofourown.org, the panel appears at the bottom right; the toolbar button opens the library. No account is needed.
+  > Source is attached (fictracker-source-v2.1.0.zip). Build steps are in BUILD-FOR-REVIEWERS.md: `npm ci && npm run build:ext` with Node 24; the output in extension/dist/build-firefox matches the uploaded package byte for byte. The background script and content scripts are not minified; the library page (app/) is built by Vite. To test: open any work on archiveofourown.org, the panel appears at the bottom right; the toolbar button opens the library. No account is needed.
 
 ---
 

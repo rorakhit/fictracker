@@ -7,7 +7,9 @@
  * 3. Copies the manifest, icons and panel CSS.
  * 4. Makes a Chrome and a Firefox copy and zips each. The Firefox manifest
  *    gets `background.scripts` instead of `service_worker` and the gecko
- *    settings AMO requires. The code is identical: Firefox aliases chrome.*.
+ *    settings AMO requires. The code is the same (Firefox aliases chrome.*)
+ *    except that Firefox's background script uses the browser's own HTML
+ *    parser instead of bundling linkedom.
  *
  * Usage:   node extension/build.mjs   (or npm run build:ext)
  * Output:  extension/dist/build-{chrome,firefox}/   (load these unpacked)
@@ -26,11 +28,31 @@ const ROOT = path.resolve(EXT_DIR, '..');
 const DIST_DIR = path.join(EXT_DIR, 'dist');
 const STAGE_DIR = path.join(DIST_DIR, 'stage');
 
-const SCRIPTS = {
-  'background.js': 'src/ext/background.js',
+const CONTENT_SCRIPTS = {
   'content/ao3.js': 'src/ext/content-ao3.js',
   'content/site.js': 'src/ext/content-site.js',
 };
+const BACKGROUND = { 'background.js': 'src/ext/background.js' };
+
+// Chrome's background service worker has no DOMParser, so its background
+// script bundles linkedom (about 600 KB). Firefox's background page has the
+// browser's own parser, so its build swaps linkedom for that.
+const FIREFOX_ALIASES = { 'linkedom/worker': './src/ext/native-dom-parser.js' };
+
+function bundle(outdir, scripts, alias = {}) {
+  return esbuild({
+    absWorkingDir: ROOT,
+    entryPoints: Object.fromEntries(
+      Object.entries(scripts).map(([out, src]) => [out.replace(/\.js$/, ''), src]),
+    ),
+    outdir,
+    bundle: true,
+    format: 'iife',
+    target: ['chrome110', 'firefox128'],
+    alias,
+    logLevel: 'warning',
+  });
+}
 
 // Gecko extension ID for AMO. Once uploaded to AMO under this ID, it
 // cannot be changed — any rename creates a new listing. Email-style IDs
@@ -49,17 +71,7 @@ async function rimraf(p) {
 async function stage() {
   await rimraf(STAGE_DIR);
   await viteBuild({ configFile: path.join(ROOT, 'vite.config.js'), logLevel: 'warn' });
-  await esbuild({
-    absWorkingDir: ROOT,
-    entryPoints: Object.fromEntries(
-      Object.entries(SCRIPTS).map(([out, src]) => [out.replace(/\.js$/, ''), src]),
-    ),
-    outdir: STAGE_DIR,
-    bundle: true,
-    format: 'iife',
-    target: ['chrome110', 'firefox128'],
-    logLevel: 'warning',
-  });
+  await bundle(STAGE_DIR, CONTENT_SCRIPTS);
   await fs.cp(path.join(EXT_DIR, 'icons'), path.join(STAGE_DIR, 'icons'), { recursive: true });
   await fs.cp(path.join(EXT_DIR, 'content/content.css'), path.join(STAGE_DIR, 'content/content.css'));
   await fs.cp(path.join(EXT_DIR, 'manifest.json'), path.join(STAGE_DIR, 'manifest.json'));
@@ -81,6 +93,10 @@ function transformManifestForFirefox(manifest) {
         optional: [],
       },
     },
+    // Lists the add-on for Firefox for Android on AMO too.
+    gecko_android: {
+      strict_min_version: GECKO_MIN_VERSION,
+    },
   };
   return out;
 }
@@ -95,6 +111,7 @@ async function buildTarget(target) {
   await rimraf(buildDir);
   await rimraf(zipPath);
   await fs.cp(STAGE_DIR, buildDir, { recursive: true });
+  await bundle(buildDir, BACKGROUND, target === 'firefox' ? FIREFOX_ALIASES : {});
 
   if (target === 'firefox') {
     const transformed = transformManifestForFirefox(manifest);

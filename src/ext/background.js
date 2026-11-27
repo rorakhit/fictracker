@@ -17,6 +17,9 @@ import { parseWorkPage, parseListingPage, parseSeriesPage, isGatedPage } from '.
 import {
   followKey, followUrl, diffFollow, mergeNews, wipTargets, badgeCount, checkSettings,
 } from '../core/follows.js';
+import {
+  SYNCED, sameJson, toSyncValue, settingsFromSync, followChanges, mergeById,
+} from '../core/sync.js';
 
 const LIB_KEY = 'ft_library';
 const FOLLOWS_KEY = 'ft_follows';
@@ -258,6 +261,126 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 // ---------------------------------------------------------------------------
+// Browser sync (opt-in): settings, presets, smart shelves and follows go
+// through the browser's own sync storage. See src/core/sync.js.
+// ---------------------------------------------------------------------------
+
+const SYNC_STATUS_KEY = 'ft_sync_status';
+const SYNC_KEYS = Object.values(SYNCED);
+const LOCAL_FOR = Object.fromEntries(Object.entries(SYNCED).map(([l, s]) => [s, l]));
+
+const syncOn = async () => Boolean((await get('ft_settings'))?.syncEnabled);
+const syncStatus = status => chrome.storage.local.set({ [SYNC_STATUS_KEY]: { ...status, at: new Date().toISOString() } });
+
+// Follow exactly these authors and series: one write, so a half-applied
+// list is never synced back out.
+async function applyFollowList(list, { union = false } = {}) {
+  let added = [];
+  await updateFollows(({ follows, news }) => {
+    const { add, remove } = followChanges(follows, list, { union });
+    if (!add.length && !remove.length) return {};
+    const next = { ...follows };
+    for (const k of remove) delete next[k];
+    const now = new Date().toISOString();
+    for (const f of add) {
+      next[followKey(f.kind, f.id)] = { ...f, added_at: now, known_ids: null, checked_at: null };
+    }
+    added = add;
+    const gone = new Set(remove);
+    return { follows: next, news: news.filter(n => !gone.has(n.follow_key)) };
+  });
+  // Note what each new follow has posted so far (paced like every request).
+  for (const f of added) {
+    get(FOLLOWS_KEY).then(all => all?.[followKey(f.kind, f.id)] && checkFollow(all[followKey(f.kind, f.id)])).catch(() => {});
+  }
+}
+
+// Copy local changes out to browser sync.
+async function pushSync(localKeys = Object.keys(SYNCED)) {
+  if (!(await syncOn())) return;
+  const local = await chrome.storage.local.get(localKeys);
+  const remote = await chrome.storage.sync.get(localKeys.map(k => SYNCED[k]));
+  const out = {};
+  for (const k of localKeys) {
+    const value = toSyncValue(k, local[k]);
+    if (!sameJson(value, remote[SYNCED[k]])) out[SYNCED[k]] = value;
+  }
+  if (!Object.keys(out).length) return;
+  try {
+    await chrome.storage.sync.set(out);
+    await syncStatus({ ok: true });
+  } catch (e) {
+    // Most likely over the browser's size limit (8 KB per item).
+    await syncStatus({ ok: false, error: e.message });
+  }
+}
+
+// Apply what another browser synced.
+async function pullSync(remote) {
+  if (!(await syncOn())) return;
+  const local = await chrome.storage.local.get(Object.keys(SYNCED));
+  const set = {};
+  for (const [syncKey, value] of Object.entries(remote)) {
+    const k = LOCAL_FOR[syncKey];
+    if (!k || value === undefined) continue;
+    if (k === 'ft_follows') { await applyFollowList(value); continue; }
+    const next = k === 'ft_settings' ? settingsFromSync(local.ft_settings, value) : value;
+    if (!sameJson(next, local[k])) set[k] = next;
+  }
+  if (Object.keys(set).length) await chrome.storage.local.set(set);
+  await syncStatus({ ok: true });
+}
+
+// Turning sync on: combine with what other browsers already synced (nothing
+// is lost from either side), then share the result.
+async function startSync() {
+  const remote = await chrome.storage.sync.get(SYNC_KEYS);
+  const local = await chrome.storage.local.get(Object.keys(SYNCED));
+  const set = {};
+  if (remote.fts_settings) set.ft_settings = { ...settingsFromSync(local.ft_settings, remote.fts_settings), syncEnabled: true };
+  if (remote.fts_presets) set.ft_finder_presets = mergeById(local.ft_finder_presets, remote.fts_presets);
+  if (remote.fts_smart_shelves) set.ft_smart_shelves = mergeById(local.ft_smart_shelves, remote.fts_smart_shelves);
+  for (const [k, v] of Object.entries(set)) if (sameJson(v, local[k])) delete set[k];
+  if (Object.keys(set).length) await chrome.storage.local.set(set);
+  if (remote.fts_follows) await applyFollowList(remote.fts_follows, { union: true });
+  await pushSync();
+}
+
+let syncTimer = null;
+let pendingSyncKeys = new Set();
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync') {
+    const remote = Object.fromEntries(
+      Object.entries(changes).filter(([k]) => SYNC_KEYS.includes(k)).map(([k, c]) => [k, c.newValue]),
+    );
+    if (Object.keys(remote).length) enqueueSync(() => pullSync(remote));
+    return;
+  }
+  if (area !== 'local') return;
+  const s = changes.ft_settings;
+  if (s && s.newValue?.syncEnabled && !s.oldValue?.syncEnabled) {
+    enqueueSync(startSync);
+    return;
+  }
+  const keys = Object.keys(changes).filter(k => k in SYNCED);
+  if (!keys.length) return;
+  keys.forEach(k => pendingSyncKeys.add(k));
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    const batch = [...pendingSyncKeys];
+    pendingSyncKeys = new Set();
+    enqueueSync(() => pushSync(batch));
+  }, 1000);
+});
+
+// Sync steps run one at a time, separately from library writes.
+let syncQueue = Promise.resolve();
+function enqueueSync(task) {
+  syncQueue = syncQueue.then(task).catch(e => syncStatus({ ok: false, error: e.message }));
+  return syncQueue;
+}
+
+// ---------------------------------------------------------------------------
 // Messages from the panel and the library tab
 // ---------------------------------------------------------------------------
 
@@ -361,6 +484,17 @@ chrome.action.onClicked.addListener(async () => {
   openLibrary(fresh && !wips ? '#following' : '');
 });
 
+// Save retired statuses (Dropped → DNF) in their new form, every time the
+// worker starts. Reads already map them; this keeps what's stored in step.
+function migrateStoredLibrary() {
+  return enqueue(async () => {
+    const raw = await get(LIB_KEY);
+    if (!raw?.statuses) return;
+    const lib = normalizeLibrary(raw);
+    if (lib.statuses !== raw.statuses) await chrome.storage.local.set({ [LIB_KEY]: lib });
+  });
+}
+
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') openLibrary('#welcome');
   scheduleChecks().catch(() => {});
@@ -371,4 +505,5 @@ chrome.runtime.onStartup.addListener(() => { scheduleChecks().catch(() => {}); }
 get(CHECK_KEY).then(s => {
   if (s?.running) chrome.storage.local.set({ [CHECK_KEY]: { ...s, running: false, interrupted: true } });
 }).catch(() => {});
+migrateStoredLibrary().catch(() => {});
 updateBadge().catch(() => {});
