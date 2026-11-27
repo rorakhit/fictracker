@@ -75,7 +75,7 @@ export default function SeriesView({ seriesMap, statuses, onOpenWork, follows = 
                 return (
                   <button
                     className="btn btn-ghost btn-sm"
-                    style={on ? { color: 'var(--accent-teal)', borderColor: 'rgba(20,184,166,0.4)' } : undefined}
+                    style={on ? { color: 'var(--accent)', borderColor: 'rgba(224,168,114,0.4)' } : undefined}
                     title={on ? 'Stop following this series' : 'Get told when a new part is posted'}
                     onClick={() => (on ? unfollow(key) : follow('series', sr.ao3_series_id, sr.series_name)).catch(() => {})}
                   >
@@ -90,12 +90,12 @@ export default function SeriesView({ seriesMap, statuses, onOpenWork, follows = 
                 style={{
                   flexShrink: 0,
                   fontSize: 12, fontWeight: 600,
-                  color: 'var(--accent-teal)',
+                  color: 'var(--accent)',
                   textDecoration: 'none',
                   padding: '5px 10px',
-                  border: '1px solid rgba(20,184,166,0.3)',
+                  border: '1px solid rgba(224,168,114,0.3)',
                   borderRadius: 6,
-                  background: 'rgba(20,184,166,0.06)',
+                  background: 'rgba(224,168,114,0.06)',
                 }}
               >
                 Full series on AO3 →
@@ -148,10 +148,10 @@ export default function SeriesView({ seriesMap, statuses, onOpenWork, follows = 
                           flexShrink: 0,
                           width: 24, height: 24,
                           borderRadius: '50%',
-                          background: 'rgba(20,184,166,0.1)',
-                          border: '1px solid rgba(20,184,166,0.25)',
+                          background: 'rgba(224,168,114,0.1)',
+                          border: '1px solid rgba(224,168,114,0.25)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 10, fontWeight: 700, color: 'var(--accent-teal)',
+                          fontSize: 10, fontWeight: 700, color: 'var(--accent)',
                         }}>
                           {w.position_in_series}
                         </div>

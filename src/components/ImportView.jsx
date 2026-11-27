@@ -64,7 +64,7 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
           </div>
         ) : (
           <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 0 }}>
-            <a href="https://archiveofourown.org/users/login" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-teal)' }}>
+            <a href="https://archiveofourown.org/users/login" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>
               Log in to AO3
             </a>{' '}
             in this browser, and links to your history and bookmarks appear here. Your history needs
@@ -107,7 +107,7 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
           <div style={{
             fontSize: 12, marginTop: 8,
             color: importMsg.includes('Could not') || importMsg.includes('Error')
-              ? '#ef4444' : 'var(--accent-teal)',
+              ? '#ef4444' : 'var(--accent)',
           }}>
             {importMsg}
           </div>
@@ -181,14 +181,14 @@ export default function ImportView({ importing, importMsg, addByUrl, handleEpubF
         </div>
 
         {exportMsg && (
-          <div style={{ fontSize: 12, color: 'var(--accent-teal)', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: 'var(--accent)', marginBottom: 6 }}>
             {exportMsg}
           </div>
         )}
         {importFileMsg && (
           <div style={{
             fontSize: 12,
-            color: importFileMsg.includes('failed') ? '#ef4444' : 'var(--accent-teal)',
+            color: importFileMsg.includes('failed') ? '#ef4444' : 'var(--accent)',
             marginBottom: 6,
           }}>
             {importFileMsg}

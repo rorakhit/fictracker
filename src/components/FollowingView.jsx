@@ -99,7 +99,7 @@ export default function FollowingView({ follows, news, follow, unfollow, addNews
             </button>
           </div>
         </div>
-        {checkLine && <div style={{ fontSize: 12, color: 'var(--accent-teal)', marginTop: 8, whiteSpace: 'pre-line' }}>{checkLine}</div>}
+        {checkLine && <div style={{ fontSize: 12, color: 'var(--accent)', marginTop: 8, whiteSpace: 'pre-line' }}>{checkLine}</div>}
         {news.length === 0 ? (
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 10, marginBottom: 0, lineHeight: 1.6 }}>
             {list.length
@@ -128,7 +128,7 @@ export default function FollowingView({ follows, news, follow, unfollow, addNews
           />
           <button className="btn btn-accent btn-sm" onClick={submit}>Follow</button>
         </div>
-        {msg && <div style={{ fontSize: 12, color: 'var(--accent-teal)', marginBottom: 10 }}>{msg}</div>}
+        {msg && <div style={{ fontSize: 12, color: 'var(--accent)', marginBottom: 10 }}>{msg}</div>}
 
         {[['Authors', authors], ['Series', series]].map(([label, items]) => items.length > 0 && (
           <div key={label} style={{ marginBottom: 14 }}>

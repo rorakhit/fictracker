@@ -344,12 +344,12 @@ export default function Library({
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <a href="https://chromewebstore.google.com/detail/fictracker/phfdhkgaagelchgejhhpelhcmebomdim"
                       target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-teal)', textDecoration: 'none' }}>
+                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
                       Add to Chrome →
                     </a>
                     <a href="https://addons.mozilla.org/en-US/firefox/addon/fictracker/"
                       target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-teal)', textDecoration: 'none' }}>
+                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
                       Add to Firefox →
                     </a>
                   </div>
@@ -435,12 +435,12 @@ export default function Library({
                       onClick={e => e.stopPropagation()}
                       style={{
                         fontSize: 11, fontWeight: 700,
-                        color: 'var(--accent-teal)',
+                        color: 'var(--accent)',
                         textDecoration: 'none',
                         padding: '3px 10px',
-                        border: '1px solid rgba(20,184,166,0.3)',
+                        border: '1px solid rgba(224,168,114,0.3)',
                         borderRadius: 5,
-                        background: 'rgba(20,184,166,0.06)',
+                        background: 'rgba(224,168,114,0.06)',
                         whiteSpace: 'nowrap',
                       }}
                     >
