@@ -1,4 +1,4 @@
-# Building FicTracker 2.0.0 from source
+# Building FicTracker 2.0.1 from source
 
 The add-on is built from this source with Vite (the library page, React) and
 esbuild (background script and content scripts). Nothing is downloaded at
@@ -17,7 +17,7 @@ npm run build:ext
 ```
 
 The Firefox build is written to `extension/dist/build-firefox/`, and the
-uploaded package is `extension/dist/fictracker-firefox-v2.0.0.zip`.
+uploaded package is `extension/dist/fictracker-firefox-v2.0.1.zip`.
 
 ## Where things come from
 

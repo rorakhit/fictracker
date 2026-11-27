@@ -27,7 +27,7 @@ nothing to paste. AMO's summary (250 max):
 
 > FicTracker keeps track of what you're reading on Archive of Our Own, right where you read it.
 >
-> Open a fic on AO3 and a small panel shows your progress. Read the next chapter and it moves along with you. Set a status (Reading, To Read, Completed, On Hold, Dropped), and rate it or add notes from your library.
+> Open a fic on AO3 and a small panel shows your progress. Read the next chapter and it moves along with you. Set a status (Reading, To Read, Completed, On Hold, DNF), and rate it or add notes from your library.
 >
 > What it does:
 > - Tracks your chapter and status in every fic as you read on AO3
@@ -49,7 +49,11 @@ nothing to paste. AMO's summary (250 max):
 >
 > FicTracker isn't affiliated with AO3 or the Organization for Transformative Works.
 
-## What's new in 2.0.0 (AMO version notes / Chrome has no field)
+## What's new in 2.0.1 (AMO version notes / Chrome has no field)
+
+> Rate a fic and jot a note right from the panel on AO3, and it'll ask for a rating when you finish one. The panel now matches the library's colors. DNF and Dropped were the same thing, so they're one status now: your Dropped fics are under DNF.
+
+## What's new in 2.0.0
 
 > FicTracker 2.0 is a rebuild based on your feedback. Sign-in is gone (it was broken, sorry!) and so are accounts, the paid tier and AI Picks. Everything now lives in the extension: your library opens from the toolbar button. New: AO3 history import, WIP and author/series update checks, and a Fic Finder that searches AO3 for any of your tags.
 
