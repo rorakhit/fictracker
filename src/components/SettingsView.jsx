@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { clearAllData, getSettings, saveSettings } from '../storage/local';
+import { useEffect, useState } from 'react';
+import { clearAllData, getSettings, saveSettings, getSyncStatus, subscribe } from '../storage/local';
 import { READING_SPEEDS } from '../utils/helpers';
 import { checkSettings } from '../core/follows';
 
@@ -21,6 +21,19 @@ export default function SettingsView() {
     setChecksState(merged);
     saveSettings({ ...getSettings(), autoCheck: merged.autoCheck, autoCheckHours: merged.hours });
   }
+
+  // Browser sync (opt-in). The background worker does the syncing.
+  const [syncEnabled, setSyncEnabledState] = useState(() => Boolean(getSettings().syncEnabled));
+  const [syncStatus, setSyncStatus] = useState(getSyncStatus);
+  useEffect(() => subscribe(() => {
+    setSyncStatus(getSyncStatus());
+    setSyncEnabledState(Boolean(getSettings().syncEnabled));
+  }), []);
+  function setSyncEnabled(on) {
+    setSyncEnabledState(on);
+    saveSettings({ ...getSettings(), syncEnabled: on });
+  }
+  const browserName = navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Chrome';
 
   async function handleClearData() {
     if (!confirmClear) { setConfirmClear(true); return; }
@@ -65,9 +78,9 @@ export default function SettingsView() {
         <h3 style={{ fontSize: 16, marginBottom: 8 }}>Your data</h3>
         <div style={{
           padding: '12px 16px',
-          background: 'rgba(20,184,166,0.06)',
+          background: 'var(--accent-dim)',
           borderRadius: 10,
-          border: '1px solid rgba(20,184,166,0.15)',
+          border: '1px solid rgba(224,168,114,0.25)',
           fontSize: 13,
           lineHeight: 1.6,
         }}>
@@ -81,6 +94,34 @@ export default function SettingsView() {
             No AI is used anywhere in FicTracker.
           </div>
         </div>
+      </div>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Sync between browsers                                            */}
+      {/* ---------------------------------------------------------------- */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, marginBottom: 24 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 4 }}>Use FicTracker on more than one computer</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+          <strong style={{ color: 'var(--text)' }}>Your library:</strong> export a backup on one computer
+          (Import tab) and restore it on the other. Restoring merges instead of replacing, so you can go
+          back and forth: the newer status of each fic wins and nothing is deleted.
+        </p>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, marginBottom: 8, cursor: 'pointer' }}>
+          <input type="checkbox" checked={syncEnabled} onChange={e => setSyncEnabled(e.target.checked)} />
+          Sync settings, Fic Finder presets, smart shelves and follows with {browserName} Sync
+        </label>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 0 24px' }}>
+          Goes through your {browserName} account's own sync, to your other computers where you're signed in to {browserName} and
+          this is switched on. FicTracker still has no account or server. Your library and notes don't sync this way
+          (browser sync is too small for them).
+          {syncEnabled && syncStatus && (
+            <span style={{ display: 'block', marginTop: 6, color: syncStatus.ok ? 'var(--success)' : 'var(--danger)' }}>
+              {syncStatus.ok
+                ? `Synced ${new Date(syncStatus.at).toLocaleString()}`
+                : `Couldn't sync: ${syncStatus.error}`}
+            </span>
+          )}
+        </p>
       </div>
 
       {/* ---------------------------------------------------------------- */}
@@ -98,9 +139,9 @@ export default function SettingsView() {
               onClick={() => setReadingWpm(wpm)}
               style={{
                 padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                border: `1px solid ${readingWpm === wpm ? 'var(--accent-teal)' : 'var(--border)'}`,
-                background: readingWpm === wpm ? 'rgba(20,184,166,0.1)' : 'var(--surface)',
-                color: readingWpm === wpm ? 'var(--accent-teal)' : 'var(--text)',
+                border: `1px solid ${readingWpm === wpm ? 'var(--accent)' : 'var(--border)'}`,
+                background: readingWpm === wpm ? 'var(--accent-dim)' : 'var(--surface)',
+                color: readingWpm === wpm ? 'var(--accent)' : 'var(--text)',
                 cursor: 'pointer',
               }}
             >
