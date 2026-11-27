@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Stars from './Stars';
 import { ratingClass, readingTime } from '../utils/helpers';
-import { getSettings } from '../storage/local';
+import { getSettings, getLibrary, getFinderPresets, saveFinderPresets } from '../storage/local';
+import { moreLikeThisPreset, buildAO3SearchUrl } from '../core/finder';
 
 export default function WorkModal({
   work, status,
@@ -17,7 +18,16 @@ export default function WorkModal({
   addWorkToShelf,
   removeWorkFromShelf,
 }) {
+  const [savedPreset, setSavedPreset] = useState(false);
   if (!work) return null;
+
+  // More like this: an AO3 search from this fic's own tags (no AI).
+  const likeThis = work.fandoms?.length ? moreLikeThisPreset(work, getLibrary()) : null;
+  function saveLikeThis() {
+    const id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    saveFinderPresets([...(getFinderPresets() || []), { ...likeThis, id }]);
+    setSavedPreset(true);
+  }
 
   // Build the set of shelf IDs this work is currently on.
   // shelvesByWork is a Map from useShelves; we look up the work id and
@@ -146,6 +156,23 @@ export default function WorkModal({
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {likeThis && (
+          <div className="modal-section more-like-this">
+            <label>More like this</label>
+            <div className="more-like-this-row">
+              <a className="btn btn-ghost btn-sm" href={buildAO3SearchUrl(likeThis)} target="_blank" rel="noopener"
+                title="An AO3 search for this fic's fandom, ship and tags, most kudos first"
+                style={{ textDecoration: 'none' }}>Search AO3 →</a>
+              <button className="btn btn-ghost btn-sm" onClick={saveLikeThis} disabled={savedPreset}>
+                {savedPreset ? 'Saved to Fic Finder ✓' : 'Save as Fic Finder preset'}</button>
+            </div>
+            <div className="more-like-this-what">
+              {[...likeThis.fandoms_include, ...likeThis.ships_include].join(' · ')}
+              {likeThis.tags_include.length > 0 && <> · any of {likeThis.tags_include.join(', ')}</>}
+            </div>
           </div>
         )}
 

@@ -80,7 +80,56 @@ export function buildAO3SearchUrl(preset) {
   set('words_to', preset.word_count_max ? String(Number(preset.word_count_max)) : '');
   if (preset.completion === 'complete') set('complete', 'T');
   if (preset.completion === 'wip') set('complete', 'F');
-  set('sort_column', 'revised_at'); // a text search is otherwise sorted by "best match"
+  // A text search is otherwise sorted by "best match".
+  set('sort_column', SORT_COLUMNS.has(preset.sort_column) ? preset.sort_column : 'revised_at');
   params.set('commit', 'Search');
   return `https://archiveofourown.org/works/search?${params.toString()}`;
 }
+
+// AO3's own sort options (otwarchive WorkSearchForm::SORT_OPTIONS) that
+// FicTracker uses.
+const SORT_COLUMNS = new Set(['revised_at', 'kudos_count']);
+
+// ---- More like this ----
+// An AO3 search for fics like one you have, built only from that fic's own
+// tags. Nothing is generated: AO3 does the searching and returns real fics.
+//   fandom(s) AND first ship AND any of up to 3 additional tags,
+//   best-loved (most kudos) first.
+// Which additional tags: the fic's tags you've liked most, counted across
+// fics you rated 4 or 5 stars; ties keep AO3's order.
+
+const MAX_TAGS = 3;
+
+export function pickTags(work, library) {
+  const tags = clean(work?.freeform_tags);
+  if (!library) return tags.slice(0, MAX_TAGS);
+  const liked = new Map();
+  for (const w of library.works || []) {
+    if (w.id === work.id) continue;
+    if ((library.statuses?.[w.id]?.rating_personal || 0) < 4) continue;
+    for (const t of w.freeform_tags || []) liked.set(t, (liked.get(t) || 0) + 1);
+  }
+  return tags
+    .map((t, i) => ({ t, i, n: liked.get(t) || 0 }))
+    .sort((a, b) => b.n - a.n || a.i - b.i)
+    .slice(0, MAX_TAGS)
+    .map(x => x.t);
+}
+
+export function moreLikeThisPreset(work, library) {
+  return {
+    name: `More like ${work.title || 'this'}`,
+    fandoms_include: clean(work.fandoms),
+    fandoms_exclude: [],
+    ships_include: clean(work.relationships).slice(0, 1),
+    ships_exclude: [],
+    tags_include: pickTags(work, library),
+    tags_exclude: [],
+    word_count_min: '',
+    word_count_max: '',
+    completion: 'any',
+    sort_column: 'kudos_count',
+  };
+}
+
+export const moreLikeThisUrl = (work, library) => buildAO3SearchUrl(moreLikeThisPreset(work, library));

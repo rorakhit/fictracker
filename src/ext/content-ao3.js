@@ -14,6 +14,7 @@
 import { parseWorkPage, detectCurrentChapter, loggedInUser } from '../core/scrape.js';
 import { normalizeLibrary, progressFromVisit } from '../core/library.js';
 import { followKey } from '../core/follows.js';
+import { moreLikeThisUrl } from '../core/finder.js';
 import { initImport, listingPageKind } from './ao3-import.js';
 
 const workMatch = window.location.pathname.match(/^\/works\/(\d+)/);
@@ -38,6 +39,7 @@ const STATUS_COLORS = {
 
 let panelMode = 'full';
 let pageMeta = null;
+let currentLib = null; // the library as of the last redraw
 
 function send(msg) {
   return chrome.runtime.sendMessage(msg).then(res => {
@@ -149,6 +151,14 @@ function showError(message) {
 
 // ---- Rendering ----
 
+// An AO3 search for fics like this one, from its own tags (see finder.js).
+function moreLikeThisLink() {
+  if (!pageMeta?.fandoms?.length) return '';
+  const url = moreLikeThisUrl(pageMeta, currentLib);
+  return `<a class="ft-more-like" href="${escapeHtml(url)}" target="_blank" rel="noopener"
+    title="An AO3 search for this fic's fandom, ship and tags">More like this on AO3 →</a>`;
+}
+
 function renderNewWork(meta) {
   const body = document.getElementById('ft-body');
   body.innerHTML = `
@@ -167,6 +177,7 @@ function renderNewWork(meta) {
     </div>
     <button class="ft-btn ft-btn-accent" id="ft-add-btn">Add to Library</button>
     <div class="ft-follows" id="ft-follows"></div>
+    ${moreLikeThisLink()}
   `;
   renderFollows();
   forceAccentText(body);
@@ -286,6 +297,7 @@ function renderExistingWork(work, status) {
         placeholder="Where you left off, the good part, anything">${escapeHtml(notes)}</textarea>
     </details>
     <div class="ft-follows" id="ft-follows"></div>
+    ${moreLikeThisLink()}
     <a class="ft-open-app" href="#" id="ft-open-library">Open your library →</a>
   `;
   renderFollows();
@@ -417,6 +429,7 @@ async function render() {
   const seq = ++renderSeq;
   const lib = await readLibrary();
   if (seq !== renderSeq) return;
+  currentLib = lib;
   const work = lib.works.find(w => w.id === pageMeta.id);
   if (!work) {
     renderNewWork(pageMeta);

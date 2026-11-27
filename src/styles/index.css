@@ -335,4 +335,14 @@ code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 1
   .wrapped-grid { grid-template-columns: 1fr; }
   .shelf-chips { gap: 6px; }
   .shelf-chip-name { max-width: 100px; }
+  /* Phones (Firefox for Android): one-line header, tabs scroll sideways. */
+  .header h1 { font-size: 22px; white-space: nowrap; }
+  .header h1 img { height: 1.8em !important; }
+  .header-right span { text-align: right; }
+  .tabs { width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tab { flex-shrink: 0; white-space: nowrap; padding: 8px 14px; }
 }
+
+/* More like this (fic view) */
+.more-like-this-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.more-like-this-what { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }

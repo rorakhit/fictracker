@@ -61,6 +61,14 @@ test('going back to the work page keeps your place', async () => {
   assert.equal((await b.library()).statuses[WORK].current_chapter, 3);
 });
 
+test('More like this links to an AO3 search from the fic\'s own tags', async () => {
+  const href = await ao3.locator('.ft-more-like').getAttribute('href');
+  const q = Object.fromEntries(new URL(href).searchParams);
+  assert.equal(q['work_search[query]'],
+    'tag:"Original Work" tag:"Original Female Character/Original Female Character" (tag:"Slow Burn" OR tag:"Found Family" OR tag:"Small Town")');
+  assert.equal(q['work_search[sort_column]'], 'kudos_count');
+});
+
 test('the status menu offers DNF and not Dropped', async () => {
   const options = await ao3.locator('#ft-status-select option').allInnerTexts();
   assert.ok(options.includes('DNF'), options.join(', '));
@@ -124,6 +132,13 @@ test('the library page shows the rating and note from AO3', async () => {
   await app.waitForSelector('.modal textarea', { timeout: 10000 });
   assert.equal(await app.locator('.modal textarea').inputValue(), 'the lighthouse scene, ch 3');
   assert.equal(await app.locator('.modal .star.filled').count(), 5);
+
+  // More like this, saved as a Fic Finder preset.
+  await app.click('.modal button:has-text("Save as Fic Finder preset")');
+  await app.waitForSelector('.modal button:has-text("Saved to Fic Finder")');
+  const presets = (await b.store('ft_finder_presets')).ft_finder_presets;
+  assert.equal(presets.at(-1).name, 'More like The Lamplighter’s Almanac');
+  assert.equal(presets.at(-1).sort_column, 'kudos_count');
   await app.close();
 });
 

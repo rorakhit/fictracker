@@ -167,6 +167,7 @@
 .ft-status-picker select,
 .ft-status-update select {
   flex: 1 !important;
+  width: 100% !important;
   background: #1e1b2a !important;
   border: 1px solid #2e293d !important;
   border-radius: 6px !important;
@@ -296,6 +297,22 @@
   margin-top: 6px !important;
 }
 .ft-open-app:hover { text-decoration: underline !important; }
+
+/* More like this (an AO3 search) */
+#fictracker-panel .ft-more-like {
+  display: block !important;
+  margin-top: 10px !important;
+  padding: 7px 10px !important;
+  border: 1px solid #2e293d !important;
+  border-radius: 8px !important;
+  background: #1e1b2a !important;
+  color: #e0a872 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+}
+#fictracker-panel .ft-more-like:hover { border-color: #e0a872 !important; }
 
 /* Floating action button (shown when panel is closed) */
 #fictracker-fab {
