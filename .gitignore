@@ -13,7 +13,6 @@ FicTracker_Brand_Board.html
 
 # Node/npm
 node_modules/
-package-lock.json
 yarn.lock
 
 # Vite

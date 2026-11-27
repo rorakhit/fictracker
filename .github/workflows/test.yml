@@ -1,0 +1,31 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Build the extensions
+        run: npm run build:ext
+      # Extensions only load in the full Chromium (new headless mode),
+      # not Playwright's headless shell.
+      - name: Install Chromium
+        run: npx playwright-core install --with-deps --no-shell chromium
+      - name: Browser tests
+        run: npm run test:e2e
