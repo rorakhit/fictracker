@@ -4,6 +4,7 @@ import ShelfStrip from './ShelfStrip';
 import { ratingClass, wordCountLabel, readingTime, timeAgo } from '../utils/helpers';
 import { getSettings } from '../storage/local';
 import { smartShelfFilter } from '../core/shelves';
+import { STATUSES, STATUS_LABELS, statusLabel } from '../core/statuses';
 
 export default function Library({
   works, statuses, stats, wipTracking,
@@ -168,9 +169,9 @@ export default function Library({
     <>
       <div className="stats">
         <div className="stat"><div className="stat-num" style={{ color: 'var(--accent)' }}>{stats.total}</div><div className="stat-label">Total</div></div>
-        <div className="stat"><div className="stat-num" style={{ color: 'var(--blue)' }}>{stats.statusCounts.to_read}</div><div className="stat-label">To Read</div></div>
-        <div className="stat"><div className="stat-num" style={{ color: 'var(--warning)' }}>{stats.statusCounts.reading}</div><div className="stat-label">Reading</div></div>
-        <div className="stat"><div className="stat-num" style={{ color: 'var(--success)' }}>{stats.statusCounts.completed}</div><div className="stat-label">Done</div></div>
+        <div className="stat"><div className="stat-num" style={{ color: 'var(--blue)' }}>{stats.statusCounts.to_read}</div><div className="stat-label">{STATUS_LABELS.to_read}</div></div>
+        <div className="stat"><div className="stat-num" style={{ color: 'var(--warning)' }}>{stats.statusCounts.reading}</div><div className="stat-label">{STATUS_LABELS.reading}</div></div>
+        <div className="stat"><div className="stat-num" style={{ color: 'var(--success)' }}>{stats.statusCounts.completed}</div><div className="stat-label">{STATUS_LABELS.completed}</div></div>
         <div className="stat"><div className="stat-num" style={{ color: 'var(--teal)' }}>{wordCountLabel(stats.totalWords)}</div><div className="stat-label">Words</div></div>
       </div>
 
@@ -239,7 +240,7 @@ export default function Library({
       {wipCheckMsg && <div style={{ fontSize: 12, color: 'var(--teal)', marginBottom: 12, whiteSpace: 'pre-line' }}>{wipCheckMsg}</div>}
 
       <div className="filters">
-        {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dnf','DNF'],['author_abandoned','Abandoned']].map(([k,l]) => (
+        {[['all', 'All'], ...Object.entries(STATUS_LABELS)].map(([k,l]) => (
           <button key={k} className={`pill ${statusFilter === k ? 'active' : ''}`}
             onClick={() => { setStatusFilter(k); if (setActiveSmartShelfId) setActiveSmartShelfId(null); }}>{l}</button>
         ))}
@@ -300,12 +301,7 @@ export default function Library({
               onChange={e => { if (e.target.value) bulkSetStatus(e.target.value); e.target.value = ''; }}
               defaultValue="">
               <option value="" disabled>Set status...</option>
-              <option value="to_read">To Read</option>
-              <option value="reading">Reading</option>
-              <option value="completed">Completed</option>
-              <option value="on_hold">On Hold</option>
-              <option value="dnf">DNF</option>
-              <option value="author_abandoned">Author Abandoned</option>
+              {STATUSES.map(k => <option key={k} value={k}>{STATUS_LABELS[k]}</option>)}
             </select>
             {shelves && shelves.length > 0 && (
               <select style={{ width: 150, padding: '5px 8px', fontSize: 12, borderRadius: 8 }}
@@ -386,7 +382,7 @@ export default function Library({
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
                   {w._status?.rating_personal > 0 && <Stars value={w._status.rating_personal} />}
-                  <span className={`status-badge status-${st}`}>{st.replace('_', ' ')}</span>
+                  <span className={`status-badge status-${st}`}>{statusLabel(st)}</span>
                 </div>
               </div>
               <div className="work-meta">

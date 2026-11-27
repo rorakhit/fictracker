@@ -8,6 +8,7 @@
 // details are refreshed.
 
 import { parseListingPage } from '../core/scrape.js';
+import { STATUS_LABELS } from '../core/statuses.js';
 
 const PATH = /^\/users\/([^/]+)(?:\/pseuds\/[^/]+)?\/(readings|bookmarks)\/?$/;
 
@@ -17,10 +18,10 @@ export function listingPageKind(pathname) {
 }
 
 const STATUS_CHOICES = {
-  auto: 'Completed, or Reading if a WIP',
-  reading: 'Reading',
-  completed: 'Completed',
-  to_read: 'To Read',
+  auto: `${STATUS_LABELS.completed}, or ${STATUS_LABELS.reading} if a WIP`,
+  reading: STATUS_LABELS.reading,
+  completed: STATUS_LABELS.completed,
+  to_read: STATUS_LABELS.to_read,
 };
 
 function statusFor(item, choice) {

@@ -3,6 +3,7 @@ import Stars from './Stars';
 import { ratingClass, readingTime } from '../utils/helpers';
 import { getSettings, getLibrary, getFinderPresets, saveFinderPresets } from '../storage/local';
 import { moreLikeThisPreset, buildAO3SearchUrl } from '../core/finder';
+import { STATUSES, STATUS_LABELS } from '../core/statuses';
 
 export default function WorkModal({
   work, status,
@@ -95,12 +96,7 @@ export default function WorkModal({
           <div className="modal-section">
             <label>Status</label>
             <select value={editStatus} onChange={e => setEditStatus(e.target.value)}>
-              <option value="to_read">To Read</option>
-              <option value="reading">Reading</option>
-              <option value="completed">Completed</option>
-              <option value="on_hold">On Hold</option>
-              <option value="dnf">DNF</option>
-              <option value="author_abandoned">Author Abandoned</option>
+              {STATUSES.map(k => <option key={k} value={k}>{STATUS_LABELS[k]}</option>)}
             </select>
           </div>
           <div className="modal-section">
