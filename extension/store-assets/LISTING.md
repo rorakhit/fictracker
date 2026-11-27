@@ -27,7 +27,7 @@ nothing to paste. AMO's summary (250 max):
 
 > FicTracker keeps track of what you're reading on Archive of Our Own, right where you read it.
 >
-> Open a fic on AO3 and a small panel shows your progress. Read the next chapter and it moves along with you. Set a status (Reading, To Read, Completed, On Hold, Dropped), and rate it from your library.
+> Open a fic on AO3 and a small panel shows your progress. Read the next chapter and it moves along with you. Set a status (Reading, To Read, Completed, On Hold, Dropped), and rate it or add notes from your library.
 >
 > What it does:
 > - Tracks your chapter and status in every fic as you read on AO3
