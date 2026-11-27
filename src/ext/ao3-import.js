@@ -76,7 +76,7 @@ export function initImport(ui) {
       <div class="ft-import-progress" id="ft-import-progress" role="status">${ui.escapeHtml(progress)}</div>
       ${done ? '<a class="ft-open-app" href="#" id="ft-open-library">Open your library →</a>' : ''}
     `;
-    ui.forceWhiteAccentText(body);
+    ui.forceAccentText(body);
 
     const mini = document.getElementById('ft-mini-bar');
     mini.innerHTML = `
