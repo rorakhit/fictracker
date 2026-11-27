@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FicTracker",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Track your AO3 reading, WIP updates and authors you follow. No account, no AI: your library stays in your browser.",
   "permissions": [
     "storage",
