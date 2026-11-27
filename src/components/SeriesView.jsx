@@ -7,14 +7,15 @@
 // what asks FicTracker to check the series page for new parts.
 
 import { ratingClass } from '../utils/helpers';
+import { statusLabel } from '../core/statuses';
 
-const STATUS_LABELS = {
-  to_read:        { label: 'To Read',   color: 'var(--blue)' },
-  reading:        { label: 'Reading',   color: 'var(--warning)' },
-  completed:      { label: 'Done',      color: 'var(--success)' },
-  on_hold:        { label: 'On Hold',   color: 'var(--purple)' },
-  dnf:            { label: 'DNF',       color: '#f97316' },
-  author_abandoned: { label: 'Abandoned', color: 'var(--rose)' },
+const STATUS_COLORS = {
+  to_read: 'var(--blue)',
+  reading: 'var(--warning)',
+  completed: 'var(--success)',
+  on_hold: 'var(--purple)',
+  dnf: '#f97316',
+  author_abandoned: 'var(--rose)',
 };
 
 function progressSummary(works, statuses) {
@@ -112,7 +113,7 @@ export default function SeriesView({ seriesMap, statuses, onOpenWork, follows = 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {sr.works.map((w, idx) => {
                 const st = statuses[w.id]?.status || 'to_read';
-                const stInfo = STATUS_LABELS[st] || { label: st, color: 'var(--text-muted)' };
+                const stInfo = { label: statusLabel(st), color: STATUS_COLORS[st] || 'var(--text-muted)' };
                 // Detect position gap: if this work's position is more than 1 ahead
                 // of the previous work's position, there's a gap in the series.
                 const prevPos = idx > 0 ? (sr.works[idx - 1].position_in_series || 0) : 0;

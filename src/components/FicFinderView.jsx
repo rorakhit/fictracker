@@ -14,6 +14,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { getFinderPresets, saveFinderPresets, subscribe } from '../storage/local';
 import { applyPreset, buildAO3SearchUrl } from '../core/finder';
 import { wordCountLabel } from '../utils/helpers';
+import { statusLabel } from '../core/statuses';
 
 // ---------------------------------------------------------------------------
 // Empty preset factory
@@ -250,7 +251,6 @@ function PresetEditor({ preset, onChange, onSave, onCancel }) {
 // ---------------------------------------------------------------------------
 function WorkCard({ work, status, onOpenWork }) {
   const st = status?.status || 'to_read';
-  const stLabel = { to_read: 'To read', reading: 'Reading', completed: 'Completed', dnf: 'DNF', on_hold: 'On hold', author_abandoned: 'Abandoned' };
 
   return (
     <div className="rec-card" style={{ cursor: 'pointer' }} onClick={() => onOpenWork(work)}>
@@ -267,7 +267,7 @@ function WorkCard({ work, status, onOpenWork }) {
             {work.is_complete ? 'Complete' : 'WIP'}
           </span>
         )}
-        <span style={{ color: 'var(--text-muted)' }}>{stLabel[st] || st}</span>
+        <span style={{ color: 'var(--text-muted)' }}>{statusLabel(st)}</span>
         {(work.fandoms || []).slice(0, 2).map(f => (
           <span key={f} className="tag fandom">{f.length > 25 ? f.slice(0, 22) + '…' : f}</span>
         ))}

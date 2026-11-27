@@ -16,18 +16,11 @@ import { normalizeLibrary, progressFromVisit } from '../core/library.js';
 import { followKey } from '../core/follows.js';
 import { moreLikeThisUrl } from '../core/finder.js';
 import { initImport, listingPageKind } from './ao3-import.js';
+import { STATUS_LABELS } from '../core/statuses.js';
 
 const workMatch = window.location.pathname.match(/^\/works\/(\d+)/);
 const ao3Id = workMatch?.[1];
 
-const STATUS_LABELS = {
-  to_read: 'To Read',
-  reading: 'Reading',
-  completed: 'Completed',
-  on_hold: 'On Hold',
-  dnf: 'DNF',
-  author_abandoned: 'Author Abandoned',
-};
 const STATUS_COLORS = {
   to_read: '#3b82f6',
   reading: '#f59e0b',
@@ -170,9 +163,7 @@ function renderNewWork(meta) {
     <div class="ft-status-picker">
       <label for="ft-add-status">Add as:</label>
       <select id="ft-add-status">
-        <option value="to_read">To Read</option>
-        <option value="reading">Reading</option>
-        <option value="completed">Completed</option>
+        ${['to_read', 'reading', 'completed'].map(k => `<option value="${k}">${STATUS_LABELS[k]}</option>`).join('')}
       </select>
     </div>
     <button class="ft-btn ft-btn-accent" id="ft-add-btn">Add to Library</button>
