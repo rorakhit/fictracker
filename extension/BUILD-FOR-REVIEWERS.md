@@ -1,4 +1,4 @@
-# Building FicTracker 2.0.1 from source
+# Building FicTracker 2.1.0 from source
 
 The add-on is built from this source with Vite (the library page, React) and
 esbuild (background script and content scripts). Nothing is downloaded at
@@ -17,20 +17,20 @@ npm run build:ext
 ```
 
 The Firefox build is written to `extension/dist/build-firefox/`, and the
-uploaded package is `extension/dist/fictracker-firefox-v2.0.1.zip`.
+uploaded package is `extension/dist/fictracker-firefox-v2.1.0.zip`.
 
 ## Where things come from
 
 | In the package | Source |
 | --- | --- |
-| `background.js` | `src/ext/background.js` (bundled with esbuild, not minified) |
+| `background.js` | `src/ext/background.js` (bundled with esbuild, not minified). The Firefox build uses the browser's own `DOMParser` (`src/ext/native-dom-parser.js`) in place of linkedom, so it's about 30 KB |
 | `content/ao3.js` | `src/ext/content-ao3.js` and `src/ext/ao3-import.js` |
 | `content/site.js` | `src/ext/content-site.js` |
 | `app/` | the React app in `src/` (built by Vite, minified) |
 | `manifest.json` | `extension/manifest.json`, with Firefox settings added by `extension/build.mjs` |
 
-Third-party code is only what's in package.json (React, Recharts, JSZip,
-linkedom and their dependencies). There is no remote code, no analytics and
+Third-party code is only what's in package.json's dependencies (React,
+Recharts, JSZip and theirs; linkedom is in the Chrome build only). There is no remote code, no analytics and
 no AI. The add-on talks to archiveofourown.org (the user's own pages, paced
 at most one request every 3 seconds) and reads fictracker.app's local
 storage once to copy a library from the old web app.
