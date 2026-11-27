@@ -10,6 +10,8 @@
 // which applies them one at a time. Shelves, presets and settings are only
 // edited here, so they're written directly.
 
+import { migrateStatuses } from '../core/library.js';
+
 const KEYS = {
   library:       'ft_library',        // { works: [], statuses: {}, reading_log: [] }
   shelves:       'ft_shelves',        // [{ id, name, color, work_ids }]
@@ -73,7 +75,12 @@ function write(key, value) {
 // ---------------------------------------------------------------------------
 
 export function getLibrary() {
-  return cache[KEYS.library];
+  const lib = cache[KEYS.library];
+  // Old statuses (Dropped) read as their new name even before the
+  // background worker has saved the change.
+  const statuses = lib?.statuses && migrateStatuses(lib.statuses);
+  // Same object when nothing changed, so React skips needless redraws.
+  return statuses && statuses !== lib.statuses ? { ...lib, statuses } : lib;
 }
 
 // Send a message to the background worker and wait for its answer.

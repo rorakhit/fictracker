@@ -14,7 +14,6 @@ const STATUS_LABELS = {
   completed:      { label: 'Done',      color: 'var(--success)' },
   on_hold:        { label: 'On Hold',   color: 'var(--purple)' },
   dnf:            { label: 'DNF',       color: '#f97316' },
-  dropped:        { label: 'Dropped',   color: 'var(--text-muted)' },
   author_abandoned: { label: 'Abandoned', color: 'var(--rose)' },
 };
 

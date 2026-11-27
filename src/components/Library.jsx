@@ -239,7 +239,7 @@ export default function Library({
       {wipCheckMsg && <div style={{ fontSize: 12, color: 'var(--teal)', marginBottom: 12, whiteSpace: 'pre-line' }}>{wipCheckMsg}</div>}
 
       <div className="filters">
-        {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dnf','DNF'],['dropped','Dropped'],['author_abandoned','Abandoned']].map(([k,l]) => (
+        {[['all','All'],['to_read','To Read'],['reading','Reading'],['completed','Done'],['on_hold','On Hold'],['dnf','DNF'],['author_abandoned','Abandoned']].map(([k,l]) => (
           <button key={k} className={`pill ${statusFilter === k ? 'active' : ''}`}
             onClick={() => { setStatusFilter(k); if (setActiveSmartShelfId) setActiveSmartShelfId(null); }}>{l}</button>
         ))}
@@ -305,7 +305,6 @@ export default function Library({
               <option value="completed">Completed</option>
               <option value="on_hold">On Hold</option>
               <option value="dnf">DNF</option>
-              <option value="dropped">Dropped</option>
               <option value="author_abandoned">Author Abandoned</option>
             </select>
             {shelves && shelves.length > 0 && (

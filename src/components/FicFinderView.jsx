@@ -250,7 +250,7 @@ function PresetEditor({ preset, onChange, onSave, onCancel }) {
 // ---------------------------------------------------------------------------
 function WorkCard({ work, status, onOpenWork }) {
   const st = status?.status || 'to_read';
-  const stLabel = { to_read: 'To read', reading: 'Reading', completed: 'Completed', dropped: 'Dropped', on_hold: 'On hold', author_abandoned: 'Abandoned' };
+  const stLabel = { to_read: 'To read', reading: 'Reading', completed: 'Completed', dnf: 'DNF', on_hold: 'On hold', author_abandoned: 'Abandoned' };
 
   return (
     <div className="rec-card" style={{ cursor: 'pointer' }} onClick={() => onOpenWork(work)}>

@@ -90,7 +90,6 @@ export default function WorkModal({
               <option value="completed">Completed</option>
               <option value="on_hold">On Hold</option>
               <option value="dnf">DNF</option>
-              <option value="dropped">Dropped</option>
               <option value="author_abandoned">Author Abandoned</option>
             </select>
           </div>

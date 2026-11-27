@@ -361,6 +361,17 @@ chrome.action.onClicked.addListener(async () => {
   openLibrary(fresh && !wips ? '#following' : '');
 });
 
+// Save retired statuses (Dropped → DNF) in their new form, every time the
+// worker starts. Reads already map them; this keeps what's stored in step.
+function migrateStoredLibrary() {
+  return enqueue(async () => {
+    const raw = await get(LIB_KEY);
+    if (!raw?.statuses) return;
+    const lib = normalizeLibrary(raw);
+    if (lib.statuses !== raw.statuses) await chrome.storage.local.set({ [LIB_KEY]: lib });
+  });
+}
+
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') openLibrary('#welcome');
   scheduleChecks().catch(() => {});
@@ -371,4 +382,5 @@ chrome.runtime.onStartup.addListener(() => { scheduleChecks().catch(() => {}); }
 get(CHECK_KEY).then(s => {
   if (s?.running) chrome.storage.local.set({ [CHECK_KEY]: { ...s, running: false, interrupted: true } });
 }).catch(() => {});
+migrateStoredLibrary().catch(() => {});
 updateBadge().catch(() => {});
